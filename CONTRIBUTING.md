@@ -62,7 +62,7 @@ Thank you for your interest in contributing to CamForge-Next!
 - **Node.js** 18.0 或更高版本
 - **pnpm** 8.0 或更高版本
 - **Rust** 1.70 或更高版本
-- **Windows 10/11**（当前仅支持 Windows）
+- **Windows 10/11**、**macOS** 或 **Linux**
 
 ### 安装步骤 | Installation Steps
 
@@ -92,23 +92,34 @@ pnpm tauri build
 
 ```
 camforge-next/
-├── src/                    # 前端源码
-│   ├── components/         # UI 组件
-│   ├── services/           # 业务服务层
-│   ├── stores/             # 状态管理
-│   ├── io/                 # I/O 抽象层
-│   ├── i18n/               # 国际化
-│   ├── constants/          # 常量定义
-│   ├── types/              # 类型定义
-│   └── utils/              # 工具函数
-├── src-tauri/              # Tauri 后端
-│   ├── src/                # Rust 源码
-│   │   ├── cam/            # 凸轮计算模块
-│   │   ├── commands/       # Tauri 命令
-│   │   └── types/          # Rust 类型定义
-│   └── tauri.conf.json     # Tauri 配置
-├── docs/                   # 文档
-└── public/                 # 静态资源
+├── crates/                    # Rust crates
+│   ├── camforge-core/         # 共享核心库
+│   │   └── src/
+│   │       ├── motion.rs      # 运动规律计算
+│   │       ├── profile.rs     # 轮廓计算
+│   │       ├── geometry.rs    # 几何分析
+│   │       └── types.rs       # 类型定义
+│   └── camforge-server/       # HTTP API 服务器
+│       └── src/
+│           ├── main.rs        # 服务器入口
+│           └── routes/        # API 路由
+├── src/                       # 前端源码
+│   ├── components/            # UI 组件
+│   ├── services/              # 业务服务层
+│   ├── stores/                # 状态管理
+│   ├── api/                   # API 适配层
+│   ├── io/                    # I/O 抽象层
+│   ├── i18n/                  # 国际化
+│   ├── constants/             # 常量定义
+│   ├── types/                 # 类型定义
+│   └── utils/                 # 工具函数
+├── src-tauri/                 # Tauri 桌面应用
+│   ├── src/
+│   │   ├── lib.rs             # 应用入口
+│   │   └── commands/          # Tauri 命令
+│   └── tauri.conf.json        # Tauri 配置
+├── docs/                      # 文档
+└── public/                    # 静态资源
 ```
 
 详细架构说明请参阅 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
