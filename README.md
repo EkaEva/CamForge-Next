@@ -4,7 +4,7 @@
 
 **凸轮机构运动学模拟器 | Cam Mechanism Kinematics Simulator**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/camforge/camforge-next)
+[![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)](https://github.com/camforge/camforge-next)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24c8db.svg)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-1.9-4f88c6.svg)](https://solidjs.com)
@@ -63,7 +63,7 @@
 | **CSV** | 通用数据格式，可用 Excel 打开 |
 | **Excel** | 包含完整数据的电子表格 |
 | **SVG** | 矢量图形格式，可无损缩放 |
-| **TIFF** | 高分辨率图片（支持 600 DPI） |
+| **PNG** | 高分辨率图片（支持 600 DPI） |
 | **GIF** | 动画格式，展示凸轮运动过程 |
 | **JSON** | 预设配置文件，方便参数保存与分享 |
 
@@ -150,13 +150,18 @@ camforge-next/
 │   │   ├── charts/         # 图表组件
 │   │   ├── controls/       # 控件组件
 │   │   └── layout/         # 布局组件
+│   ├── services/           # 业务服务层
 │   ├── stores/             # 状态管理
+│   ├── io/                 # I/O 抽象层
 │   ├── i18n/               # 国际化
 │   ├── constants/          # 常量定义
-│   └── types/              # 类型定义
+│   ├── types/              # 类型定义
+│   └── utils/              # 工具函数
 ├── src-tauri/              # Tauri 后端
 │   ├── src/                # Rust 源码
-│   │   └── lib.rs          # 核心计算逻辑
+│   │   ├── cam/            # 凸轮计算模块
+│   │   ├── commands/       # Tauri 命令
+│   │   └── types/          # Rust 类型定义
 │   ├── icons/              # 应用图标
 │   ├── Cargo.toml          # Rust 依赖配置
 │   └── tauri.conf.json     # Tauri 配置
@@ -172,6 +177,8 @@ camforge-next/
 - [x] 动画演示
 - [x] 多格式导出
 - [x] 中英文国际化
+- [x] 错误边界与输入校验
+- [x] CI 自动化测试
 - [ ] macOS 支持
 - [ ] Linux 支持
 - [ ] 凸轮机构优化算法
@@ -229,7 +236,7 @@ camforge-next/
 | **CSV** | Universal data format, can be opened with Excel |
 | **Excel** | Spreadsheet with complete data |
 | **SVG** | Vector graphics format, scalable without quality loss |
-| **TIFF** | High-resolution image (supports 600 DPI) |
+| **PNG** | High-resolution image (supports 600 DPI) |
 | **GIF** | Animation format showing cam motion |
 | **JSON** | Preset configuration file for parameter saving and sharing |
 
@@ -316,13 +323,18 @@ camforge-next/
 │   │   ├── charts/         # Chart components
 │   │   ├── controls/       # Control components
 │   │   └── layout/         # Layout components
+│   ├── services/           # Business service layer
 │   ├── stores/             # State management
+│   ├── io/                 # I/O abstraction layer
 │   ├── i18n/               # Internationalization
 │   ├── constants/          # Constants
-│   └── types/              # Type definitions
+│   ├── types/              # Type definitions
+│   └── utils/              # Utility functions
 ├── src-tauri/              # Tauri backend
 │   ├── src/                # Rust source code
-│   │   └── lib.rs          # Core computation logic
+│   │   ├── cam/            # Cam calculation modules
+│   │   ├── commands/       # Tauri commands
+│   │   └── types/          # Rust type definitions
 │   ├── icons/              # Application icons
 │   ├── Cargo.toml          # Rust dependencies
 │   └── tauri.conf.json     # Tauri configuration
@@ -338,6 +350,8 @@ camforge-next/
 - [x] Animation demonstration
 - [x] Multi-format export
 - [x] Chinese/English internationalization
+- [x] Error boundary and input validation
+- [x] CI automated testing
 - [ ] macOS support
 - [ ] Linux support
 - [ ] Cam mechanism optimization algorithm
