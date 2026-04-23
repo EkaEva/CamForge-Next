@@ -4,7 +4,7 @@
 
 **凸轮机构运动学模拟器 | Cam Mechanism Kinematics Simulator**
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/camforge/camforge-next)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/EkaEva/CamForge-Next)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24c8db.svg)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-1.9-4f88c6.svg)](https://solidjs.com)
@@ -23,7 +23,14 @@
 
 ### 简介
 
-**CamForge-Next** 是一款现代化的凸轮机构运动学模拟器桌面应用程序。它能够帮助工程师、学生和研究人员快速设计、分析和优化凸轮机构，支持多种运动规律和实时可视化。
+**CamForge-Next** 是一款现代化的凸轮机构运动学模拟器，支持桌面应用和 Web 服务器双模式部署。它能够帮助工程师、学生和研究人员快速设计、分析和优化凸轮机构，支持多种运动规律和实时可视化。
+
+### 部署模式
+
+| 模式 | 说明 | 适用场景 |
+|------|------|----------|
+| **桌面应用** | Tauri + SolidJS，支持所有功能 | 个人使用、离线使用 |
+| **Web 服务器** | Axum + SolidJS，支持在线部署 | 团队协作、在线演示 |
 
 ### 功能特性
 
@@ -76,6 +83,7 @@
 | [TypeScript](https://www.typescriptlang.org) | 5.6 | 类型安全的 JavaScript |
 | [Tailwind CSS](https://tailwindcss.com) | 4.2 | 原子化 CSS 框架 |
 | [Rust](https://www.rust-lang.org) | 1.70+ | 高性能后端计算 |
+| [Axum](https://docs.rs/axum) | 0.7 | HTTP API 服务器 |
 | [ndarray](https://docs.rs/ndarray) | 0.15 | Rust 数值计算库 |
 | [rayon](https://docs.rs/rayon) | 1.8 | Rust 并行计算库 |
 
@@ -86,13 +94,13 @@
 - **Node.js** 18.0 或更高版本
 - **pnpm** 8.0 或更高版本
 - **Rust** 1.70 或更高版本
-- **Windows 10/11**（当前仅支持 Windows）
+- **Windows 10/11**、**macOS** 或 **Linux**
 
 #### 安装依赖
 
 ```bash
 # 克隆仓库
-git clone https://github.com/camforge/camforge-next.git
+git clone https://github.com/EkaEva/CamForge-Next.git
 cd camforge-next
 
 # 安装前端依赖
@@ -102,13 +110,21 @@ pnpm install
 #### 开发模式
 
 ```bash
+# 桌面应用
 pnpm tauri dev
+
+# Web 服务器
+pnpm build && cargo run -p camforge-server
 ```
 
 #### 构建发布
 
 ```bash
+# 桌面应用
 pnpm tauri build
+
+# Web 服务器（Docker）
+docker-compose up -d
 ```
 
 构建产物位于 `src-tauri/target/release/bundle/` 目录下。
@@ -137,6 +153,8 @@ pnpm tauri build
 | `Space` | 播放/暂停动画 |
 | `←` | 单帧后退（暂停时） |
 | `→` | 单帧前进（暂停时） |
+| `Ctrl+Z` | 撤销参数修改 |
+| `Ctrl+Y` | 重做参数修改 |
 
 > 注：快捷键仅在凸轮轮廓页面有效
 
@@ -144,29 +162,32 @@ pnpm tauri build
 
 ```
 camforge-next/
-├── src/                    # 前端源码
-│   ├── components/         # UI 组件
-│   │   ├── animation/      # 动画组件
-│   │   ├── charts/         # 图表组件
-│   │   ├── controls/       # 控件组件
-│   │   └── layout/         # 布局组件
-│   ├── services/           # 业务服务层
-│   ├── stores/             # 状态管理
-│   ├── io/                 # I/O 抽象层
-│   ├── i18n/               # 国际化
-│   ├── constants/          # 常量定义
-│   ├── types/              # 类型定义
-│   └── utils/              # 工具函数
-├── src-tauri/              # Tauri 后端
-│   ├── src/                # Rust 源码
-│   │   ├── cam/            # 凸轮计算模块
-│   │   ├── commands/       # Tauri 命令
-│   │   └── types/          # Rust 类型定义
-│   ├── icons/              # 应用图标
-│   ├── Cargo.toml          # Rust 依赖配置
-│   └── tauri.conf.json     # Tauri 配置
-├── public/                 # 静态资源
-└── package.json            # Node.js 配置
+├── crates/                    # Rust crates
+│   ├── camforge-core/         # 共享核心库
+│   │   └── src/
+│   │       ├── motion.rs      # 运动规律计算
+│   │       ├── profile.rs     # 轮廓计算
+│   │       ├── geometry.rs    # 几何分析
+│   │       └── types.rs       # 类型定义
+│   └── camforge-server/       # HTTP API 服务器
+│       └── src/
+│           ├── main.rs        # 服务器入口
+│           └── routes/        # API 路由
+├── src/                       # 前端源码
+│   ├── components/            # UI 组件
+│   ├── services/              # 业务服务层
+│   ├── stores/                # 状态管理
+│   ├── api/                   # API 适配层
+│   ├── i18n/                  # 国际化
+│   └── utils/                 # 工具函数
+├── src-tauri/                 # Tauri 桌面应用
+│   └── src/
+│       ├── lib.rs             # 应用入口
+│       └── commands/          # Tauri 命令
+├── docs/                      # 文档
+├── Dockerfile                 # Docker 部署
+├── docker-compose.yml         # Docker Compose
+└── Cargo.toml                 # Workspace 配置
 ```
 
 ### 开发路线
@@ -185,8 +206,8 @@ camforge-next/
 - [x] 前后端分离架构
 - [x] Web 服务器部署支持
 - [x] Docker 部署支持
-- [ ] macOS 支持
-- [ ] Linux 支持
+- [x] macOS 支持
+- [x] Linux 支持
 - [ ] 凸轮机构优化算法
 - [ ] 更多从动件类型（平底、摆动）
 
@@ -202,7 +223,14 @@ camforge-next/
 
 ### Overview
 
-**CamForge-Next** is a modern desktop application for cam mechanism kinematics simulation. It helps engineers, students, and researchers quickly design, analyze, and optimize cam mechanisms with support for various motion laws and real-time visualization.
+**CamForge-Next** is a modern cam mechanism kinematics simulator that supports both desktop application and web server deployment. It helps engineers, students, and researchers quickly design, analyze, and optimize cam mechanisms with support for various motion laws and real-time visualization.
+
+### Deployment Modes
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| **Desktop App** | Tauri + SolidJS with full functionality | Personal use, offline use |
+| **Web Server** | Axum + SolidJS for online deployment | Team collaboration, online demo |
 
 ### Features
 
@@ -255,6 +283,7 @@ camforge-next/
 | [TypeScript](https://www.typescriptlang.org) | 5.6 | Type-safe JavaScript |
 | [Tailwind CSS](https://tailwindcss.com) | 4.2 | Utility-first CSS framework |
 | [Rust](https://www.rust-lang.org) | 1.70+ | High-performance backend computation |
+| [Axum](https://docs.rs/axum) | 0.7 | HTTP API server |
 | [ndarray](https://docs.rs/ndarray) | 0.15 | Rust numerical computing library |
 | [rayon](https://docs.rs/rayon) | 1.8 | Rust parallel computing library |
 
@@ -265,13 +294,13 @@ camforge-next/
 - **Node.js** 18.0 or higher
 - **pnpm** 8.0 or higher
 - **Rust** 1.70 or higher
-- **Windows 10/11** (currently Windows only)
+- **Windows 10/11**, **macOS**, or **Linux**
 
 #### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/camforge/camforge-next.git
+git clone https://github.com/EkaEva/CamForge-Next.git
 cd camforge-next
 
 # Install frontend dependencies
@@ -281,13 +310,21 @@ pnpm install
 #### Development Mode
 
 ```bash
+# Desktop app
 pnpm tauri dev
+
+# Web server
+pnpm build && cargo run -p camforge-server
 ```
 
 #### Build for Production
 
 ```bash
+# Desktop app
 pnpm tauri build
+
+# Web server (Docker)
+docker-compose up -d
 ```
 
 Build artifacts are located in `src-tauri/target/release/bundle/`.
@@ -316,6 +353,8 @@ Build artifacts are located in `src-tauri/target/release/bundle/`.
 | `Space` | Play/Pause animation |
 | `←` | Step backward (when paused) |
 | `→` | Step forward (when paused) |
+| `Ctrl+Z` | Undo parameter change |
+| `Ctrl+Y` | Redo parameter change |
 
 > Note: Shortcuts only work on the Cam Profile page
 
@@ -323,29 +362,32 @@ Build artifacts are located in `src-tauri/target/release/bundle/`.
 
 ```
 camforge-next/
-├── src/                    # Frontend source code
-│   ├── components/         # UI components
-│   │   ├── animation/      # Animation components
-│   │   ├── charts/         # Chart components
-│   │   ├── controls/       # Control components
-│   │   └── layout/         # Layout components
-│   ├── services/           # Business service layer
-│   ├── stores/             # State management
-│   ├── io/                 # I/O abstraction layer
-│   ├── i18n/               # Internationalization
-│   ├── constants/          # Constants
-│   ├── types/              # Type definitions
-│   └── utils/              # Utility functions
-├── src-tauri/              # Tauri backend
-│   ├── src/                # Rust source code
-│   │   ├── cam/            # Cam calculation modules
-│   │   ├── commands/       # Tauri commands
-│   │   └── types/          # Rust type definitions
-│   ├── icons/              # Application icons
-│   ├── Cargo.toml          # Rust dependencies
-│   └── tauri.conf.json     # Tauri configuration
-├── public/                 # Static assets
-└── package.json            # Node.js configuration
+├── crates/                    # Rust crates
+│   ├── camforge-core/         # Shared core library
+│   │   └── src/
+│   │       ├── motion.rs      # Motion law calculation
+│   │       ├── profile.rs     # Profile calculation
+│   │       ├── geometry.rs    # Geometry analysis
+│   │       └── types.rs       # Type definitions
+│   └── camforge-server/       # HTTP API server
+│       └── src/
+│           ├── main.rs        # Server entry
+│           └── routes/        # API routes
+├── src/                       # Frontend source code
+│   ├── components/            # UI components
+│   ├── services/              # Business services
+│   ├── stores/                # State management
+│   ├── api/                   # API adapter layer
+│   ├── i18n/                  # Internationalization
+│   └── utils/                 # Utility functions
+├── src-tauri/                 # Tauri desktop app
+│   └── src/
+│       ├── lib.rs             # App entry
+│       └── commands/          # Tauri commands
+├── docs/                      # Documentation
+├── Dockerfile                 # Docker deployment
+├── docker-compose.yml         # Docker Compose
+└── Cargo.toml                 # Workspace config
 ```
 
 ### Roadmap
@@ -364,8 +406,8 @@ camforge-next/
 - [x] Frontend-backend separation architecture
 - [x] Web server deployment support
 - [x] Docker deployment support
-- [ ] macOS support
-- [ ] Linux support
+- [x] macOS support
+- [x] Linux support
 - [ ] Cam mechanism optimization algorithm
 - [ ] More follower types (flat-faced, oscillating)
 
