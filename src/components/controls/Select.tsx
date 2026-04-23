@@ -33,12 +33,13 @@ export function Select(props: SelectProps) {
 
   return (
     <div class="flex flex-col space-y-1">
-      <label class="text-xs text-gray-500 dark:text-gray-400">
+      <label class="text-xs text-gray-500 dark:text-gray-400" id={`${props.label}-label`}>
         {props.label}
       </label>
       <select
         value={props.value}
         onChange={handleChange}
+        aria-labelledby={`${props.label}-label`}
         class="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white appearance-none cursor-pointer"
       >
         {props.options.map((option) => (

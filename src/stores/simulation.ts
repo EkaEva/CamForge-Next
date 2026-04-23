@@ -6,14 +6,44 @@ import type { ChartDrawOptions, AnimationFrameOptions } from '../utils/chartDraw
 import { computeMotion } from '../services/motion';
 import { arrayMax, arrayMin, arrayMaxBy, arrayMinBy, filterFinite, findIndex } from '../utils/array';
 import { isTauriEnv, invokeTauri } from '../utils/tauri';
+import { generateGifAsync, terminateGifWorker } from '../services/gifEncoder';
+import { createHistory, type HistoryActions } from './history';
 import * as XLSX from 'xlsx';
-import GIF from 'gif.js';
 
 // 检查是否在 Tauri 环境中
 const isTauri = isTauriEnv();
 
+// 参数历史管理（撤销/重做）
+const paramsHistory: HistoryActions<CamParams> = createHistory(defaultParams);
+
 // 参数状态
 export const [params, setParams] = createSignal<CamParams>(defaultParams);
+
+// 撤销/重做操作
+export const canUndo = () => paramsHistory.canUndo();
+export const canRedo = () => paramsHistory.canRedo();
+
+export function undoParams(): boolean {
+  if (paramsHistory.undo()) {
+    setParams(() => paramsHistory.state());
+    setParamsChanged(true);
+    setParamsUpdated(true);
+    runSimulation();
+    return true;
+  }
+  return false;
+}
+
+export function redoParams(): boolean {
+  if (paramsHistory.redo()) {
+    setParams(() => paramsHistory.state());
+    setParamsChanged(true);
+    setParamsUpdated(true);
+    runSimulation();
+    return true;
+  }
+  return false;
+}
 
 // 显示选项状态
 export const [displayOptions, setDisplayOptions] = createSignal<DisplayOptions>(defaultDisplayOptions);
@@ -298,6 +328,8 @@ export async function runSimulation() {
 export function updateParam<K extends keyof CamParams>(key: K, value: CamParams[K]) {
   setParams((prev) => {
     const newParams = { ...prev, [key]: value };
+    // 记录到历史
+    paramsHistory.push(newParams);
     // 检查参数是否与上次运行不同
     if (lastRunParamsHash && getParamsHash(newParams) !== lastRunParamsHash) {
       setParamsChanged(true);
@@ -1015,94 +1047,40 @@ export function generateHighResPNG(
 // 保持向后兼容的别名
 export const generateTIFF = generateHighResPNG;
 
-// 生成 GIF 动画（真正的 GIF 格式）
-export async function generateGIF(lang: string, onProgress?: (progress: number) => void, customDpi?: number): Promise<Blob> {
+// 生成 GIF 动画（异步，使用 Web Worker 避免阻塞主线程）
+export async function generateGIF(
+  lang: string,
+  onProgress?: (progress: number) => void,
+  customDpi?: number
+): Promise<Blob> {
   const data = simulationData();
   const p = params();
   const disp = displayOptions();
+
   if (!data) return new Blob();
 
-  const n = data.s.length; // 帧数等于离散点数
-
-  // 平衡清晰度和导出速度
   const dpi = customDpi || 150;
-  const width = 5 * dpi;  // 750px at 150 DPI
-  const height = 5 * dpi; // 750px at 150 DPI
 
-  // 创建画布
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d')!;
-
-  // 创建 GIF 编码器
-  // quality: 10 是较好的平衡点，dither 会增加处理时间
-  // Worker 路径根据环境动态设置
-  const workerScript = import.meta.env.DEV
-    ? '/node_modules/gif.js/dist/gif.worker.js'
-    : '/gif.worker.js';
-
-  const gif = new GIF({
-    workers: 2,
-    quality: 10,
-    width,
-    height,
-    workerScript,
-    repeat: 0  // 无限循环
-  });
-
-  // 动画帧选项
-  const frameOptions: AnimationFrameOptions = {
-    width,
-    height,
-    frameIndex: 0,
-    displayOptions: disp,
-    zoom: 0.8
-  };
-
-  // 等待 UI 更新，避免卡顿
-  await new Promise(resolve => setTimeout(resolve, 50));
-
-  // 生成所有帧（占进度的 20%），分批处理避免卡顿
-  const batchSize = 30; // 每批处理30帧
-  for (let i = 0; i < n; i++) {
-    frameOptions.frameIndex = i;
-    drawAnimationFrame(ctx, data, p, frameOptions);
-
-    // 添加帧到 GIF（延迟 33ms，约 30fps）
-    gif.addFrame(ctx, { copy: true, delay: 33 });
-
-    if (onProgress) {
-      // 帧生成占 20% 进度
-      onProgress((i + 1) / n * 0.2);
-    }
-
-    // 每批结束后让出主线程
-    if (i % batchSize === batchSize - 1) {
-      await new Promise(resolve => requestAnimationFrame(resolve));
-    }
+  try {
+    return await generateGifAsync(
+      data,
+      p,
+      disp,
+      {
+        dpi,
+        width: 5 * dpi,
+        height: 5 * dpi,
+      },
+      onProgress
+    );
+  } catch (error) {
+    console.error('GIF generation failed:', error);
+    return new Blob();
   }
-
-  // 渲染 GIF（占进度的 80%）
-  return new Promise((resolve, reject) => {
-    // 监听渲染进度
-    gif.on('progress', (p: number) => {
-      if (onProgress) {
-        // 渲染占 80% 进度，从 20% 到 100%
-        onProgress(0.2 + p * 0.8);
-      }
-    });
-
-    gif.on('finished', (blob: Blob) => {
-      resolve(blob);
-    });
-    // gif.js 不支持 error 事件，使用 abort 处理
-    gif.on('abort', () => {
-      reject(new Error('GIF generation was aborted'));
-    });
-    gif.render();
-  });
 }
+
+// 导出 Worker 清理函数，供应用退出时调用
+export { terminateGifWorker };
 
 // 生成 Excel 文件（真正的 xlsx 格式）
 export function generateExcel(lang: string): Blob {

@@ -299,8 +299,8 @@ export function CamAnimation(props: CamAnimationProps) {
   const { s_0 } = data;
 
   return (
-    <div class="relative w-full h-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-      <svg viewBox={viewBoxData().viewBox} class="w-full h-full" preserveAspectRatio="xMidYMid meet">
+    <div class="relative w-full h-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden" role="img" aria-label={t().mainCanvas.camProfile}>
+      <svg viewBox={viewBoxData().viewBox} class="w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         {/* 基圆 */}
         <Show when={displayOptions().showBaseCircle}>
           <circle cx="0" cy="0" r={s_0 * zoom()} fill="none" stroke="#9CA3AF" stroke-width={0.5 * zoom()} stroke-dasharray="2,2" />

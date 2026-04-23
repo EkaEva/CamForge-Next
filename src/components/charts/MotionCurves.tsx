@@ -271,7 +271,17 @@ export function MotionCurves() {
           Run simulation to see motion curves
         </div>
       }>
-        <canvas ref={canvasRef} class="w-full h-full" style={{ width: '100%', height: '100%' }} />
+        <div role="img" aria-label={t().chart.motionTitle}>
+          <canvas
+            ref={canvasRef}
+            class="w-full h-full"
+            style={{ width: '100%', height: '100%' }}
+            aria-hidden="true"
+          />
+          <span class="sr-only">
+            {t().chart.motionTitle}: {t().chart.displacement}, {t().chart.velocity}, {t().chart.acceleration} curves over angle
+          </span>
+        </div>
       </Show>
     </div>
   );

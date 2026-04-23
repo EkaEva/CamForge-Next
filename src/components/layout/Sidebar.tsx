@@ -106,7 +106,18 @@ export function Sidebar() {
     <aside class="w-80 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
       <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 flex items-center gap-3">
-        <img src="/logo.png" alt="CamForge" class="h-10 w-auto" />
+        <a
+          href="https://github.com/EkaEva/CamForge-Next"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="block cursor-pointer"
+        >
+          <img
+            src="/logo.png"
+            alt="CamForge"
+            class="h-10 w-auto transition-transform duration-200 hover:scale-110 hover:rotate-6 active:scale-95 active:rotate-0"
+          />
+        </a>
         <div>
           <h1 class="text-lg font-bold text-gray-900 dark:text-white tracking-wide">
             CamForge

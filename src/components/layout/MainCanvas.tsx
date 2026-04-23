@@ -489,6 +489,14 @@ export function MainCanvas() {
                     <span class="text-sm text-gray-600 dark:text-gray-300">{t().help.stepForward}</span>
                     <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">→</kbd>
                   </div>
+                  <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-600 dark:text-gray-300">{t().help.undo}</span>
+                    <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">Ctrl+Z</kbd>
+                  </div>
+                  <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-600 dark:text-gray-300">{t().help.redo}</span>
+                    <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">Ctrl+Y</kbd>
+                  </div>
                 </div>
                 <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
                   {t().help.shortcutsNote}
@@ -502,8 +510,14 @@ export function MainCanvas() {
                 </h2>
                 <div class="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                   <p>
-                    <span class="font-semibold text-gray-900 dark:text-white">CamForge-Next</span>
-                    <span class="text-gray-400 ml-2">v0.1.0</span>
+                    <a
+                      href="https://github.com/EkaEva/CamForge-Next"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="font-semibold text-gray-900 dark:text-white hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                    >
+                      CamForge-Next
+                    </a>
                   </p>
                   <p class="text-gray-500 dark:text-gray-400">
                     {t().help.aboutDesc}

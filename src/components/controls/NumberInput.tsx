@@ -113,7 +113,7 @@ export function NumberInput(props: NumberInputProps) {
 
   return (
     <div class="flex flex-col space-y-1">
-      <label class="text-xs text-gray-500 dark:text-gray-400">
+      <label class="text-xs text-gray-500 dark:text-gray-400" id={`${props.label}-label`}>
         {props.label}
       </label>
       <div class="relative">
@@ -127,6 +127,9 @@ export function NumberInput(props: NumberInputProps) {
           onChange={handleChange}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
+          aria-labelledby={`${props.label}-label`}
+          aria-invalid={hasError()}
+          aria-describedby={hasError() ? `${props.label}-error` : undefined}
           classList={{
             'w-full px-3 py-1.5 pr-16 text-sm bg-gray-100 dark:bg-gray-700 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors': true,
             'border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white': !hasError(),
@@ -142,6 +145,7 @@ export function NumberInput(props: NumberInputProps) {
             <button
               type="button"
               onClick={() => handleStepChange('up')}
+              aria-label={`增加 ${props.label}`}
               class="w-4 h-3 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
             >
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -151,6 +155,7 @@ export function NumberInput(props: NumberInputProps) {
             <button
               type="button"
               onClick={() => handleStepChange('down')}
+              aria-label={`减少 ${props.label}`}
               class="w-4 h-3 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
             >
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -160,13 +165,13 @@ export function NumberInput(props: NumberInputProps) {
           </div>
           {/* 单位 */}
           <Show when={props.unit}>
-            <span class="text-xs text-gray-400 dark:text-gray-500 w-8 text-right">
+            <span class="text-xs text-gray-400 dark:text-gray-500 w-8 text-right" aria-hidden="true">
               {props.unit}
             </span>
           </Show>
           {/* 没有单位时占位，保持对齐 */}
           <Show when={!props.unit}>
-            <span class="w-8" />
+            <span class="w-8" aria-hidden="true" />
           </Show>
         </div>
       </div>

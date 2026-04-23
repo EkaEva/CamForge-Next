@@ -201,7 +201,17 @@ export function GeometryChart() {
           Run simulation to see geometry constraints
         </div>
       }>
-        <canvas ref={canvasRef} class="w-full h-full" style={{ width: '100%', height: '100%' }} />
+        <div role="img" aria-label={t().chart.pressureTitle}>
+          <canvas
+            ref={canvasRef}
+            class="w-full h-full"
+            style={{ width: '100%', height: '100%' }}
+            aria-hidden="true"
+          />
+          <span class="sr-only">
+            {t().chart.pressureTitle}: pressure angle over angle
+          </span>
+        </div>
       </Show>
     </div>
   );

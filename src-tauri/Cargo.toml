@@ -1,6 +1,6 @@
 [package]
 name = "camforge-next"
-version = "0.1.1"
+version = "0.1.2"
 description = "CamForge-Next - High-performance cam mechanism simulator"
 authors = ["CamForge Team"]
 edition = "2021"

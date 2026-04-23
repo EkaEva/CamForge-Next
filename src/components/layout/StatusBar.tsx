@@ -51,7 +51,7 @@ export function StatusBar() {
             </svg>
           </Show>
         </button>
-        <span class="text-xs text-gray-400 dark:text-gray-500">v0.1.1</span>
+        <span class="text-xs text-gray-400 dark:text-gray-500">v0.1.2</span>
       </div>
     </footer>
   );
