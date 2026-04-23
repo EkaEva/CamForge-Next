@@ -2,8 +2,6 @@
 //!
 //! 计算压力角和曲率半径
 
-/// 常量：度转弧度
-const DEG2RAD: f64 = std::f64::consts::PI / 180.0;
 /// 常量：弧度转度
 const RAD2DEG: f64 = 180.0 / std::f64::consts::PI;
 

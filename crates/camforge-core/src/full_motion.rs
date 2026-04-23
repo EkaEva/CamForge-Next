@@ -35,8 +35,8 @@ pub fn compute_full_motion(params: &CamParams) -> Result<FullMotionResult, Strin
     validate_motion_params(params)?;
 
     let n = params.n_points;
-    let delta_0 = (params.delta_0 as f64) * DEG2RAD;
-    let delta_ret = (params.delta_ret as f64) * DEG2RAD;
+    let delta_0 = params.delta_0 * DEG2RAD;
+    let delta_ret = params.delta_ret * DEG2RAD;
 
     let tc_law = MotionLaw::try_from(params.tc_law)?;
     let hc_law = MotionLaw::try_from(params.hc_law)?;
@@ -49,10 +49,9 @@ pub fn compute_full_motion(params: &CamParams) -> Result<FullMotionResult, Strin
     let mut a = vec![0.0; n];
 
     // 使用与前端一致的阶段划分逻辑（基于 delta 比较）
-    // 前端: delta <= riseEnd → 推程, delta <= outerDwellEnd → 远休止, delta <= returnEnd → 回程
-    let delta0_deg = params.delta_0 as f64;
-    let delta01_deg = params.delta_01 as f64;
-    let delta_ret_deg = params.delta_ret as f64;
+    let delta0_deg = params.delta_0;
+    let delta01_deg = params.delta_01;
+    let delta_ret_deg = params.delta_ret;
 
     // 相位边界（度）
     let rise_end_deg = delta0_deg;
@@ -93,9 +92,9 @@ pub fn compute_full_motion(params: &CamParams) -> Result<FullMotionResult, Strin
     // 阶段分界点 (度)
     let phase_bounds = vec![
         0.0,
-        params.delta_0 as f64,
-        params.delta_0 as f64 + params.delta_01 as f64,
-        params.delta_0 as f64 + params.delta_01 as f64 + params.delta_ret as f64,
+        params.delta_0,
+        params.delta_0 + params.delta_01,
+        params.delta_0 + params.delta_01 + params.delta_ret,
         360.0,
     ];
 
@@ -209,7 +208,7 @@ fn validate_motion_params(params: &CamParams) -> Result<(), String> {
     if params.r_0 <= 0.0 {
         return Err(format!("r_0 must be > 0, got {}", params.r_0));
     }
-    if params.e >= params.r_0 {
+    if params.e.abs() >= params.r_0 {
         return Err(format!(
             "|e| must be < r_0, got e={}, r_0={}",
             params.e, params.r_0

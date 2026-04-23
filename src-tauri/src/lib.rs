@@ -1,10 +1,8 @@
-//! CamForge-Next 库入口
+//! CamForge-Next Tauri 桌面应用入口
 //!
 //! 凸轮机构运动学计算应用
 
-mod cam;
 mod commands;
-mod types;
 
 use commands::simulation::SimState;
 

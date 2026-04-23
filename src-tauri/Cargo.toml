@@ -1,9 +1,10 @@
 [package]
 name = "camforge-next"
-version = "0.1.2"
-description = "CamForge-Next - High-performance cam mechanism simulator"
-authors = ["CamForge Team"]
-edition = "2021"
+version.workspace = true
+description = "CamForge-Next - High-performance cam mechanism simulator (Tauri desktop app)"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [lib]
 name = "camforge_next_lib"
@@ -13,35 +14,24 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+# 内部核心库
+camforge-core.workspace = true
+
 # Tauri
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 
-# Serialization
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-
-# Numerical computing
-ndarray = "0.15"
-num-traits = "0.2"
-
-# Parallel computing
-rayon = "1.8"
-
-# Error handling
-thiserror = "1.0"
-anyhow = "1.0"
+# 使用 workspace 共享依赖
+serde.workspace = true
+serde_json.workspace = true
+ndarray.workspace = true
+num-traits.workspace = true
+rayon.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
 
 [features]
 default = []
 devtools = ["tauri/devtools"]
-
-[profile.release]
-lto = true
-codegen-units = 1
-panic = "abort"
-strip = true
-opt-level = 3
-

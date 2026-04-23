@@ -2,9 +2,6 @@
 //!
 //! 计算理论廓形和滚子从动件实际廓形
 
-/// 常量：度转弧度
-const DEG2RAD: f64 = std::f64::consts::PI / 180.0;
-
 /// 凸轮轮廓计算结果
 pub struct ProfileResult {
     /// 理论廓形 X 坐标
@@ -189,7 +186,6 @@ mod tests {
         let result = compute_cam_profile(&s, 40.0, 0.0, 1, 1).unwrap();
 
         // 检查轮廓闭合（首尾点距离）
-        // 由于离散化，首尾点不完全重合，但距离应很小
         let dx = result.x[0] - result.x[359];
         let dy = result.y[0] - result.y[359];
         let dist = (dx.powi(2) + dy.powi(2)).sqrt();

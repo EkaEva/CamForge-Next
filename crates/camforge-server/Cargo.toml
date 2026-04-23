@@ -1,0 +1,26 @@
+[package]
+name = "camforge-server"
+version.workspace = true
+description = "HTTP API server for CamForge-Next web deployment"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+# 内部核心库
+camforge-core.workspace = true
+
+# 使用 workspace 共享依赖
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+
+# HTTP 服务器
+axum = "0.7"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+tokio = { version = "1", features = ["full"] }
+
+[features]
+default = []

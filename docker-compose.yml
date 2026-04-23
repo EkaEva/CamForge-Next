@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  camforge-next:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - RUST_LOG=info
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+# 可选：使用预构建镜像
+# services:
+#   camforge-next:
+#     image: ghcr.io/ekaeva/camforge-next:latest
+#     ports:
+#       - "3000:3000"
+#     restart: unless-stopped

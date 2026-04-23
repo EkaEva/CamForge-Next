@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-04-23
+
+### Added
+
+- **前后端分离架构**：项目支持桌面应用和 Web 服务器双模式部署
+  - 桌面应用：Tauri + SolidJS，支持所有功能
+  - Web 服务器：Axum + SolidJS，支持在线部署
+- **共享核心库 `camforge-core`**：
+  - 提取凸轮计算逻辑为独立 Rust crate
+  - 运动规律、轮廓计算、几何分析模块
+  - 13 个单元测试全部通过
+- **HTTP API 服务器 `camforge-server`**：
+  - 基于 Axum 框架的 REST API
+  - 端点：`/api/simulate`、`/api/export/dxf`、`/api/export/csv`
+  - CORS 支持、健康检查、静态文件服务
+- **前端 API 适配层**：
+  - 自动检测运行环境（Tauri/Web）
+  - 统一 API 接口，透明切换实现
+- **Docker 部署支持**：
+  - 多阶段构建 Dockerfile
+  - docker-compose.yml 一键部署
+  - 健康检查配置
+- **Cargo Workspace**：
+  - 统一依赖版本管理
+  - 共享 release profile 优化
+
+### Changed
+
+- 重构项目结构，拆分为三个 crate：
+  - `camforge-core`：核心计算库
+  - `camforge-server`：HTTP API 服务器
+  - `camforge-next`：Tauri 桌面应用
+- 迁移 `src-tauri/src/cam/` 和 `src-tauri/src/types/` 到 `camforge-core`
+- 更新 `src-tauri/src/commands/simulation.rs` 使用 `camforge-core`
+
+### Documentation
+
+- 新增 `docs/REFACTORING_PLAN.md` 前后端分离改造方案
+- 新增 `docs/DEPLOYMENT.md` 部署指南
+
+---
+
 ## [0.1.2] - 2026-04-23
 
 ### Added
@@ -122,6 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.2.0]: https://github.com/EkaEva/CamForge-Next/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/EkaEva/CamForge-Next/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/EkaEva/CamForge-Next/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/EkaEva/CamForge-Next/releases/tag/v0.1.0

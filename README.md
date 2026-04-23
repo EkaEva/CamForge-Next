@@ -4,7 +4,7 @@
 
 **凸轮机构运动学模拟器 | Cam Mechanism Kinematics Simulator**
 
-[![Version](https://img.shields.io/badge/version-0.1.2-blue.svg)](https://github.com/camforge/camforge-next)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/camforge/camforge-next)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24c8db.svg)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-1.9-4f88c6.svg)](https://solidjs.com)
@@ -182,6 +182,9 @@ camforge-next/
 - [x] GIF 异步导出（Web Worker）
 - [x] 撤销/重做功能
 - [x] 无障碍性改进
+- [x] 前后端分离架构
+- [x] Web 服务器部署支持
+- [x] Docker 部署支持
 - [ ] macOS 支持
 - [ ] Linux 支持
 - [ ] 凸轮机构优化算法
@@ -358,6 +361,9 @@ camforge-next/
 - [x] GIF async export (Web Worker)
 - [x] Undo/Redo functionality
 - [x] Accessibility improvements
+- [x] Frontend-backend separation architecture
+- [x] Web server deployment support
+- [x] Docker deployment support
 - [ ] macOS support
 - [ ] Linux support
 - [ ] Cam mechanism optimization algorithm

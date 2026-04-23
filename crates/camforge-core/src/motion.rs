@@ -4,9 +4,6 @@
 
 use crate::types::MotionLaw;
 
-/// 常量：度转弧度
-const DEG2RAD: f64 = std::f64::consts::PI / 180.0;
-
 /// 计算推程阶段的位移、速度、加速度
 ///
 /// # Arguments

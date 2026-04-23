@@ -1,0 +1,28 @@
+[package]
+name = "camforge-core"
+version = "0.1.2"
+description = "Core calculation library for CamForge-Next cam mechanism simulator"
+authors = ["CamForge Team"]
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Numerical computing
+ndarray = "0.15"
+num-traits = "0.2"
+
+# Parallel computing
+rayon = "1.8"
+
+# Error handling
+thiserror = "1.0"
+
+[dev-dependencies]
+approx = "0.5"
+
+[features]
+default = []

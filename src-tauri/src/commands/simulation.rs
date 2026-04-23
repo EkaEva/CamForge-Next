@@ -5,8 +5,9 @@
 use std::sync::Mutex;
 use tauri::State;
 
-use crate::types::{CamParams, FrameData, SimulationData};
-use crate::cam::{
+// 使用 camforge-core 的类型和函数
+use camforge_core::{
+    CamParams, SimulationData, FrameData,
     compute_full_motion, compute_cam_profile, compute_roller_profile,
     compute_pressure_angle, compute_curvature_radius, compute_rotated_cam,
 };

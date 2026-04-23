@@ -63,6 +63,58 @@ impl Default for CamParams {
     }
 }
 
+impl CamParams {
+    /// 验证参数有效性
+    pub fn validate(&self) -> Result<(), String> {
+        // 四角之和必须等于 360 度
+        let sum = self.delta_0 + self.delta_01 + self.delta_ret + self.delta_02;
+        if (sum - 360.0).abs() > 0.01 {
+            return Err(format!("四角之和必须等于 360°（当前: {:.2}°）", sum));
+        }
+
+        // 基圆半径必须大于偏距
+        if self.r_0 <= self.e.abs() {
+            return Err("基圆半径必须大于偏距的绝对值".to_string());
+        }
+
+        // 行程必须为正
+        if self.h <= 0.0 {
+            return Err("行程必须为正数".to_string());
+        }
+
+        // 角速度必须为正
+        if self.omega <= 0.0 {
+            return Err("角速度必须为正数".to_string());
+        }
+
+        // 离散点数范围验证
+        if self.n_points < 36 {
+            return Err("离散点数不能小于 36".to_string());
+        }
+        if self.n_points > 720 {
+            return Err("离散点数不能大于 720".to_string());
+        }
+
+        // 运动规律验证
+        if self.tc_law < 1 || self.tc_law > 6 {
+            return Err(format!("推程运动规律必须为 1-6，当前: {}", self.tc_law));
+        }
+        if self.hc_law < 1 || self.hc_law > 6 {
+            return Err(format!("回程运动规律必须为 1-6，当前: {}", self.hc_law));
+        }
+
+        // 旋向和偏距符号验证
+        if self.sn != 1 && self.sn != -1 {
+            return Err(format!("旋向符号必须为 +1 或 -1，当前: {}", self.sn));
+        }
+        if self.pz != 1 && self.pz != -1 {
+            return Err(format!("偏距符号必须为 +1 或 -1，当前: {}", self.pz));
+        }
+
+        Ok(())
+    }
+}
+
 /// 完整模拟数据
 ///
 /// 包含凸轮一整圈运动的所有计算结果
@@ -173,6 +225,7 @@ impl TryFrom<i32> for MotionLaw {
 }
 
 impl MotionLaw {
+    /// 获取运动规律名称
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Uniform => "Uniform Motion",
@@ -182,5 +235,45 @@ impl MotionLaw {
             Self::QuinticPolynomial => "3-4-5 Polynomial",
             Self::SepticPolynomial => "4-5-6-7 Polynomial",
         }
+    }
+
+    /// 获取运动规律中文名称
+    pub fn as_str_zh(&self) -> &'static str {
+        match self {
+            Self::Uniform => "等速运动",
+            Self::ConstantAcceleration => "等加速等减速",
+            Self::SimpleHarmonic => "简谐运动",
+            Self::Cycloidal => "摆线运动",
+            Self::QuinticPolynomial => "3-4-5 多项式",
+            Self::SepticPolynomial => "4-5-6-7 多项式",
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_params_valid() {
+        let params = CamParams::default();
+        assert!(params.validate().is_ok());
+    }
+
+    #[test]
+    fn test_invalid_angle_sum() {
+        let mut params = CamParams::default();
+        params.delta_0 = 100.0;
+        params.delta_01 = 100.0;
+        params.delta_ret = 100.0;
+        params.delta_02 = 100.0; // Sum = 400
+        assert!(params.validate().is_err());
+    }
+
+    #[test]
+    fn test_motion_law_conversion() {
+        assert_eq!(MotionLaw::try_from(1).unwrap(), MotionLaw::Uniform);
+        assert_eq!(MotionLaw::try_from(5).unwrap(), MotionLaw::QuinticPolynomial);
+        assert!(MotionLaw::try_from(7).is_err());
     }
 }
