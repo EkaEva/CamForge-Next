@@ -9,6 +9,7 @@ import { isTauriEnv, invokeTauri } from '../utils/tauri';
 import { generateGifAsync, terminateGifWorker } from '../services/gifEncoder';
 import { createHistory, type HistoryActions } from './history';
 import { generateDXF as generateDXFCore, generateCSV as generateCSVCore, generateExcel as generateExcelCore } from '../exporters';
+import { getApi } from '../api';
 
 // 检查是否在 Tauri 环境中
 const isTauri = isTauriEnv();
@@ -305,12 +306,21 @@ export async function runSimulation() {
 
   try {
     if (isTauri) {
+      // Tauri 环境：使用 IPC 调用 Rust 后端
       const data = await invokeTauri<SimulationData>('run_simulation', { params: currentParams });
       setSimulationData(data);
     } else {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const data = generateMockData(currentParams);
-      setSimulationData(() => data);
+      // Web 环境：尝试使用 HTTP API，失败则使用前端计算
+      try {
+        const api = await getApi();
+        const data = await api.runSimulation(currentParams);
+        setSimulationData(data);
+      } catch (apiError) {
+        console.warn('HTTP API unavailable, using frontend calculation:', apiError);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const data = generateMockData(currentParams);
+        setSimulationData(() => data);
+      }
     }
     // 更新状态
     setLastRunTime(new Date());
@@ -318,6 +328,7 @@ export async function runSimulation() {
     setParamsChanged(false);
   } catch (e) {
     console.error('Simulation error:', e);
+    // 错误时使用前端计算作为 fallback
     const data = generateMockData(params());
     setSimulationData(() => data);
   } finally {
