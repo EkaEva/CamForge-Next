@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-04-24
+
+### Fixed
+
+- **移动端布局修复**：
+  - 修复控制卡片重叠：移动端隐藏缩放控制卡片，使用双指缩放手势替代
+  - 修复 Tab 栏显示不全：Tab 栏支持横向滑动，隐藏滚动条
+  - 修复状态提示不可见：移动端新增独立状态提示区域
+
+### Changed
+
+- Tab 栏布局改为移动端垂直排列，桌面端水平排列
+- 状态信息在移动端隐藏，改为独立状态提示区域显示
+- 添加 `scrollbar-hide` CSS 类用于隐藏滚动条
+
+---
+
 ## [0.3.0] - 2026-04-24
 
 ### Added
@@ -259,6 +276,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.3.1]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/EkaEva/CamForge-Next/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/EkaEva/CamForge-Next/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/EkaEva/CamForge-Next/compare/v0.2.0...v0.2.1

@@ -645,12 +645,12 @@ export function CamAnimation(props: CamAnimationProps) {
         </select>
       </div>
 
-      {/* 缩放控制 */}
-      <div class="absolute bottom-3 right-3 flex items-center gap-1 sm:gap-2 bg-white/90 dark:bg-gray-800/90 rounded-full px-2 sm:px-3 py-1.5 shadow-lg">
+      {/* 缩放控制 - 移动端隐藏，使用双指缩放手势 */}
+      <div class="hidden sm:flex absolute bottom-3 right-3 items-center gap-2 bg-white/90 dark:bg-gray-800/90 rounded-full px-3 py-1.5 shadow-lg">
         <button
           type="button"
           onClick={() => setZoom(Math.max(0.1, zoom() - 0.05))}
-          class="w-11 h-11 sm:w-8 sm:h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors touch-manipulation"
+          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" d="M20 12H4" />
@@ -664,13 +664,13 @@ export function CamAnimation(props: CamAnimationProps) {
           step={0.05}
           value={zoom()}
           onInput={(e) => setZoom(parseFloat(e.currentTarget.value))}
-          class="w-16 sm:w-20 h-2 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer"
+          class="w-20 h-2 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer"
         />
 
         <button
           type="button"
           onClick={() => setZoom(Math.min(1, zoom() + 0.05))}
-          class="w-11 h-11 sm:w-8 sm:h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors touch-manipulation"
+          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" d="M12 4v16m8-8H4" />

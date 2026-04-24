@@ -400,15 +400,16 @@ export function MainCanvas() {
 
   return (
     <main class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      {/* Tab Bar */}
-      <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div class="flex items-center gap-1 flex-shrink-0 overflow-x-auto">
+      {/* Tab Bar - 移动端垂直布局，桌面端水平布局 */}
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        {/* Tab 栏 - 移动端独占一行，支持横向滚动 */}
+        <div class="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0">
           {tabs.map((tab) => (
             <button
               type="button"
               onClick={() => setActiveTab(tab.id)}
               classList={{
-                'px-3 py-2 md:px-3 md:py-1.5 text-sm rounded-md transition-colors min-h-[44px] min-w-[44px] whitespace-nowrap': true,
+                'px-3 py-2 text-sm rounded-md transition-colors min-h-[44px] min-w-[44px] whitespace-nowrap flex-shrink-0': true,
                 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': activeTab() === tab.id,
                 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600': activeTab() !== tab.id,
               }}
@@ -418,7 +419,8 @@ export function MainCanvas() {
           ))}
         </div>
 
-        <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 min-w-0">
+        {/* 状态信息 - 桌面端显示 */}
+        <div class="hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 min-w-0">
           {/* 校验错误 */}
           <Show when={validationErrors().length > 0}>
             <span class="flex items-center gap-1.5 text-red-500 truncate max-w-[200px]" title={validationErrors()[0]}>
@@ -461,6 +463,56 @@ export function MainCanvas() {
           </Show>
           <Show when={lastRunTime() && validationErrors().length === 0}>
             <span class="flex-shrink-0">{formatTime(lastRunTime())}</span>
+          </Show>
+        </div>
+      </div>
+
+      {/* 移动端状态提示 */}
+      <div class="sm:hidden px-4 py-1.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-xs">
+        <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          {/* 校验错误 */}
+          <Show when={validationErrors().length > 0}>
+            <span class="flex items-center gap-1 text-red-500 whitespace-nowrap">
+              <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span class="truncate max-w-[150px]">{validationErrors()[0]}</span>
+            </span>
+          </Show>
+          {/* 参数已更新 */}
+          <Show when={paramsUpdated() && validationErrors().length === 0}>
+            <span class="flex items-center gap-1 text-green-500 whitespace-nowrap">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {t().status.paramsUpdated}
+            </span>
+          </Show>
+          {/* 压力角超限警告 */}
+          <Show when={isPressureAngleExceeded()}>
+            <span class="flex items-center gap-1 text-amber-500 whitespace-nowrap">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              {t().status.pressureAngleExceeded}
+            </span>
+          </Show>
+          {/* 导出状态 */}
+          <Show when={exportStatus().type !== 'idle'}>
+            <span
+              class="truncate max-w-[150px] whitespace-nowrap"
+              classList={{
+                'text-green-500': exportStatus().type === 'success',
+                'text-red-500': exportStatus().type === 'error',
+                'text-blue-500': exportStatus().type === 'exporting',
+              }}
+            >
+              {exportStatus().message}
+            </span>
+          </Show>
+          {/* 运行时间 */}
+          <Show when={lastRunTime() && validationErrors().length === 0}>
+            <span class="text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatTime(lastRunTime())}</span>
           </Show>
         </div>
       </div>

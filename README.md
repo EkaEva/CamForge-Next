@@ -4,7 +4,7 @@
 
 **凸轮机构运动学模拟器 | Cam Mechanism Kinematics Simulator**
 
-[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](https://github.com/EkaEva/CamForge-Next)
+[![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](https://github.com/EkaEva/CamForge-Next)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24c8db.svg)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-1.9-4f88c6.svg)](https://solidjs.com)
@@ -208,6 +208,9 @@ camforge-next/
 - [x] Docker 部署支持
 - [x] macOS 支持
 - [x] Linux 支持
+- [x] 移动端响应式布局
+- [x] 触摸手势支持
+- [ ] iOS/Android 应用
 - [ ] 凸轮机构优化算法
 - [ ] 更多从动件类型（平底、摆动）
 
@@ -408,6 +411,9 @@ camforge-next/
 - [x] Docker deployment support
 - [x] macOS support
 - [x] Linux support
+- [x] Mobile responsive layout
+- [x] Touch gesture support
+- [ ] iOS/Android app
 - [ ] Cam mechanism optimization algorithm
 - [ ] More follower types (flat-faced, oscillating)
 
