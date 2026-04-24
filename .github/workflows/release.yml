@@ -132,7 +132,7 @@ jobs:
         run: pnpm install
 
       - name: Build Android APK
-        run: pnpm tauri android build --release
+        run: pnpm tauri android build
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
           NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/27.0.12077973
@@ -187,7 +187,7 @@ jobs:
         run: pnpm tauri ios init
 
       - name: Build iOS (simulator)
-        run: pnpm tauri ios build --target aarch64-apple-ios-sim --release
+        run: pnpm tauri ios build --target aarch64-apple-ios-sim
 
       - name: Upload iOS App
         uses: actions/upload-artifact@v4
