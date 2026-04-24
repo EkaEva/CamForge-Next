@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-04-24
+
+### Added
+
+- **GitHub Actions Docker 构建**：
+  - 新增 `.github/workflows/docker.yml` 自动构建 Docker 镜像
+  - 推送到 GitHub Container Registry (ghcr.io)
+  - 支持 `main` 分支和版本标签自动触发
+
+### Changed
+
+- **Dockerfile 优化**：
+  - 修复 workspace 包含 `src-tauri` 导致的构建失败
+  - 构建时自动排除 Tauri 桌面应用模块
+  - 升级 Rust 版本到 1.82 以支持 Cargo.lock v4
+
+### Deployment
+
+- 支持通过 `ghcr.io/ekaeva/camforge-next:latest` 拉取镜像
+- 服务器部署简化为：拉取镜像 → 运行容器
+
+---
+
 ## [0.2.1] - 2026-04-24
 
 ### Added
@@ -201,6 +224,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.2.2]: https://github.com/EkaEva/CamForge-Next/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/EkaEva/CamForge-Next/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/EkaEva/CamForge-Next/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/EkaEva/CamForge-Next/compare/v0.1.1...v0.1.2

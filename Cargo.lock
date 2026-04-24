@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "camforge-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "approx",
  "ndarray",
@@ -438,7 +438,7 @@ dependencies = [
 
 [[package]]
 name = "camforge-next"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "camforge-core",
@@ -457,7 +457,7 @@ dependencies = [
 
 [[package]]
 name = "camforge-server"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "axum",

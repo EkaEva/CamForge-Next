@@ -4,7 +4,7 @@
 # ============================================
 # 阶段 1: 构建后端 (Rust)
 # ============================================
-FROM rust:1.75-alpine AS backend-builder
+FROM rust:1.82-alpine AS backend-builder
 
 WORKDIR /app
 
@@ -15,6 +15,9 @@ RUN apk add --no-cache musl-dev
 COPY Cargo.toml Cargo.lock ./
 COPY crates/camforge-core/Cargo.toml ./crates/camforge-core/
 COPY crates/camforge-server/Cargo.toml ./crates/camforge-server/
+
+# 创建 Docker 专用的 Cargo.toml（排除 src-tauri）
+RUN sed '/src-tauri/d' Cargo.toml > Cargo.toml.tmp && mv Cargo.toml.tmp Cargo.toml
 
 # 创建空的 src 目录以缓存依赖
 RUN mkdir -p crates/camforge-core/src crates/camforge-server/src && \
@@ -55,6 +58,8 @@ COPY index.html ./
 COPY tsconfig.json ./
 COPY tsconfig.node.json ./
 COPY vite.config.ts ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
 
 # 构建前端
 RUN pnpm build
