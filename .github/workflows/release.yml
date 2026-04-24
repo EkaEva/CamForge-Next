@@ -143,24 +143,57 @@ jobs:
                src-tauri/gen/android/app/src/main/res/mipmap-$density/ic_launcher_foreground.png
           done
 
+      - name: Decode keystore
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo $ANDROID_KEYSTORE_BASE64 | base64 -d > camforge-next.keystore
+
       - name: Build Android APK
         run: pnpm tauri android build
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
           NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/27.0.12077973
 
+      - name: Sign APK
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # 签名 APK
+          cd src-tauri/gen/android/app/build/outputs/apk/universal/release
+          $ANDROID_HOME/build-tools/36.1.0/apksigner sign \
+            --ks ../../../../../../../../../camforge-next.keystore \
+            --ks-pass pass:$ANDROID_KEYSTORE_PASSWORD \
+            --ks-key-alias $ANDROID_KEY_ALIAS \
+            --key-pass pass:$ANDROID_KEY_PASSWORD \
+            --out CamForge-Next_signed.apk \
+            app-universal-release-unsigned.apk
+
       - name: Rename and upload APK
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           # 获取版本号
           VERSION=${{ github.ref_name }}
           VERSION=${VERSION#v}
 
-          # 重命名 APK 文件
           cd src-tauri/gen/android/app/build/outputs/apk/universal/release
-          mv app-universal-release-unsigned.apk CamForge-Next_${VERSION}_android-universal.apk
 
-          # 输出文件路径
-          echo "APK_PATH=$(pwd)/CamForge-Next_${VERSION}_android-universal.apk" >> $GITHUB_ENV
+          # 判断是否已签名
+          if [ -f CamForge-Next_signed.apk ]; then
+            mv CamForge-Next_signed.apk CamForge-Next_${VERSION}_android-universal.apk
+            echo "APK_PATH=$(pwd)/CamForge-Next_${VERSION}_android-universal.apk" >> $GITHUB_ENV
+            echo "APK_STATUS=signed" >> $GITHUB_ENV
+          else
+            mv app-universal-release-unsigned.apk CamForge-Next_${VERSION}_android-universal-unsigned.apk
+            echo "APK_PATH=$(pwd)/CamForge-Next_${VERSION}_android-universal-unsigned.apk" >> $GITHUB_ENV
+            echo "APK_STATUS=unsigned" >> $GITHUB_ENV
+          fi
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
