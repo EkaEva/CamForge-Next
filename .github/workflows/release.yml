@@ -131,17 +131,42 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
+      - name: Copy Android icons to project
+        run: |
+          # 复制生成的图标到 Android 项目
+          for density in hdpi mdpi xhdpi xxhdpi xxxhdpi; do
+            cp src-tauri/icons/android/mipmap-$density/ic_launcher.png \
+               src-tauri/gen/android/app/src/main/res/mipmap-$density/ic_launcher.png
+            cp src-tauri/icons/android/mipmap-$density/ic_launcher_round.png \
+               src-tauri/gen/android/app/src/main/res/mipmap-$density/ic_launcher_round.png
+            cp src-tauri/icons/android/mipmap-$density/ic_launcher_foreground.png \
+               src-tauri/gen/android/app/src/main/res/mipmap-$density/ic_launcher_foreground.png
+          done
+
       - name: Build Android APK
         run: pnpm tauri android build
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
           NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/27.0.12077973
 
+      - name: Rename and upload APK
+        run: |
+          # 获取版本号
+          VERSION=${{ github.ref_name }}
+          VERSION=${VERSION#v}
+
+          # 重命名 APK 文件
+          cd src-tauri/gen/android/app/build/outputs/apk/universal/release
+          mv app-universal-release-unsigned.apk CamForge-Next_${VERSION}_android-universal.apk
+
+          # 输出文件路径
+          echo "APK_PATH=$(pwd)/CamForge-Next_${VERSION}_android-universal.apk" >> $GITHUB_ENV
+
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
+          path: ${{ env.APK_PATH }}
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
@@ -149,7 +174,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          files: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
+          files: ${{ env.APK_PATH }}
           draft: true
 
   build-ios:
@@ -186,15 +211,28 @@ jobs:
       - name: Initialize iOS project
         run: pnpm tauri ios init
 
+      - name: Copy iOS icons to project
+        run: |
+          # 复制生成的 iOS 图标到项目
+          cp src-tauri/icons/ios/*.png src-tauri/gen/apple/CamForge-Next/Images.xcassets/AppIcon.appiconset/ 2>/dev/null || true
+
       - name: Build iOS (simulator)
         run: pnpm tauri ios build --target aarch64-sim
 
-      - name: Create IPA from App
+      - name: Create and rename IPA
         run: |
+          # 获取版本号
+          VERSION=${{ github.ref_name }}
+          VERSION=${VERSION#v}
+
+          # 创建 IPA
           cd src-tauri/gen/apple/build/arm64-sim
           mkdir -p Payload
           mv CamForge-Next.app Payload/
-          zip -r CamForge-Next.ipa Payload
+          zip -r CamForge-Next_${VERSION}_ios-arm64-sim.ipa Payload
+
+          # 输出文件路径
+          echo "IPA_PATH=$(pwd)/CamForge-Next_${VERSION}_ios-arm64-sim.ipa" >> $GITHUB_ENV
 
       - name: Upload IPA to Release
         uses: softprops/action-gh-release@v2
@@ -202,5 +240,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          files: src-tauri/gen/apple/build/arm64-sim/CamForge-Next.ipa
+          files: ${{ env.IPA_PATH }}
           draft: true
