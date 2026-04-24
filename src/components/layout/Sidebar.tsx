@@ -10,7 +10,13 @@ const rotationOptions = [
   { value: -1, label: 'Counter-clockwise', labelZh: '逆时针' },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isMobile?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar(props: SidebarProps) {
   const [isTauriEnv, setIsTauriEnv] = createSignal(false);
   const [presets, setPresets] = createSignal<string[]>([]);
   const [presetName, setPresetName] = createSignal('');
@@ -102,8 +108,18 @@ export function Sidebar() {
   // 获取校验错误数量
   const errorCount = () => validateParams(params()).errors.length;
 
+  // 计算侧边栏类名
+  const sidebarClass = () => {
+    if (props.isMobile) {
+      return `h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col
+        fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out
+        ${props.isOpen ? 'translate-x-0' : '-translate-x-full'}`;
+    }
+    return 'w-80 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col';
+  };
+
   return (
-    <aside class="w-80 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <aside class={sidebarClass()}>
       {/* Logo */}
       <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 flex items-center gap-3">
         <a

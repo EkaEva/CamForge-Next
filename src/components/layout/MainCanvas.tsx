@@ -402,15 +402,15 @@ export function MainCanvas() {
     <main class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Tab Bar */}
       <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div class="flex items-center gap-1 flex-shrink-0">
+        <div class="flex items-center gap-1 flex-shrink-0 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               type="button"
               onClick={() => setActiveTab(tab.id)}
               classList={{
-                'px-3 py-1.5 text-sm rounded-md transition-colors': true,
+                'px-3 py-2 md:px-3 md:py-1.5 text-sm rounded-md transition-colors min-h-[44px] min-w-[44px] whitespace-nowrap': true,
                 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': activeTab() === tab.id,
-                'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700': activeTab() !== tab.id,
+                'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600': activeTab() !== tab.id,
               }}
             >
               {getTabLabel(tab.labelKey)}
@@ -581,7 +581,7 @@ export function MainCanvas() {
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                       {t().export.quickExport}
                     </h2>
-                    <div class="grid grid-cols-5 gap-3">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
                       <For each={exportItems()}>
                         {(item) => {
                           const isExportingThis = () => exporting() === item.id;
@@ -651,7 +651,7 @@ export function MainCanvas() {
                       <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                         {t().export.chartExport}
                       </h3>
-                      <div class="grid grid-cols-2 gap-4">
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                           <label class="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">
                             {t().export.imageFormat}
@@ -681,21 +681,21 @@ export function MainCanvas() {
                           </select>
                         </div>
                       </div>
-                      <div class="mt-4 grid grid-cols-2 gap-3">
+                      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportCharts().motion} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), motion: e.currentTarget.checked })} class="accent-blue-500" />
+                          <input type="checkbox" checked={customExportCharts().motion} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), motion: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
                           {t().export.charts.motion}
                         </label>
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportCharts().pressure} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), pressure: e.currentTarget.checked })} class="accent-blue-500" />
+                          <input type="checkbox" checked={customExportCharts().pressure} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), pressure: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
                           {t().export.charts.pressure}
                         </label>
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportCharts().curvature} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), curvature: e.currentTarget.checked })} class="accent-blue-500" />
+                          <input type="checkbox" checked={customExportCharts().curvature} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), curvature: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
                           {t().export.charts.curvature}
                         </label>
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportCharts().profile} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), profile: e.currentTarget.checked })} class="accent-blue-500" />
+                          <input type="checkbox" checked={customExportCharts().profile} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), profile: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
                           {t().export.charts.profile}
                         </label>
                       </div>
@@ -706,7 +706,7 @@ export function MainCanvas() {
                       <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                         {t().export.animationExport}
                       </h3>
-                      <div class="grid grid-cols-2 gap-4">
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                           <label class="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">
                             {t().export.animationFormat}
@@ -748,17 +748,17 @@ export function MainCanvas() {
                       <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                         {t().export.dataExport}
                       </h3>
-                      <div class="grid grid-cols-3 gap-3">
+                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportData().csv} onChange={(e) => setCustomExportData({ ...customExportData(), csv: e.currentTarget.checked })} class="accent-blue-500" />
+                          <input type="checkbox" checked={customExportData().csv} onChange={(e) => setCustomExportData({ ...customExportData(), csv: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
                           CSV
                         </label>
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportData().excel} onChange={(e) => setCustomExportData({ ...customExportData(), excel: e.currentTarget.checked })} class="accent-blue-500" />
+                          <input type="checkbox" checked={customExportData().excel} onChange={(e) => setCustomExportData({ ...customExportData(), excel: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
                           Excel
                         </label>
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportData().dxf} onChange={(e) => setCustomExportData({ ...customExportData(), dxf: e.currentTarget.checked })} class="accent-blue-500" />
+                          <input type="checkbox" checked={customExportData().dxf} onChange={(e) => setCustomExportData({ ...customExportData(), dxf: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
                           DXF
                         </label>
                       </div>

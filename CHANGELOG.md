@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-04-24
+
+### Added
+
+- **移动端适配**：完整的移动端和移动端网页访问支持
+  - 响应式布局：支持 320px-1536px 宽度范围
+  - 移动端导航栏：汉堡菜单 + 撤销/重做按钮
+  - 侧边栏折叠：移动端可滑出/收起
+  - 触摸手势：双指缩放、单指滑动控制帧
+
+### Changed
+
+- **Tailwind 配置**：
+  - 新增 `xs: 475px` 断点
+  - 新增 `touch: 44px` 触摸目标尺寸
+- **触摸目标优化**：
+  - 所有交互元素 ≥44x44px
+  - Toggle 开关从 32x16px 增大到 48x28px
+  - NumberInput 箭头按钮增大触摸区域
+  - Tab 按钮增大触摸区域
+- **图表响应式**：
+  - MotionCurves、CurvatureChart、GeometryChart 边距响应式
+  - 小屏幕自动调整图表边距
+- **CSS 增强**：
+  - 添加移动端触摸反馈样式
+  - 禁用 hover 状态粘滞
+  - 添加 `touch-manipulation` 优化
+
+### Fixed
+
+- 修复移动端地址栏导致的视口高度问题（使用 `100dvh`）
+- 修复导出网格在小屏幕的布局问题
+
+---
+
 ## [0.2.2] - 2026-04-24
 
 ### Added
@@ -224,6 +259,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.3.0]: https://github.com/EkaEva/CamForge-Next/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/EkaEva/CamForge-Next/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/EkaEva/CamForge-Next/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/EkaEva/CamForge-Next/compare/v0.1.2...v0.2.0

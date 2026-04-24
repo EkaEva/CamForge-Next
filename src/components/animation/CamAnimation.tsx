@@ -15,6 +15,12 @@ export function CamAnimation(props: CamAnimationProps) {
   let animationId: number | undefined;
   let lastTime = 0;
 
+  // 触摸手势状态
+  let touchStartDistance = 0;
+  let touchStartZoom = 1;
+  let touchStartX = 0;
+  let touchStartY = 0;
+
   // 计算最大帧数
   const maxFrame = createMemo(() => {
     const data = simulationData();
@@ -285,6 +291,48 @@ export function CamAnimation(props: CamAnimationProps) {
     }
   };
 
+  // 触摸手势处理
+  const getTouchDistance = (touch1: Touch, touch2: Touch): number => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const handleTouchStart = (e: TouchEvent) => {
+    if (e.touches.length === 2) {
+      // 双指缩放开始
+      touchStartDistance = getTouchDistance(e.touches[0], e.touches[1]);
+      touchStartZoom = zoom();
+    } else if (e.touches.length === 1) {
+      // 单指触摸开始
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (e.touches.length === 2) {
+      // 双指缩放
+      e.preventDefault();
+      const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+      if (touchStartDistance > 0) {
+        const scale = currentDistance / touchStartDistance;
+        const newZoom = Math.max(0.1, Math.min(1, touchStartZoom * scale));
+        setZoom(newZoom);
+      }
+    } else if (e.touches.length === 1 && !playing()) {
+      // 单指滑动控制帧（仅在暂停时）
+      const dx = e.touches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 20) {
+        const max = maxFrame();
+        const direction = dx > 0 ? 1 : -1;
+        const newFrame = frame() + direction;
+        setFrame(newFrame < 0 ? max : (newFrame > max ? 0 : newFrame));
+        touchStartX = e.touches[0].clientX;
+      }
+    }
+  };
+
   const data = simulationData();
   const p = params();
 
@@ -299,7 +347,13 @@ export function CamAnimation(props: CamAnimationProps) {
   const { s_0 } = data;
 
   return (
-    <div class="relative w-full h-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden" role="img" aria-label={t().mainCanvas.camProfile}>
+    <div
+      class="relative w-full h-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden touch-manipulation"
+      role="img"
+      aria-label={t().mainCanvas.camProfile}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+    >
       <svg viewBox={viewBoxData().viewBox} class="w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         {/* 基圆 */}
         <Show when={displayOptions().showBaseCircle}>
@@ -545,11 +599,11 @@ export function CamAnimation(props: CamAnimationProps) {
       </div>
 
       {/* 播放控制 */}
-      <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/90 dark:bg-gray-800/90 rounded-full px-4 py-2 shadow-lg">
+      <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3 bg-white/90 dark:bg-gray-800/90 rounded-full px-3 sm:px-4 py-2 shadow-lg">
         <button
           type="button"
           onClick={togglePlay}
-          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+          class="w-11 h-11 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors touch-manipulation"
         >
           <Show when={playing()} fallback={
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -571,7 +625,7 @@ export function CamAnimation(props: CamAnimationProps) {
             const newFrame = parseInt(e.currentTarget.value);
             setFrame(Math.min(newFrame, maxFrame()));
           }}
-          class="w-32 h-1 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer"
+          class="w-24 sm:w-32 h-2 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer"
         />
 
         <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-center">
@@ -581,7 +635,7 @@ export function CamAnimation(props: CamAnimationProps) {
         <select
           value={speed()}
           onChange={(e) => setSpeed(parseInt(e.currentTarget.value))}
-          class="text-xs bg-transparent border-none text-gray-500 dark:text-gray-400 cursor-pointer"
+          class="text-xs bg-transparent border-none text-gray-500 dark:text-gray-400 cursor-pointer min-h-[44px]"
         >
           <option value="1">1x</option>
           <option value="2">2x</option>
@@ -592,11 +646,11 @@ export function CamAnimation(props: CamAnimationProps) {
       </div>
 
       {/* 缩放控制 */}
-      <div class="absolute bottom-3 right-3 flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 rounded-full px-3 py-1.5 shadow-lg">
+      <div class="absolute bottom-3 right-3 flex items-center gap-1 sm:gap-2 bg-white/90 dark:bg-gray-800/90 rounded-full px-2 sm:px-3 py-1.5 shadow-lg">
         <button
           type="button"
           onClick={() => setZoom(Math.max(0.1, zoom() - 0.05))}
-          class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+          class="w-11 h-11 sm:w-8 sm:h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors touch-manipulation"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" d="M20 12H4" />
@@ -610,13 +664,13 @@ export function CamAnimation(props: CamAnimationProps) {
           step={0.05}
           value={zoom()}
           onInput={(e) => setZoom(parseFloat(e.currentTarget.value))}
-          class="w-20 h-1 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer"
+          class="w-16 sm:w-20 h-2 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer"
         />
 
         <button
           type="button"
           onClick={() => setZoom(Math.min(1, zoom() + 0.05))}
-          class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+          class="w-11 h-11 sm:w-8 sm:h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors touch-manipulation"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" d="M12 4v16m8-8H4" />

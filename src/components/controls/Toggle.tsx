@@ -12,7 +12,7 @@ export function Toggle(props: ToggleProps) {
   };
 
   return (
-    <div class="flex items-center justify-between py-1 cursor-pointer" onClick={handleClick}>
+    <div class="flex items-center justify-between py-1.5 cursor-pointer min-h-[44px]" onClick={handleClick}>
       <span class="text-xs text-gray-600 dark:text-gray-300">
         {props.label}
       </span>
@@ -21,15 +21,15 @@ export function Toggle(props: ToggleProps) {
         role="switch"
         aria-checked={getChecked()}
         classList={{
-          'relative w-8 h-4 rounded-full transition-colors cursor-pointer border-0 focus:outline-none focus:ring-2 focus:ring-blue-500': true,
+          'relative w-12 h-7 rounded-full transition-colors cursor-pointer border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation': true,
           'bg-blue-500': getChecked(),
           'bg-gray-300 dark:bg-gray-600': !getChecked(),
         }}
       >
         <span
           classList={{
-            'absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform': true,
-            'translate-x-4': getChecked(),
+            'absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow transition-transform': true,
+            'translate-x-5': getChecked(),
           }}
         />
       </button>

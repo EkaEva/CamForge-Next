@@ -146,7 +146,7 @@ export function NumberInput(props: NumberInputProps) {
               type="button"
               onClick={() => handleStepChange('up')}
               aria-label={`增加 ${props.label}`}
-              class="w-4 h-3 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
+              class="w-8 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600 rounded cursor-pointer touch-manipulation"
             >
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
@@ -156,7 +156,7 @@ export function NumberInput(props: NumberInputProps) {
               type="button"
               onClick={() => handleStepChange('down')}
               aria-label={`减少 ${props.label}`}
-              class="w-4 h-3 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
+              class="w-8 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600 rounded cursor-pointer touch-manipulation"
             >
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />

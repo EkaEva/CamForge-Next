@@ -34,3 +34,40 @@ body {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* 触摸反馈优化 - 移动端 */
+@media (hover: none) and (pointer: coarse) {
+  /* 移动端：添加 active 效果替代 hover */
+  .touch-feedback:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+
+  /* 禁用 hover 状态粘滞 */
+  button:hover,
+  a:hover,
+  [role="button"]:hover {
+    background-color: inherit;
+  }
+}
+
+/* 触摸操作优化 */
+.touch-manipulation {
+  touch-action: manipulation;  /* 禁用双击缩放 */
+}
+
+/* 防止文本选择 */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 防止长按菜单 */
+.no-callout {
+  -webkit-touch-callout: none;
+}
+
+/* 移动端滚动优化 */
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}

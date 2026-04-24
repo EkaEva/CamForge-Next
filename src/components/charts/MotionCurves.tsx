@@ -24,8 +24,18 @@ export function MotionCurves() {
 
     const width = rect.width;
     const height = rect.height;
-    // 三Y轴布局：左侧s，右侧v（内）和a（外偏移60px）
-    const padding = { top: 55, right: 130, bottom: 55, left: 70 };
+
+    // 响应式边距计算
+    const getResponsivePadding = () => {
+      const w = window.innerWidth;
+      if (w < 640) {
+        return { top: 40, right: 20, bottom: 45, left: 45 };
+      } else if (w < 768) {
+        return { top: 50, right: 80, bottom: 50, left: 55 };
+      }
+      return { top: 55, right: 130, bottom: 55, left: 70 };
+    };
+    const padding = getResponsivePadding();
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
@@ -137,7 +147,8 @@ export function MotionCurves() {
     ctx.stroke();
 
     // 右侧Y轴2 - 加速度a（绿色，向外偏移）
-    const aAxisX = width - padding.right + 60;
+    const aAxisOffset = window.innerWidth < 640 ? 40 : (window.innerWidth < 768 ? 50 : 60);
+    const aAxisX = width - padding.right + aAxisOffset;
     ctx.strokeStyle = '#16A34A';
     ctx.lineWidth = 1;
     ctx.beginPath();

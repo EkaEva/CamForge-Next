@@ -25,7 +25,18 @@ export function CurvatureChart() {
 
     const width = rect.width;
     const height = rect.height;
-    const padding = { top: 55, right: 70, bottom: 55, left: 70 };
+
+    // 响应式边距计算
+    const getResponsivePadding = () => {
+      const w = window.innerWidth;
+      if (w < 640) {
+        return { top: 40, right: 20, bottom: 45, left: 45 };
+      } else if (w < 768) {
+        return { top: 50, right: 50, bottom: 50, left: 55 };
+      }
+      return { top: 55, right: 70, bottom: 55, left: 70 };
+    };
+    const padding = getResponsivePadding();
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
