@@ -253,21 +253,21 @@ camforge-next/
 
 #### Application Interface
 
-<img src="public/showcase/ui-screenshot.png" alt="CamForge-Next UI" width="100%">
+<img src="public/showcase-en/ui-screenshot.png" alt="CamForge-Next UI" width="100%">
 
 #### Cam Animation Demo
 
-<img src="public/showcase/cam-animation.gif" alt="Cam Animation" width="60%">
+<img src="public/showcase-en/cam-animation.gif" alt="Cam Animation" width="60%">
 
 #### Analysis Charts
 
 | Cam Profile | Motion Curves |
 |:---:|:---:|
-| <img src="public/showcase/cam-profile.png" alt="Cam Profile" width="100%"> | <img src="public/showcase/motion-curves.png" alt="Motion Curves" width="100%"> |
+| <img src="public/showcase-en/cam-profile.png" alt="Cam Profile" width="100%"> | <img src="public/showcase-en/motion-curves.png" alt="Motion Curves" width="100%"> |
 
 | Pressure Angle | Curvature Radius |
 |:---:|:---:|
-| <img src="public/showcase/pressure-angle.png" alt="Pressure Angle" width="100%"> | <img src="public/showcase/curvature-radius.png" alt="Curvature Radius" width="100%"> |
+| <img src="public/showcase-en/pressure-angle.png" alt="Pressure Angle" width="100%"> | <img src="public/showcase-en/curvature-radius.png" alt="Curvature Radius" width="100%"> |
 
 ### Deployment Modes
 
