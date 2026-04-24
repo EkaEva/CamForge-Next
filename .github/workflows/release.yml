@@ -191,9 +191,9 @@ jobs:
 
       - name: Create IPA from App
         run: |
-          cd src-tauri/gen/apple
+          cd src-tauri/gen/apple/build/arm64-sim
           mkdir -p Payload
-          mv build/Release-iphonesimulator/*.app Payload/ || mv build/*.app Payload/
+          mv CamForge-Next.app Payload/
           zip -r CamForge-Next.ipa Payload
 
       - name: Upload IPA to Release
@@ -202,5 +202,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          files: src-tauri/gen/apple/CamForge-Next.ipa
+          files: src-tauri/gen/apple/build/arm64-sim/CamForge-Next.ipa
           draft: true
