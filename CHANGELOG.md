@@ -17,11 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 配置 Android 权限（网络、文件存储）
   - 安装 Android NDK 27.0.12077973
   - 安装 Rust Android 编译目标（aarch64, armv7, i686, x86_64）
+- **GitHub Actions 自动构建**：
+  - 自动构建 Android APK（通用版）
+  - 自动构建 iOS IPA（模拟器版）
+  - Android APK 自动签名
+  - 自动发布到 GitHub Releases
 
 ### Changed
 
 - 更新 `tauri.conf.json` 添加 iOS/Android 配置块
 - 添加移动端文件导出适配计划（使用分享功能）
+- 更新 README.md 添加结果展示部分
 
 ### Documentation
 

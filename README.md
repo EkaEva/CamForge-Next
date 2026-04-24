@@ -25,6 +25,26 @@
 
 **CamForge-Next** 是一款现代化的凸轮机构运动学模拟器，支持桌面应用和 Web 服务器双模式部署。它能够帮助工程师、学生和研究人员快速设计、分析和优化凸轮机构，支持多种运动规律和实时可视化。
 
+### 结果展示
+
+#### 应用界面
+
+<img src="public/showcase/ui-screenshot.png" alt="CamForge-Next UI" width="100%">
+
+#### 凸轮动画演示
+
+<img src="public/showcase/cam-animation.gif" alt="Cam Animation" width="60%">
+
+#### 分析图表
+
+| 凸轮轮廓 | 运动曲线 |
+|:---:|:---:|
+| <img src="public/showcase/cam-profile.png" alt="Cam Profile" width="100%"> | <img src="public/showcase/motion-curves.png" alt="Motion Curves" width="100%"> |
+
+| 压力角曲线 | 曲率半径曲线 |
+|:---:|:---:|
+| <img src="public/showcase/pressure-angle.png" alt="Pressure Angle" width="100%"> | <img src="public/showcase/curvature-radius.png" alt="Curvature Radius" width="100%"> |
+
 ### 部署模式
 
 | 模式 | 说明 | 适用场景 |
@@ -211,7 +231,7 @@ camforge-next/
 - [x] 移动端响应式布局
 - [x] 触摸手势支持
 - [x] iOS/Android 应用配置
-- [ ] iOS/Android 应用发布
+- [x] iOS/Android 应用构建（APK 已签名发布）
 - [ ] 凸轮机构优化算法
 - [ ] 更多从动件类型（平底、摆动）
 
@@ -228,6 +248,26 @@ camforge-next/
 ### Overview
 
 **CamForge-Next** is a modern cam mechanism kinematics simulator that supports both desktop application and web server deployment. It helps engineers, students, and researchers quickly design, analyze, and optimize cam mechanisms with support for various motion laws and real-time visualization.
+
+### Showcase
+
+#### Application Interface
+
+<img src="public/showcase/ui-screenshot.png" alt="CamForge-Next UI" width="100%">
+
+#### Cam Animation Demo
+
+<img src="public/showcase/cam-animation.gif" alt="Cam Animation" width="60%">
+
+#### Analysis Charts
+
+| Cam Profile | Motion Curves |
+|:---:|:---:|
+| <img src="public/showcase/cam-profile.png" alt="Cam Profile" width="100%"> | <img src="public/showcase/motion-curves.png" alt="Motion Curves" width="100%"> |
+
+| Pressure Angle | Curvature Radius |
+|:---:|:---:|
+| <img src="public/showcase/pressure-angle.png" alt="Pressure Angle" width="100%"> | <img src="public/showcase/curvature-radius.png" alt="Curvature Radius" width="100%"> |
 
 ### Deployment Modes
 
@@ -415,7 +455,7 @@ camforge-next/
 - [x] Mobile responsive layout
 - [x] Touch gesture support
 - [x] iOS/Android app configuration
-- [ ] iOS/Android app release
+- [x] iOS/Android app build (Signed APK released)
 - [ ] Cam mechanism optimization algorithm
 - [ ] More follower types (flat-faced, oscillating)
 
