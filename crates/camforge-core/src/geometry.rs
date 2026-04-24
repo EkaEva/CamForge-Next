@@ -114,6 +114,35 @@ mod tests {
     }
 
     #[test]
+    fn test_pressure_angle_with_offset() {
+        // 有偏距时，压力角应非零
+        let s = vec![5.0; 360];
+        let ds_ddelta = vec![10.0; 360];
+        let alpha = compute_pressure_angle(&s, &ds_ddelta, 40.0, 5.0, 1).unwrap();
+
+        // 压力角应大于 0
+        for a in &alpha {
+            assert!(*a > 0.0, "Pressure angle should be positive, got {}", a);
+        }
+    }
+
+    #[test]
+    fn test_pressure_angle_invalid_s0() {
+        let s = vec![0.0; 10];
+        let ds_ddelta = vec![0.0; 10];
+        let result = compute_pressure_angle(&s, &ds_ddelta, 0.0, 0.0, 1);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_pressure_angle_invalid_pz() {
+        let s = vec![0.0; 10];
+        let ds_ddelta = vec![0.0; 10];
+        let result = compute_pressure_angle(&s, &ds_ddelta, 40.0, 0.0, 0);
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn test_curvature_radius_circle() {
         // 圆形凸轮，曲率半径应等于半径
         let r = 40.0;
@@ -134,6 +163,36 @@ mod tests {
                     i
                 );
             }
+        }
+    }
+
+    #[test]
+    fn test_curvature_radius_insufficient_points() {
+        let x = vec![0.0, 1.0];
+        let y = vec![0.0, 1.0];
+        let result = compute_curvature_radius(&x, &y);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_curvature_radius_mismatched_lengths() {
+        let x = vec![0.0, 1.0, 2.0];
+        let y = vec![0.0, 1.0];
+        let result = compute_curvature_radius(&x, &y);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_curvature_radius_straight_line() {
+        // 直线的曲率半径应为无穷大
+        let x: Vec<f64> = (0..100).map(|i| i as f64).collect();
+        let y: Vec<f64> = vec![0.0; 100];
+
+        let rho = compute_curvature_radius(&x, &y).unwrap();
+
+        // 直线的曲率半径应接近无穷大
+        for &r in &rho {
+            assert!(r.abs() > 1000.0 || r.is_infinite(), "Straight line should have infinite curvature radius, got {}", r);
         }
     }
 }
