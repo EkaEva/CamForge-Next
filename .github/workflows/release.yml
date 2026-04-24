@@ -87,3 +87,126 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
           tauriScript: pnpm tauri
+
+  build-android:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Install NDK
+        run: sdkmanager "ndk;27.0.12077973"
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build Android APK
+        run: pnpm tauri android build --release
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
+          NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/27.0.12077973
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
+
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
+          draft: true
+
+  build-ios:
+    permissions:
+      contents: write
+    runs-on: macos-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Initialize iOS project
+        run: pnpm tauri ios init
+
+      - name: Build iOS (simulator)
+        run: pnpm tauri ios build --target aarch64-apple-ios-sim --release
+
+      - name: Upload iOS App
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-app
+          path: src-tauri/target/aarch64-apple-ios-sim/release/bundle/ios/*.app
+
+      - name: Create IPA from App
+        run: |
+          cd src-tauri/target/aarch64-apple-ios-sim/release/bundle/ios
+          mkdir -p Payload
+          mv *.app Payload/
+          zip -r CamForge-Next.ipa Payload
+
+      - name: Upload IPA to Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: src-tauri/target/aarch64-apple-ios-sim/release/bundle/ios/CamForge-Next.ipa
+          draft: true
