@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - 2026-04-25
+
+### Fixed
+
+- **P-001**：自定义导出现在读取设置面板的默认下载目录
+  - 有默认目录时直接使用，不再强制弹出目录选择器
+  - 无默认目录时才弹出选择器
+- **P-002**：移动端平台检测增强
+  - `isMobilePlatform()` 增加 `navigator.userAgent` 回退检测
+  - 修复 `__TAURI_INTERNALS__.metadata.platform` 为 `undefined` 时检测失败
+  - 移动端不再显示桌面窗口控制按钮
+- **P-002**：移动端 header 按钮位置优化
+  - 安全区域从 `padding-top` 改为 `margin-top`，按钮不再偏低
+- **P-004**：移动端导出使用浏览器下载方式
+  - `saveFile` 在移动端 Tauri 环境下使用 `<a download>` 触发系统下载
+  - 修复移动端自定义导出报错问题
+- **P-004**：移动端状态栏显示宽度增加
+  - 导出状态从 `max-w-[150px]` 改为 `max-w-[60vw]`
+
+### Added
+
+- **P-003**：添加 OG meta 社交分享标签
+  - Open Graph（og:title, og:description, og:image, og:url, og:type）
+  - Twitter Card（summary_large_image）
+  - SEO 增强（robots, canonical）
+  - JSON-LD 结构化数据（WebApplication）
+
+[0.3.6]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.5...v0.3.6
+
 ## [0.3.5] - 2026-04-25
 
 ### Security

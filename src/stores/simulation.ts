@@ -6,6 +6,7 @@ import type { ChartDrawOptions } from '../utils/chartDrawing';
 import { computeMotion } from '../services/motion';
 import { arrayMax, arrayMin, arrayMaxBy, arrayMinBy, filterFinite, findIndex } from '../utils/array';
 import { isTauriEnv, invokeTauri } from '../utils/tauri';
+import { isMobilePlatform } from '../utils/platform';
 import { generateGifAsync, terminateGifWorker } from '../services/gifEncoder';
 import { createHistory, type HistoryActions } from './history';
 import { generateDXF as generateDXFCore, generateCSV as generateCSVCore, generateExcel as generateExcelCore, generateTIFFBlob } from '../exporters';
@@ -447,6 +448,18 @@ export async function saveFile(
   const finalSaveDir = options?.saveDir || getDownloadDir();
 
   if (isTauri) {
+    // 移动端：使用浏览器下载方式（WebView 支持 <a download>）
+    if (isMobilePlatform()) {
+      try {
+        downloadFile(content, filename, mimeType);
+        return { success: true, path: filename };
+      } catch (e) {
+        console.error('Mobile download error:', e);
+        return { success: false, error: String(e) };
+      }
+    }
+
+    // 桌面端：使用 Tauri 文件系统
     try {
       const { writeFile, mkdir } = await import('@tauri-apps/plugin-fs');
       const { join, dirname, downloadDir } = await import('@tauri-apps/api/path');

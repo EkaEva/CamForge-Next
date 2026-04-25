@@ -5,6 +5,7 @@ import { CamAnimation } from '../animation';
 import { MotionCurves, GeometryChart, CurvatureChart } from '../charts';
 import { showToast } from '../ui/Toast';
 import { isMobilePlatform, isTauriEnv as checkIsTauriEnv } from '../../utils/platform';
+import { getDownloadDir } from '../../stores/settings';
 
 type Tab = 'animation' | 'motion' | 'geometry' | 'curvature' | 'export' | 'help';
 
@@ -305,7 +306,7 @@ export function MainCanvas() {
     const minDuration = 300;
     const exportedFiles: string[] = [];
     const failedFiles: string[] = [];
-    let saveDir = ''; // 保存目录路径
+    let saveDir = getDownloadDir() || ''; // 先读取用户配置的默认目录
 
     try {
       const charts = customExportCharts();
@@ -316,8 +317,8 @@ export function MainCanvas() {
       const animDpi = customExportAnimDPI();
 
       const isTauriEnv = checkIsTauriEnv();
-      // 桌面端 Tauri 环境选择目录；移动端直接保存到下载目录
-      if (isTauriEnv && !isMobilePlatform()) {
+      // 桌面端且无默认目录时，弹出目录选择器
+      if (isTauriEnv && !isMobilePlatform() && !saveDir) {
         const { open } = await import('@tauri-apps/plugin-dialog');
         const selectedDir = await open({
           directory: true,
@@ -561,7 +562,7 @@ export function MainCanvas() {
           {/* 导出状态 */}
           <Show when={exportStatus().type !== 'idle'}>
             <span
-              class="truncate max-w-[150px] whitespace-nowrap"
+              class="truncate max-w-[60vw] whitespace-nowrap"
               classList={{
                 'text-green-500': exportStatus().type === 'success',
                 'text-red-500': exportStatus().type === 'error',
