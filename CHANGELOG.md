@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-04-25
+
+### Fixed
+
+- **M-001**：移动端安全区域适配
+  - 移动端 header 添加 `env(safe-area-inset-top)` 适配系统状态栏
+  - 解决侧边栏展开按钮进入状态栏区域的问题
+
+- **E-001**：TIFF 导出性能优化
+  - 重构 `src/exporters/tiff.ts` 使用异步分块处理
+  - 避免大图像编码阻塞主线程
+
+- **E-002**：自定义导出多文件修复
+  - 修复只导出一个文件的问题
+  - 确保所有选中文件保存到同一目录
+
+- **E-003**：自定义导出 TIFF 格式修复
+  - 自定义导出现在正确支持 TIFF 格式
+  - 默认格式改为 TIFF
+
+- **M-002**：移动端导出路径显示优化
+  - Toast 消息显示"已保存到下载目录"
+  - 延长显示时间到 5 秒
+
+### Added
+
+- **E-004**：自定义导出添加 JSON 预设选项
+  - 数据导出部分新增"预设 (JSON)"选项
+
+- **F-001**：新增设置面板
+  - 新增 `src/components/layout/SettingsPanel.tsx` 设置面板组件
+  - 状态栏添加设置按钮
+  - 支持语言、主题、默认 DPI、默认格式设置
+  - 桌面端支持配置默认下载目录
+
+- **W-002**：添加 PWA 图标和配置
+  - 新增 `public/apple-touch-icon.png`
+  - 新增 `public/manifest.json` PWA 配置
+  - 更新 `index.html` 添加 PWA 相关 meta 标签
+
+- **W-003**：添加 robots.txt
+  - 新增 `public/robots.txt` 爬虫配置
+
+### Changed
+
+- 自定义导出默认格式从 PNG 改为 TIFF
+- 自定义导出数据部分布局改为 2x4 网格
+
+---
+
 ## [0.3.3] - 2026-04-25
 
 ### Fixed
@@ -337,6 +387,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.3.4]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.0...v0.3.1

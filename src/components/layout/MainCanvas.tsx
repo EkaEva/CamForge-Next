@@ -14,7 +14,7 @@ export function MainCanvas() {
   const [exportProgress, setExportProgress] = createSignal(0);
 
   // 自定义导出状态
-  const [customExportFormat, setCustomExportFormat] = createSignal<'png' | 'tiff' | 'svg'>('png');
+  const [customExportFormat, setCustomExportFormat] = createSignal<'png' | 'tiff' | 'svg'>('tiff');
   const [customExportDPI, setCustomExportDPI] = createSignal(300);
   const [customExportCharts, setCustomExportCharts] = createSignal({
     motion: true,
@@ -29,6 +29,7 @@ export function MainCanvas() {
     csv: false,
     excel: false,
     dxf: false,
+    preset: false,
   });
 
   // 检查是否有选中项
@@ -36,7 +37,7 @@ export function MainCanvas() {
     const charts = customExportCharts();
     const data = customExportData();
     return charts.motion || charts.pressure || charts.curvature || charts.profile ||
-           customExportAnimation() || data.csv || data.excel || data.dxf;
+           customExportAnimation() || data.csv || data.excel || data.dxf || data.preset;
   };
 
   // 自动清除导出状态
@@ -239,10 +240,11 @@ export function MainCanvas() {
         setExportStatus({ type: 'success', message: `${t().export.exported}: ${filename}${pathInfo}`, files: [filename] });
         // 移动端显示 Toast 通知
         if (isMobilePlatform()) {
-          const toastMsg = result.path
-            ? `${t().export.exported}: ${filename}`
-            : `${t().export.exported}: ${filename}`;
-          showToast(toastMsg, 'success', 4000);
+          const currentLang = getCurrentLang();
+          const toastMsg = currentLang === 'zh'
+            ? `已保存到下载目录: ${filename}`
+            : `Saved to Downloads: ${filename}`;
+          showToast(toastMsg, 'success', 5000);
         }
       } else if (result.error !== 'Cancelled') {
         setExportStatus({ type: 'error', message: `${t().export.exportFailed}: ${result.error}` });
@@ -319,7 +321,7 @@ export function MainCanvas() {
       if (charts.profile) chartTypes.push('profile');
 
       const totalItems = chartTypes.length + (customExportAnimation() ? 1 : 0) +
-                        (dataExports.csv ? 1 : 0) + (dataExports.excel ? 1 : 0) + (dataExports.dxf ? 1 : 0);
+                        (dataExports.csv ? 1 : 0) + (dataExports.excel ? 1 : 0) + (dataExports.dxf ? 1 : 0) + (dataExports.preset ? 1 : 0);
       let currentItem = 0;
 
       for (const type of chartTypes) {
@@ -329,11 +331,15 @@ export function MainCanvas() {
         if (format === 'svg') {
           const content = generateSVG();
           const result = await saveFile(content, `${filename}.svg`, 'image/svg+xml', { saveDir: savedPath });
-          if (result.path) savedPath = result.path;
+          if (result.success && result.path) savedPath = result.path;
+        } else if (format === 'tiff') {
+          const blob = await generateRealTIFF(type, currentLang, dpi);
+          const result = await saveFile(blob, `${filename}.tiff`, 'image/tiff', { saveDir: savedPath });
+          if (result.success && result.path) savedPath = result.path;
         } else {
           const blob = await generateHighResPNG(type, currentLang, dpi);
           const result = await saveFile(blob, `${filename}.png`, 'image/png', { saveDir: savedPath });
-          if (result.path) savedPath = result.path;
+          if (result.success && result.path) savedPath = result.path;
         }
 
         exportedFiles.push(filename);
@@ -350,11 +356,11 @@ export function MainCanvas() {
             setExportProgress(Math.round(((currentItem + progress) / totalItems) * 100));
           }, animDpi);
           const result = await saveFile(blob, `${filename}.gif`, 'image/gif', { saveDir: savedPath });
-          if (result.path) savedPath = result.path;
+          if (result.success && result.path) savedPath = result.path;
         } else {
           const blob = await generateHighResPNG('profile', currentLang, animDpi);
           const result = await saveFile(blob, `${filename}.png`, 'image/png', { saveDir: savedPath });
-          if (result.path) savedPath = result.path;
+          if (result.success && result.path) savedPath = result.path;
         }
 
         exportedFiles.push(filename);
@@ -368,7 +374,7 @@ export function MainCanvas() {
         const content = generateCSV(currentLang);
         const bom = '﻿';
         const result = await saveFile(bom + content, `${filename}.csv`, 'text/csv;charset=utf-8', { saveDir: savedPath });
-        if (result.path) savedPath = result.path;
+        if (result.success && result.path) savedPath = result.path;
         exportedFiles.push(filename);
         currentItem++;
       }
@@ -378,7 +384,7 @@ export function MainCanvas() {
         setExportStatus({ type: 'exporting', message: `${currentLang === 'zh' ? '正在导出' : 'Exporting'} ${filename}...` });
         const blob = generateExcel(currentLang);
         const result = await saveFile(blob, `${filename}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', { saveDir: savedPath });
-        if (result.path) savedPath = result.path;
+        if (result.success && result.path) savedPath = result.path;
         exportedFiles.push(filename);
         currentItem++;
       }
@@ -388,7 +394,17 @@ export function MainCanvas() {
         setExportStatus({ type: 'exporting', message: `${currentLang === 'zh' ? '正在导出' : 'Exporting'} ${filename}...` });
         const content = generateDXF(true);
         const result = await saveFile(content, `${filename}.dxf`, 'application/dxf', { saveDir: savedPath });
-        if (result.path) savedPath = result.path;
+        if (result.success && result.path) savedPath = result.path;
+        exportedFiles.push(filename);
+        currentItem++;
+      }
+
+      if (dataExports.preset) {
+        const filename = getExportFilename('preset', currentLang);
+        setExportStatus({ type: 'exporting', message: `${currentLang === 'zh' ? '正在导出' : 'Exporting'} ${filename}...` });
+        const content = generatePresetJSON();
+        const result = await saveFile(content, `${filename}.json`, 'application/json', { saveDir: savedPath });
+        if (result.success && result.path) savedPath = result.path;
         exportedFiles.push(filename);
         currentItem++;
       }
@@ -403,9 +419,9 @@ export function MainCanvas() {
       // 移动端显示 Toast 通知
       if (isMobilePlatform()) {
         const toastMsg = currentLang === 'zh'
-          ? `已导出 ${exportedFiles.length} 个文件`
-          : `Exported ${exportedFiles.length} files`;
-        showToast(toastMsg, 'success', 4000);
+          ? `已保存 ${exportedFiles.length} 个文件到下载目录`
+          : `Saved ${exportedFiles.length} files to Downloads`;
+        showToast(toastMsg, 'success', 5000);
       }
     } catch (e) {
       console.error('Custom export error:', e);
@@ -835,7 +851,7 @@ export function MainCanvas() {
                       <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                         {t().export.dataExport}
                       </h3>
-                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
                           <input type="checkbox" checked={customExportData().csv} onChange={(e) => setCustomExportData({ ...customExportData(), csv: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
                           CSV
@@ -847,6 +863,10 @@ export function MainCanvas() {
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
                           <input type="checkbox" checked={customExportData().dxf} onChange={(e) => setCustomExportData({ ...customExportData(), dxf: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
                           DXF
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
+                          <input type="checkbox" checked={customExportData().preset} onChange={(e) => setCustomExportData({ ...customExportData(), preset: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
+                          {currentLang === 'zh' ? '预设 (JSON)' : 'Preset (JSON)'}
                         </label>
                       </div>
                     </div>

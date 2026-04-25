@@ -5,6 +5,19 @@ type Theme = 'light' | 'dark' | 'system';
 const [theme, setTheme] = createSignal<Theme>('system');
 const [isDark, setIsDark] = createSignal(false);
 
+// 导出设置
+interface ExportSettings {
+  defaultDpi: number;
+  defaultFormat: 'png' | 'tiff' | 'svg';
+  downloadDir: string;
+}
+
+const [exportSettings, setExportSettings] = createSignal<ExportSettings>({
+  defaultDpi: 300,
+  defaultFormat: 'tiff',
+  downloadDir: '',
+});
+
 // 更新暗色模式状态
 function updateDarkMode() {
   const currentTheme = theme();
@@ -37,6 +50,21 @@ export function initTheme() {
   }
   updateDarkMode();
 
+  // 从 localStorage 读取导出设置
+  const savedExportSettings = localStorage.getItem('exportSettings');
+  if (savedExportSettings) {
+    try {
+      const parsed = JSON.parse(savedExportSettings);
+      setExportSettings({
+        defaultDpi: parsed.defaultDpi || 300,
+        defaultFormat: parsed.defaultFormat || 'tiff',
+        downloadDir: parsed.downloadDir || '',
+      });
+    } catch {
+      // 忽略解析错误
+    }
+  }
+
   // 监听系统主题变化
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateDarkMode);
 }
@@ -66,6 +94,25 @@ export function setThemeMode(mode: Theme) {
   updateDarkMode();
 }
 
+// 更新导出设置
+export function updateExportSettings(settings: Partial<ExportSettings>) {
+  setExportSettings(prev => {
+    const newSettings = { ...prev, ...settings };
+    localStorage.setItem('exportSettings', JSON.stringify(newSettings));
+    return newSettings;
+  });
+}
+
+// 获取下载目录
+export function getDownloadDir(): string {
+  return exportSettings().downloadDir;
+}
+
+// 设置下载目录
+export function setDownloadDir(dir: string) {
+  updateExportSettings({ downloadDir: dir });
+}
+
 // 导出
 export function useTheme() {
   return {
@@ -76,4 +123,13 @@ export function useTheme() {
   };
 }
 
-export { theme, isDark };
+export function useExportSettings() {
+  return {
+    settings: exportSettings(),
+    updateSettings: updateExportSettings,
+    getDownloadDir,
+    setDownloadDir,
+  };
+}
+
+export { theme, isDark, exportSettings };

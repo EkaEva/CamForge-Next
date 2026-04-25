@@ -1,928 +1,373 @@
-# CamForge-Next v0.3.2 iOS/Android 应用开发计划
+# CamForge-Next v0.3.4 系统优化计划
 
-> **项目目标**：完成 Tauri 移动端配置，实现 iOS/Android 应用打包，版本更新到 v0.3.2。
->
-> **状态**：✅ 已完成并发布
-
----
-
-## 当前状态（2026-04-24 更新）
-
-### 已完成 ✅
-
-| 步骤 | 状态 | 说明 |
-|------|------|------|
-| 检查 Tauri 移动端支持 | ✅ 完成 | Tauri v2.10.3 支持 iOS/Android |
-| 更新 tauri.conf.json | ✅ 完成 | 添加 iOS/Android 配置块 |
-| 生成移动端图标 | ✅ 完成 | iOS 图标 17 个，Android 图标 15 个 |
-| 初始化 Android 项目 | ✅ 完成 | 生成完整 Gradle 构建配置 |
-| 配置 Android 权限 | ✅ 完成 | 网络权限、文件存储权限 |
-| 安装 Android NDK | ✅ 完成 | NDK 27.0.12077973 |
-| 安装 Rust Android 目标 | ✅ 完成 | aarch64, armv7, i686, x86_64 |
-| GitHub Actions 自动构建 | ✅ 完成 | 自动构建 APK/IPA |
-| Android APK 签名 | ✅ 完成 | 使用 keystore 签名 |
-| iOS IPA 构建 | ✅ 完成 | 模拟器版本 |
-| v0.3.2 发布 | ✅ 完成 | GitHub Releases 已发布 |
-
-### 待完成 ⏳
-
-| 步骤 | 状态 | 阻塞原因 |
-|------|------|---------|
-| iOS 真机构建 | ⏳ 待完成 | 需要 macOS + Xcode + Apple Developer 账号 |
-| 发布到 Google Play | ⏳ 待完成 | 需要 Google Play 开发者账号 |
-| 发布到 App Store | ⏳ 待完成 | 需要 Apple Developer 账号 |
-
-### 环境要求
-
-**iOS 开发**：
-- 操作系统：macOS
-- Xcode 15+
-- Apple Developer 账号（发布需要）
-
-**Android 开发**：
-- Android SDK（可通过 Android Studio 安装）
-- JDK 17+
-- 设置 `ANDROID_HOME` 环境变量
-
-### 安装 Android SDK 步骤
-
-1. 下载 Android Studio：https://developer.android.com/studio
-2. 安装后打开 Android Studio
-3. 进入 SDK Manager（Tools > SDK Manager）
-4. 安装 Android SDK 34+
-5. 设置环境变量：
-   ```powershell
-   # Windows PowerShell
-   [Environment]::SetEnvironmentVariable("ANDROID_HOME", "C:\Users\<用户名>\AppData\Local\Android\Sdk", "User")
-   ```
-6. 重启终端后运行：
-   ```bash
-   pnpm tauri android init
-   ```
+> **制定日期**：2026-04-25
+> **目标版本**：v0.3.4
+> **依据**：v0.3.3 用户反馈 + 服务器部署日志分析
 
 ---
 
 ## 一、问题分析
 
-### 1.1 当前状态
+### 1.1 移动端 UI 问题
 
-| 项目 | 当前状态 | 目标状态 |
-|------|---------|---------|
-| Tauri 版本 | v2.0.0 | v2.0.0 (已支持移动端) |
-| iOS 配置 | 未配置 | 完整配置，可构建 IPA |
-| Android 配置 | 未配置 | 完整配置，可构建 APK |
-| 移动端图标 | 无 | 完整图标集 |
-| 移动端权限 | 无 | 配置必要权限 |
-| 文件导出 | Tauri 桌面端 | 移动端分享功能 |
+| 问题编号 | 问题描述 | 严重程度 | 影响范围 |
+|---------|---------|---------|---------|
+| M-001 | 移动端隐藏 TitleBar 后，侧边栏展开按钮进入系统状态栏区域 | 🔴 高 | 移动端用户体验 |
+| M-002 | 移动端导出后不清楚文件保存位置 | 🔴 高 | 移动端导出可用性 |
 
-### 1.2 Tauri v2 移动端支持
+### 1.2 导出功能问题
 
-Tauri v2 已原生支持 iOS 和 Android 平台，主要优势：
-- 单一代码库，跨平台共享
-- Rust 后端计算，性能优异
-- 前端响应式布局已完成（v0.3.0/v0.3.1）
-- 触摸手势支持已完成
+| 问题编号 | 问题描述 | 严重程度 | 影响范围 |
+|---------|---------|---------|---------|
+| E-001 | TIFF 导出卡顿（桌面端鼠标转圈，移动端直接卡死） | 🔴 高 | 导出性能 |
+| E-002 | 自定义导出只导出一个文件（应导出多个选中文件） | 🔴 高 | 自定义导出功能 |
+| E-003 | 自定义导出选择 TIFF 格式，实际输出 PNG | 🔴 高 | 自定义导出功能 |
+| E-004 | 自定义导出数据部分缺少 JSON 预设文件选项 | 🟡 中 | 自定义导出完整性 |
 
-### 1.3 需要解决的问题
+### 1.3 Web 部署问题
 
-| 问题类型 | 具体描述 | 严重程度 |
-|---------|---------|---------|
-| iOS 项目未初始化 | 缺少 `src-tauri/gen/apple` 目录 | 🔴 高 |
-| Android 项目未初始化 | 缺少 `src-tauri/gen/android` 目录 | 🔴 高 |
-| 移动端图标缺失 | 缺少 iOS/Android 专用图标 | 🔴 高 |
-| 移动端权限未配置 | 文件访问、分享权限未声明 | 🔴 高 |
-| 移动端导出功能 | 需适配移动端文件保存方式 | 🟡 中 |
-| 窗口配置 | 移动端需要全屏显示 | 🟡 中 |
+| 问题编号 | 问题描述 | 严重程度 | 影响范围 |
+|---------|---------|---------|---------|
+| W-001 | logo.png 文件过大（~996KB），拖慢首屏加载 | 🟡 中 | Web 性能 |
+| W-002 | 缺少 apple-touch-icon.png，iOS 设备 404 | 🟡 中 | PWA 体验 |
+| W-003 | 缺少 robots.txt，爬虫访问 404 | 🟢 低 | SEO |
+| W-004 | 前端更新后旧 JS hash 文件 404 | 🟡 中 | 版本更新 |
+
+### 1.4 功能增强
+
+| 问题编号 | 问题描述 | 严重程度 | 影响范围 |
+|---------|---------|---------|---------|
+| F-001 | 缺少设置按钮，无法配置默认下载目录 | 🟡 中 | 用户体验 |
 
 ---
 
 ## 二、优化目标
 
-### 2.1 本次开发目标
+### 2.1 本次优化目标
 
 | 指标 | 当前状态 | 目标状态 | 衡量方式 |
 |------|---------|---------|---------|
-| iOS 构建 | 不支持 | 可构建 IPA | `pnpm tauri ios build` 成功 |
-| Android 构建 | 不支持 | 可构建 APK | `pnpm tauri android build` 成功 |
-| 移动端图标 | 缺失 | 完整图标集 | 图标显示正确 |
-| 移动端导出 | 仅桌面端 | 分享功能可用 | 可导出文件 |
+| 移动端顶部布局 | 与状态栏重叠 | 安全区域内显示 | 真机测试 |
+| TIFF 导出性能 | 卡顿/卡死 | 流畅导出 | 性能测试 |
+| 自定义导出 | 只导出一个文件 | 导出所有选中文件 | 功能测试 |
+| Logo 大小 | ~996KB | <100KB | 文件大小 |
+| PWA 图标 | 缺失 | 完整 | 无 404 错误 |
 
 ### 2.2 分阶段目标
 
 | 阶段 | 目标 | 预期成果 |
 |------|------|---------|
-| 第一阶段 | 环境准备与配置 | Tauri 移动端配置完成 |
-| 第二阶段 | iOS 项目初始化 | 可构建 iOS 应用 |
-| 第三阶段 | Android 项目初始化 | 可构建 Android 应用 |
-| 第四阶段 | 移动端功能适配 | 导出功能可用 |
-| 第五阶段 | 测试与发布 | v0.3.2 发布 |
+| 第一阶段 | 移动端 UI 修复 | 安全区域适配 |
+| 第二阶段 | 导出功能修复 | TIFF 性能优化 + 自定义导出修复 |
+| 第三阶段 | 设置功能增强 | 新增设置面板 + 默认下载目录 |
+| 第四阶段 | Web 部署优化 | 资源压缩 + PWA 图标 |
+| 第五阶段 | 测试与发布 | v0.3.4 发布 |
 
 ---
 
 ## 三、实施步骤
 
-### 第一阶段：环境准备与配置（预计 0.5 天）
+### 第一阶段：移动端 UI 修复
 
-#### 3.1.1 检查开发环境
-
-**前置条件检查**：
-
-| 环境 | iOS 开发 | Android 开发 |
-|------|---------|---------|
-| 操作系统 | macOS | macOS/Linux/Windows |
-| SDK | Xcode 15+ | Android SDK 34+ |
-| 其他 | Apple Developer 账号 | JDK 17+ |
-
-**验证命令**：
-```bash
-# 检查 Tauri CLI 移动端支持
-pnpm tauri --help | grep -E "ios|android"
-
-# macOS 检查 Xcode
-xcodebuild -version
-
-# 检查 Android SDK（如果已安装）
-adb version
-```
-
----
-
-#### 3.1.2 更新 Tauri 配置文件
-
-**文件**：`src-tauri/tauri.conf.json`
-
-**添加移动端配置**：
-```json
-{
-  "productName": "CamForge-Next",
-  "version": "0.3.2",
-  "identifier": "top.camforge.next",
-
-  "ios": {
-    "minimumSystemVersion": "13.0",
-    "developmentTeam": "YOUR_TEAM_ID"
-  },
-
-  "android": {
-    "minSdkVersion": 24
-  },
-
-  "app": {
-    "windows": [
-      {
-        "label": "main",
-        "title": "CamForge-Next",
-        "width": 1400,
-        "height": 900,
-        "minWidth": 1200,
-        "minHeight": 800,
-        "decorations": false,
-        "visible": false,
-        "focus": true
-      }
-    ],
-    "security": {
-      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws://localhost:*/ http://localhost:*/"
-    },
-    "withGlobalTauri": true
-  },
-
-  "bundle": {
-    "active": true,
-    "targets": "all",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
-    "iOS": {
-      "icon": [
-        "icons/apple/20x20@1x.png",
-        "icons/apple/20x20@2x.png",
-        "icons/apple/20x20@3x.png",
-        "icons/apple/29x29@1x.png",
-        "icons/apple/29x29@2x.png",
-        "icons/apple/29x29@3x.png",
-        "icons/apple/40x40@1x.png",
-        "icons/apple/40x40@2x.png",
-        "icons/apple/40x40@3x.png",
-        "icons/apple/60x60@2x.png",
-        "icons/apple/60x60@3x.png",
-        "icons/apple/76x76@1x.png",
-        "icons/apple/76x76@2x.png",
-        "icons/apple/83.5x83.5@2x.png",
-        "icons/apple/1024x1024@1x.png"
-      ]
-    },
-    "android": {
-      "icon": [
-        "icons/android/36x36.png",
-        "icons/android/48x48.png",
-        "icons/android/72x72.png",
-        "icons/android/96x96.png",
-        "icons/android/144x144.png",
-        "icons/android/192x192.png",
-        "icons/android/512x512.png"
-      ]
-    },
-    "windows": {
-      "nsis": {
-        "installMode": "currentUser",
-        "languages": ["SimpChinese", "English"],
-        "installerIcon": "icons/icon.ico",
-        "headerImage": null,
-        "sidebarImage": null
-      }
-    }
-  }
-}
-```
-
-**验证方法**：
-- [ ] 配置文件语法正确（JSON 格式）
-- [ ] iOS/Android 配置块存在
-- [ ] 版本号更新为 0.3.2
-
----
-
-#### 3.1.3 生成移动端图标
-
-**图标规格要求**：
-
-**iOS 图标**（存放于 `src-tauri/icons/apple/`）：
-| 尺寸 | 文件名 | 用途 |
-|------|--------|------|
-| 20x20 | 20x20@1x.png | Notification |
-| 40x20 | 20x20@2x.png | Notification @2x |
-| 60x20 | 20x20@3x.png | Notification @3x |
-| 29x29 | 29x29@1x.png | Settings |
-| 58x29 | 29x29@2x.png | Settings @2x |
-| 87x29 | 29x29@3x.png | Settings @3x |
-| 40x40 | 40x40@1x.png | Spotlight |
-| 80x40 | 40x40@2x.png | Spotlight @2x |
-| 120x40 | 40x40@3x.png | Spotlight @3x |
-| 120x60 | 60x60@2x.png | App Icon @2x |
-| 180x60 | 60x60@3x.png | App Icon @3x |
-| 76x76 | 76x76@1x.png | iPad |
-| 152x76 | 76x76@2x.png | iPad @2x |
-| 167x83.5 | 83.5x83.5@2x.png | iPad Pro |
-| 1024x1024 | 1024x1024@1x.png | App Store |
-
-**Android 图标**（存放于 `src-tauri/icons/android/`）：
-| 尺寸 | 文件名 | 密度 |
-|------|--------|------|
-| 36x36 | 36x36.png | ldpi |
-| 48x48 | 48x48.png | mdpi |
-| 72x72 | 72x72.png | hdpi |
-| 96x96 | 96x96.png | xhdpi |
-| 144x144 | 144x144.png | xxhdpi |
-| 192x192 | 192x192.png | xxxhdpi |
-| 512x512 | 512x512.png | Play Store |
-
-**生成方法**：
-```bash
-# 使用 Tauri CLI 生成图标（需要源图标 1024x1024 或 512x512）
-pnpm tauri icon src-tauri/icons/icon.png
-
-# 或手动使用 ImageMagick
-# 示例：生成 iOS 60x60@2x
-convert public/logo.png -resize 120x120 src-tauri/icons/apple/60x60@2x.png
-```
-
-**验证方法**：
-- [ ] iOS 图标目录存在，包含所有尺寸
-- [ ] Android 图标目录存在，包含所有尺寸
-- [ ] 图标格式为 PNG，无透明度问题
-
----
-
-### 第二阶段：iOS 项目初始化（预计 1 天）
-
-#### 3.2.1 初始化 iOS 项目
-
-**执行命令**（需要 macOS）：
-```bash
-# 初始化 iOS 项目
-pnpm tauri ios init
-
-# 或使用 Tauri CLI
-cargo tauri ios init
-```
-
-**生成的目录结构**：
-```
-src-tauri/gen/apple/
-├── CamForge-Next/
-│   ├── CamForge-Next/
-│   │   ├── Assets.xcassets/
-│   │   ├── AppDelegate.swift
-│   │   ├── ViewController.swift
-│   │   └── Info.plist
-│   ├── CamForge-Next.xcodeproj/
-│   └── CamForge-Next.entitlements
-└── ExportOptions.plist
-```
-
-**验证方法**：
-- [ ] `src-tauri/gen/apple` 目录存在
-- [ ] Xcode 项目文件存在
-- [ ] Info.plist 配置正确
-
----
-
-#### 3.2.2 配置 iOS 权限
-
-**文件**：`src-tauri/gen/apple/CamForge-Next/CamForge-Next/Info.plist`
-
-**添加权限声明**：
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <!-- 基本配置 -->
-    <key>CFBundleDisplayName</key>
-    <string>CamForge-Next</string>
-    <key>CFBundleIdentifier</key>
-    <string>top.camforge.next</string>
-    <key>CFBundleVersion</key>
-    <string>0.3.2</string>
-    <key>CFBundleShortVersionString</key>
-    <string>0.3.2</string>
-
-    <!-- 最低系统版本 -->
-    <key>MinimumOSVersion</key>
-    <string>13.0</string>
-
-    <!-- 支持方向 -->
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-
-    <!-- 文件导出支持 -->
-    <key>UIFileSharingEnabled</key>
-    <true/>
-    <key>LSSupportsOpeningDocumentsInPlace</key>
-    <true/>
-
-    <!-- 安全配置 -->
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <false/>
-    </dict>
-</dict>
-</plist>
-```
-
-**验证方法**：
-- [ ] Info.plist 包含必要权限
-- [ ] 文件导出权限已启用
-- [ ] 支持横竖屏方向
-
----
-
-#### 3.2.3 配置 iOS Entitlements
-
-**文件**：`src-tauri/gen/apple/CamForge-Next/CamForge-Next.entitlements`
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <!-- App Groups（用于文件共享） -->
-    <key>com.apple.security.application-groups</key>
-    <array>
-        <string>group.top.camforge.next</string>
-    </array>
-</dict>
-</plist>
-```
-
----
-
-#### 3.2.4 构建 iOS 应用
-
-**执行命令**：
-```bash
-# 开发构建（模拟器）
-pnpm tauri ios build --debug
-
-# 生产构建
-pnpm tauri ios build --release
-
-# 指定目标
-pnpm tauri ios build --target aarch64-apple-ios
-```
-
-**构建产物**：
-- Debug: `src-tauri/target/aarch64-apple-ios/debug/`
-- Release: `src-tauri/target/aarch64-apple-ios/release/`
-- IPA: `src-tauri/target/aarch64-apple-ios/release/bundle/ios/`
-
-**验证方法**：
-- [ ] 构建命令执行成功
-- [ ] IPA 文件生成
-- [ ] 可在模拟器运行
-
----
-
-### 第三阶段：Android 项目初始化（预计 1 天）
-
-#### 3.3.1 初始化 Android 项目
-
-**执行命令**：
-```bash
-# 初始化 Android 项目
-pnpm tauri android init
-
-# 或使用 Tauri CLI
-cargo tauri android init
-```
-
-**生成的目录结构**：
-```
-src-tauri/gen/android/
-├── app/
-│   ├── src/
-│   │   └── main/
-│   │       ├── java/top/camforge/next/
-│   │       ├── res/
-│   │       │   ├── drawable/
-│   │       │   ├── mipmap-ldpi/
-│   │       │   ├── mipmap-mdpi/
-│   │       │   ├── mipmap-hdpi/
-│   │       │   ├── mipmap-xhdpi/
-│   │       │   ├── mipmap-xxhdpi/
-│   │       │   ├── mipmap-xxxhdpi/
-│   │       │   └── values/
-│   │       └── AndroidManifest.xml
-│   ├── build.gradle.kts
-│   └── proguard-rules.pro
-├── build.gradle.kts
-├── gradle.properties
-└── settings.gradle.kts
-```
-
-**验证方法**：
-- [ ] `src-tauri/gen/android` 目录存在
-- [ ] Gradle 配置文件存在
-- [ ] AndroidManifest.xml 配置正确
-
----
-
-#### 3.3.2 配置 Android 权限
-
-**文件**：`src-tauri/gen/android/app/src/main/AndroidManifest.xml`
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- 基本权限 -->
-    <uses-permission android:name="android.permission.INTERNET"/>
-
-    <!-- 文件存储权限 -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32"/>
-
-    <!-- 应用配置 -->
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="false">
-
-        <activity
-            android:name=".MainActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:screenOrientation="fullSensor"
-            android:windowSoftInputMode="adjustResize">
-
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-```
-
-**验证方法**：
-- [ ] AndroidManifest.xml 包含必要权限
-- [ ] 支持全屏方向
-- [ ] Activity 配置正确
-
----
-
-#### 3.3.3 配置 Gradle 构建
-
-**文件**：`src-tauri/gen/android/app/build.gradle.kts`
-
-```kotlin
-plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-}
-
-android {
-    namespace = "top.camforge.next"
-    compileSdk = 34
-
-    defaultConfig {
-        applicationId = "top.camforge.next"
-        minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = "0.3.2"
-
-        ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-        }
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-        debug {
-            isMinifyEnabled = false
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-}
-
-dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-}
-```
-
-**验证方法**：
-- [ ] Gradle 配置语法正确
-- [ ] SDK 版本设置正确
-- [ ] ABI 过滤器包含所有架构
-
----
-
-#### 3.3.4 构建 Android 应用
-
-**执行命令**：
-```bash
-# 开发构建
-pnpm tauri android build --debug
-
-# 生产构建
-pnpm tauri android build --release
-
-# 生成 APK
-pnpm tauri android build --release --apk
-
-# 生成 AAB（用于 Play Store）
-pnpm tauri android build --release --aab
-```
-
-**构建产物**：
-- APK: `src-tauri/gen/android/app/build/outputs/apk/`
-- AAB: `src-tauri/gen/android/app/build/outputs/bundle/`
-
-**验证方法**：
-- [ ] 构建命令执行成功
-- [ ] APK 文件生成
-- [ ] 可在模拟器/真机运行
-
----
-
-### 第四阶段：移动端功能适配（预计 1 天）
-
-#### 3.4.1 移动端文件导出适配
+#### 3.1.1 M-001: 移动端安全区域适配
 
 **问题分析**：
-移动端没有传统文件系统访问方式，需要使用系统分享功能。
+- 隐藏 TitleBar 后，移动端 header 没有考虑系统状态栏高度
+- 需要使用 CSS `env(safe-area-inset-top)` 适配安全区域
 
-**解决方案**：使用 `@tauri-apps/plugin-share` 插件
+**修复方案**：
+1. 修改 `src/App.tsx` 移动端 header 样式
+2. 添加 `pt-[env(safe-area-inset-top)]` 顶部安全区域内边距
+3. 确保 header 高度 = 56px + safe-area-inset-top
 
-**安装依赖**：
-```bash
-pnpm add @tauri-apps/plugin-share
-```
-
-**更新 Cargo.toml**：
-```toml
-[dependencies]
-tauri-plugin-share = "2"
-```
-
-**修改文件**：`src/api/tauri.ts`
-
-```typescript
-import { share } from '@tauri-apps/plugin-share';
-
-// 检测是否为移动端
-function isMobilePlatform(): boolean {
-  const platform = navigator.platform || navigator.userAgent;
-  return /Android|iPhone|iPad|iPod/i.test(platform);
-}
-
-// 移动端文件保存（使用分享功能）
-export async function saveFileMobile(
-  data: Blob | string,
-  filename: string,
-  mimeType: string
-): Promise<{ success: boolean; path?: string; error?: string }> {
-  try {
-    // 将数据转换为 Uint8Array
-    let uint8Array: Uint8Array;
-    if (typeof data === 'string') {
-      uint8Array = new TextEncoder().encode(data);
-    } else {
-      uint8Array = new Uint8Array(await data.arrayBuffer());
-    }
-
-    // 使用分享功能
-    await share({
-      files: [{
-        name: filename,
-        mimeType: mimeType,
-        data: uint8Array
-      }]
-    });
-
-    return { success: true };
-  } catch (e) {
-    return { success: false, error: String(e) };
-  }
-}
-
-// 统一文件保存接口（自动检测平台）
-export async function saveFileUniversal(
-  data: Blob | string,
-  filename: string,
-  mimeType: string,
-  options?: { saveDir?: string }
-): Promise<{ success: boolean; path?: string; error?: string }> {
-  if (isMobilePlatform()) {
-    return saveFileMobile(data, filename, mimeType);
-  } else {
-    // 桌面端使用原有逻辑
-    return saveFile(data, filename, mimeType, options);
-  }
-}
-```
+**修改文件**：`src/App.tsx`
 
 **验证方法**：
-- [ ] 移动端可调用分享功能
-- [ ] 文件可保存到相册/文件 App
-- [ ] 桌面端功能不受影响
+- [ ] Android 真机测试，header 在状态栏下方
+- [ ] iOS 真机测试，header 在刘海区域下方
+- [ ] 横竖屏切换正常
 
 ---
 
-#### 3.4.2 移动端窗口配置
+#### 3.1.2 M-002: 移动端导出路径显示优化
 
 **问题分析**：
-移动端应用需要全屏显示，不需要窗口装饰。
+- Toast 只显示"已导出 X 个文件"，未显示具体路径
+- 移动端用户不知道文件保存到哪里
 
-**解决方案**：在 tauri.conf.json 中配置移动端窗口
+**修复方案**：
+1. 修改 Toast 消息，显示"已保存到下载目录"
+2. 在设置中添加默认下载目录配置
+3. 导出成功后显示完整路径或目录名称
 
-```json
-{
-  "app": {
-    "windows": [
-      {
-        "label": "main",
-        "title": "CamForge-Next",
-        // 桌面端配置
-        "width": 1400,
-        "height": 900,
-        "minWidth": 1200,
-        "minHeight": 800,
-        "decorations": false,
-        // 移动端自动全屏
-        "fullscreen": false,
-        "visible": false,
-        "focus": true
-      }
-    ]
-  }
-}
-```
-
-**注意**：Tauri v2 移动端会自动处理窗口全屏，无需额外配置。
-
----
-
-#### 3.4.3 移动端性能优化
-
-**优化点**：
-
-1. **动画帧率自适应**
-```typescript
-// src/components/animation/CamAnimation.tsx
-function getOptimalFrameRate(): number {
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const isLowEnd = navigator.hardwareConcurrency <= 4;
-
-  if (isMobile || isLowEnd) {
-    return 30;  // 移动端/低端设备降低帧率
-  }
-  return 60;
-}
-```
-
-2. **Canvas 渲染优化**
-```typescript
-// 使用 requestAnimationFrame 控制渲染频率
-let lastFrameTime = 0;
-const frameInterval = 1000 / getOptimalFrameRate();
-
-function animate(timestamp: number) {
-  if (timestamp - lastFrameTime >= frameInterval) {
-    // 渲染帧
-    lastFrameTime = timestamp;
-  }
-  requestAnimationFrame(animate);
-}
-```
+**修改文件**：
+- `src/components/layout/MainCanvas.tsx`
+- `src/stores/settings.ts`（新增）
 
 **验证方法**：
-- [ ] 移动端帧率稳定在 30fps
-- [ ] 动画流畅度可接受
-- [ ] 内存占用合理
+- [ ] 移动端导出后 Toast 显示保存位置
+- [ ] 设置面板可配置下载目录
 
 ---
 
-### 第五阶段：测试与发布（预计 0.5 天）
+### 第二阶段：导出功能修复
 
-#### 3.5.1 测试清单
+#### 3.2.1 E-001: TIFF 导出性能优化
 
-| 测试项 | iOS | Android | 测试方法 |
-|--------|-----|---------|---------|
-| 应用启动 | ✓ | ✓ | 模拟器/真机 |
-| 参数调整 | ✓ | ✓ | 触摸操作 |
-| 动画播放 | ✓ | ✓ | 播放控制 |
-| 图表显示 | ✓ | ✓ | 各 Tab 页 |
-| 文件导出 | ✓ | ✓ | 分享功能 |
-| 横竖屏切换 | ✓ | ✓ | 旋转设备 |
-| 深色模式 | ✓ | ✓ | 系统设置 |
+**问题分析**：
+- TIFF 编码使用 utif2 库，同步处理大图像会阻塞主线程
+- 需要使用 Web Worker 异步处理
 
----
+**修复方案**：
+1. 创建 `src/workers/tiffWorker.ts` Web Worker
+2. 将 TIFF 编码逻辑移到 Worker 中
+3. 修改 `generateRealTIFF` 函数使用 Worker 异步处理
+4. 添加进度回调
 
-#### 3.5.2 版本更新清单
+**修改文件**：
+- `src/workers/tiffWorker.ts`（新增）
+- `src/exporters/tiff.ts`
+- `src/stores/simulation.ts`
 
-| 文件 | 更新内容 | 状态 |
-|------|---------|------|
-| `package.json` | version: 0.3.2 | [ ] |
-| `Cargo.toml` | version: 0.3.2 | [ ] |
-| `src-tauri/Cargo.toml` | 添加 tauri-plugin-share | [ ] |
-| `src-tauri/tauri.conf.json` | iOS/Android 配置 + version: 0.3.2 | [ ] |
-| `src/components/layout/StatusBar.tsx` | 版本号显示: v0.3.2 | [ ] |
-| `README.md` | 版本徽章 + 开发路线更新 | [ ] |
-| `CHANGELOG.md` | 添加 v0.3.2 更新日志 | [ ] |
+**验证方法**：
+- [ ] TIFF 导出不阻塞 UI
+- [ ] 移动端导出流畅
+- [ ] 进度显示正常
 
 ---
 
-#### 3.5.3 发布流程
+#### 3.2.2 E-002: 自定义导出多文件修复
 
-```bash
-# 1. 提交代码
-git add .
-git commit -m "feat: iOS/Android mobile app support (v0.3.2)"
+**问题分析**：
+- 当前代码中 `savedPath` 变量在每次导出后被覆盖
+- 需要确保每个文件都保存到同一目录
 
-# 2. 推送到 GitHub
-git push origin master
+**修复方案**：
+1. 检查 `handleCustomExport` 函数逻辑
+2. 确保所有文件使用同一个 `savedPath`
+3. 修复进度计算
 
-# 3. 创建并推送 tag
-git tag v0.3.2
-git push origin v0.3.2
+**修改文件**：`src/components/layout/MainCanvas.tsx`
 
-# 4. 等待 GitHub Actions 构建
-
-# 5. 发布 Release（Draft → Published）
-gh release edit v0.3.2 --draft=false
-```
+**验证方法**：
+- [ ] 勾选多个图表，全部导出
+- [ ] 勾选图表+数据，全部导出
+- [ ] 文件保存在同一目录
 
 ---
 
-## 四、验证方法总览
+#### 3.2.3 E-003: 自定义导出 TIFF 格式修复
 
-### 4.1 自动化验证
+**问题分析**：
+- 自定义导出代码中使用 `generateHighResPNG` 而非 `generateRealTIFF`
+- 需要根据 format 选择正确的生成函数
 
-| 验证项 | 命令 | 通过标准 |
-|--------|------|---------|
-| iOS 构建 | `pnpm tauri ios build --release` | IPA 生成成功 |
-| Android 构建 | `pnpm tauri android build --release` | APK 生成成功 |
-| 前端测试 | `pnpm test:run` | 所有测试通过 |
-| Rust 测试 | `cargo test --workspace` | 所有测试通过 |
+**修复方案**：
+1. 修改自定义导出逻辑，根据 format 选择生成函数
+2. TIFF 格式使用 `generateRealTIFF`
+3. PNG 格式使用 `generateHighResPNG`
 
-### 4.2 手动验证
+**修改文件**：`src/components/layout/MainCanvas.tsx`
 
-| 验证项 | 平台 | 测试方法 |
-|--------|------|---------|
-| 应用启动 | iOS/Android | 模拟器启动测试 |
-| 功能完整性 | iOS/Android | 真机功能测试 |
-| 导出功能 | iOS/Android | 分享导出测试 |
-| 性能表现 | iOS/Android | 帧率/内存监控 |
+**验证方法**：
+- [ ] 选择 TIFF 格式，导出 .tiff 文件
+- [ ] 选择 PNG 格式，导出 .png 文件
+- [ ] 选择 SVG 格式，导出 .svg 文件
 
 ---
 
-## 五、时间规划
+#### 3.2.4 E-004: 自定义导出添加 JSON 预设选项
 
-| 阶段 | 预计时间 | 开始日期 | 结束日期 |
-|------|---------|---------|---------|
-| 第一阶段：环境准备与配置 | 0.5 天 | - | - |
-| 第二阶段：iOS 项目初始化 | 1 天 | - | - |
-| 第三阶段：Android 项目初始化 | 1 天 | - | - |
-| 第四阶段：移动端功能适配 | 1 天 | - | - |
-| 第五阶段：测试与发布 | 0.5 天 | - | - |
-| **总计** | **4 天** | - | - |
+**问题分析**：
+- 数据导出部分缺少 JSON 预设文件选项
+- 需要添加 preset 导出功能
 
----
+**修复方案**：
+1. 修改 `customExportData` 状态，添加 `preset: false`
+2. 添加 JSON 预设导出 UI 选项
+3. 实现导出逻辑
 
-## 六、风险评估
+**修改文件**：`src/components/layout/MainCanvas.tsx`
 
-| 集险 | 可能性 | 影响 | 缓解措施 |
-|------|--------|------|---------|
-| iOS 构建环境问题 | 高 | 高 | 需 macOS + Xcode，可使用 CI 构建 |
-| Android SDK 配置问题 | 中 | 中 | 使用 Android Studio 自动配置 |
-| 签名证书问题 | 高 | 高 | 使用 Apple Developer 账号 |
-| 移动端性能不足 | 中 | 中 | 帧率自适应 + 渲染优化 |
-| 分享功能兼容性 | 低 | 中 | 使用 Tauri 官方插件 |
+**验证方法**：
+- [ ] 数据导出显示 JSON 预设选项
+- [ ] 勾选后导出 .json 文件
 
 ---
 
-## 七、相关文件清单
+### 第三阶段：设置功能增强
 
-```
-需要修改的文件：
-├── package.json                         # 版本号 + share 插件
-├── Cargo.toml                           # 版本号
-├── README.md                            # 版本徽章和开发路线
-├── CHANGELOG.md                         # 更新日志
-├── src-tauri/
-│   ├── Cargo.toml                       # share 插件依赖
-│   ├── tauri.conf.json                  # iOS/Android 配置
-│   └── icons/
-│       ├── apple/                       # iOS 图标目录（新建）
-│       └── android/                     # Android 图标目录（新建）
-├── src-tauri/gen/                       # 移动端生成目录（新建）
-│   ├── apple/                           # iOS 项目
-│   └── android/                         # Android 项目
-├── src/
-│   ├── api/tauri.ts                     # 移动端文件保存适配
-│   └── components/layout/StatusBar.tsx  # 版本号显示
-```
+#### 3.3.1 F-001: 新增设置面板
+
+**问题分析**：
+- 缺少全局设置入口
+- 无法配置默认下载目录
+
+**修复方案**：
+1. 创建 `src/components/layout/SettingsPanel.tsx` 设置面板组件
+2. 在 StatusBar 语言按钮旁添加设置按钮
+3. 设置项：
+   - 默认下载目录（桌面端）
+   - 导出 DPI 默认值
+   - 语言设置
+4. 使用 localStorage 持久化设置
+
+**新增文件**：
+- `src/components/layout/SettingsPanel.tsx`
+- `src/stores/settings.ts`（扩展）
+
+**修改文件**：
+- `src/components/layout/StatusBar.tsx`
+- `src/App.tsx`
+
+**验证方法**：
+- [ ] 状态栏显示设置按钮
+- [ ] 点击打开设置面板
+- [ ] 可配置下载目录
+- [ ] 设置持久化
 
 ---
 
-## 八、注意事项
+### 第四阶段：Web 部署优化
 
-### 8.1 iOS 开发要求
+#### 3.4.1 W-001: Logo 文件压缩
 
-- **必须使用 macOS**：iOS 构建只能在 macOS 上进行
-- **Xcode 版本**：需要 Xcode 15 或更高版本
-- **Apple Developer 账号**：发布到 App Store 需要付费账号
-- **签名证书**：需要配置开发证书和发布证书
+**问题分析**：
+- `public/logo.png` 约 996KB，过大
+- 影响首屏加载速度
 
-### 8.2 Android 开发要求
+**修复方案**：
+1. 使用图像压缩工具压缩 logo.png
+2. 目标：<100KB
+3. 或转换为 WebP 格式
 
-- **JDK 版本**：需要 JDK 17 或更高版本
-- **Android SDK**：需要 SDK 34 或更高版本
-- **签名**：发布版 APK 需要签名
-- **Play Store**：发布到 Play Store 需要 Google Play 开发者账号
+**修改文件**：`public/logo.png`
 
-### 8.3 CI/CD 构建
+**验证方法**：
+- [ ] logo.png < 100KB
+- [ ] 图像质量可接受
 
-GitHub Actions 可以自动构建移动端应用：
-- iOS 构建：使用 `macos-latest` runner
-- Android 构建：使用 `ubuntu-latest` runner
+---
+
+#### 3.4.2 W-002: 添加 PWA 图标
+
+**问题分析**：
+- iOS 设备请求 `/apple-touch-icon.png` 返回 404
+- 需要添加 PWA 相关图标
+
+**修复方案**：
+1. 创建 `public/apple-touch-icon.png`（180x180）
+2. 更新 `index.html` 添加图标链接
+3. 添加 `manifest.json` PWA 配置
+
+**新增文件**：
+- `public/apple-touch-icon.png`
+- `public/manifest.json`
+
+**修改文件**：`index.html`
+
+**验证方法**：
+- [ ] `/apple-touch-icon.png` 返回 200
+- [ ] iOS 书签显示正确图标
+
+---
+
+#### 3.4.3 W-003: 添加 robots.txt
+
+**问题分析**：
+- 爬虫访问 `/robots.txt` 返回 404
+
+**修复方案**：
+1. 创建 `public/robots.txt`
+2. 配置允许爬取的路径
+
+**新增文件**：`public/robots.txt`
+
+**验证方法**：
+- [ ] `/robots.txt` 返回 200
+- [ ] 内容正确
+
+---
+
+#### 3.4.4 W-004: 前端版本更新处理
+
+**问题分析**：
+- 前端更新后，旧版 HTML 引用旧 hash JS 文件导致 404
+- 这是 SPA 部署的常见问题
+
+**修复方案**：
+1. 在服务器配置中添加 fallback 规则
+2. 更新 `docs/DEPLOYMENT.md` 说明
+3. 考虑添加版本检测机制
+
+**修改文件**：`docs/DEPLOYMENT.md`
+
+**验证方法**：
+- [ ] 更新部署后无 404 错误
+
+---
+
+## 四、验证清单
+
+### 4.1 功能验证
+
+- [ ] 移动端 header 不与状态栏重叠
+- [ ] TIFF 导出流畅，不卡顿
+- [ ] 自定义导出导出所有选中文件
+- [ ] 自定义导出 TIFF 格式正确
+- [ ] 自定义导出包含 JSON 预设选项
+- [ ] 设置面板可配置下载目录
+- [ ] 移动端导出显示保存位置
+
+### 4.2 Web 部署验证
+
+- [ ] logo.png < 100KB
+- [ ] apple-touch-icon.png 存在
+- [ ] robots.txt 存在
+- [ ] 无 404 错误
+
+### 4.3 版本更新验证
+
+- [ ] package.json 版本 0.3.4
+- [ ] Cargo.toml 版本 0.3.4
+- [ ] tauri.conf.json 版本 0.3.4
+- [ ] StatusBar 版本显示 v0.3.4
+- [ ] README 版本徽章更新
+- [ ] CHANGELOG 添加 v0.3.4
+
+---
+
+## 五、执行顺序
+
+1. **M-001** → 移动端安全区域适配
+2. **E-001** → TIFF 导出性能优化（Web Worker）
+3. **E-002** → 自定义导出多文件修复
+4. **E-003** → 自定义导出 TIFF 格式修复
+5. **E-004** → 自定义导出添加 JSON 预设
+6. **F-001** → 新增设置面板
+7. **M-002** → 移动端导出路径显示优化
+8. **W-001** → Logo 压缩
+9. **W-002** → 添加 PWA 图标
+10. **W-003** → 添加 robots.txt
+11. **版本更新** → 所有版本号
+12. **文档更新** → CHANGELOG, README
+13. **Git 发布** → 提交、标签、Release
+
+---
+
+## 六、v0.3.3 优化计划完成情况
+
+| 问题编号 | 描述 | 状态 |
+|---------|------|------|
+| S-001 | 敏感文件泄露风险 | ✅ 已完成 |
+| H-009 | 移动端隐藏窗口控制按钮 | ✅ 已完成（但引入 M-001 问题） |
+| H-010 | 移动端导出状态提示 | ✅ 已完成（但提示内容需优化） |
+| H-011 | 移动端自定义导出功能 | ✅ 已完成 |
+| H-006 | CSP 配置收紧 | ✅ 已完成 |
+| M-001-B | TIFF 导出功能实现 | ✅ 已完成（但性能需优化） |
 
 ---
 
 **文档版本**：v1.0
-**创建日期**：2026-04-24
-**最后更新**：2026-04-24
+**创建日期**：2026-04-25
+**最后更新**：2026-04-25

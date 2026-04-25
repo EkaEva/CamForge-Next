@@ -54,7 +54,7 @@ function App() {
         <TitleBar />
         {/* 移动端顶部导航栏 */}
         {isMobile() && (
-          <header class="h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 md:hidden flex-shrink-0">
+          <header class="h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 md:hidden flex-shrink-0" style={{ 'padding-top': 'env(safe-area-inset-top)', 'min-height': 'calc(56px + env(safe-area-inset-top))' }}>
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen())}
