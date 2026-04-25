@@ -129,6 +129,9 @@ export function Sidebar(props: SidebarProps) {
           <img
             src="/logo.png"
             alt="CamForge"
+            width="40"
+            height="40"
+            decoding="async"
             class="h-10 w-auto transition-transform duration-200 hover:scale-110 hover:rotate-6 active:scale-95 active:rotate-0"
           />
         </a>

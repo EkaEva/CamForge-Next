@@ -126,8 +126,8 @@ export function setDownloadDir(dir: string) {
 // 导出
 export function useTheme() {
   return {
-    theme: theme(),
-    isDark: isDark(),
+    theme: theme,
+    isDark: isDark,
     toggleTheme,
     setThemeMode,
   };
@@ -135,7 +135,7 @@ export function useTheme() {
 
 export function useExportSettings() {
   return {
-    settings: exportSettings(),
+    settings: exportSettings,
     updateSettings: updateExportSettings,
     getDownloadDir,
     setDownloadDir,

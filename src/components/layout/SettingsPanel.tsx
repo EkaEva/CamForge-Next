@@ -171,7 +171,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 onClick={() => setThemeMode('light')}
                 classList={{
                   'px-4 py-2 rounded-lg text-sm transition-colors': true,
-                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': theme === 'light',
+                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': theme() === 'light',
                   'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': theme !== 'light',
                 }}
               >
@@ -182,7 +182,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 onClick={() => setThemeMode('dark')}
                 classList={{
                   'px-4 py-2 rounded-lg text-sm transition-colors': true,
-                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': theme === 'dark',
+                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': theme() === 'dark',
                   'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': theme !== 'dark',
                 }}
               >
@@ -193,8 +193,8 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 onClick={() => setThemeMode('system')}
                 classList={{
                   'px-4 py-2 rounded-lg text-sm transition-colors': true,
-                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': theme === 'system',
-                  'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': theme !== 'system',
+                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': theme() === 'system',
+                  'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': theme() !== 'system',
                 }}
               >
                 {currentT.settings.themeSystem}
@@ -214,7 +214,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 {currentT.settings.defaultDpi}
               </label>
               <select
-                value={settings.defaultDpi}
+                value={settings().defaultDpi}
                 onChange={(e) => updateSettings({ defaultDpi: parseInt(e.currentTarget.value) })}
                 class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
               >
@@ -230,7 +230,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 {currentT.settings.defaultFormat}
               </label>
               <select
-                value={settings.defaultFormat}
+                value={settings().defaultFormat}
                 onChange={(e) => updateSettings({ defaultFormat: e.currentTarget.value as 'png' | 'tiff' | 'svg' })}
                 class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
               >
@@ -249,7 +249,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 <div class="flex gap-2">
                   <input
                     type="text"
-                    value={settings.downloadDir}
+                    value={settings().downloadDir}
                     readonly
                     placeholder={currentT.settings.downloadDirPlaceholder}
                     class="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
@@ -262,7 +262,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
                   >
                     {selectingDir() ? '...' : currentT.settings.select}
                   </button>
-                  <Show when={settings.downloadDir}>
+                  <Show when={settings().downloadDir}>
                     <button
                       type="button"
                       onClick={handleClearDir}

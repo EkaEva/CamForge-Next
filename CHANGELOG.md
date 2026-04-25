@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.7] - 2026-04-25
+
+### Fixed
+
+- **P-005**：设置面板下载目录输入框现在正确显示已配置的路径
+  - 修复 `useExportSettings()` 返回静态值而非响应式 signal 的问题
+  - 选择目录后输入框立即更新显示
+
+- **P-006**：暗色主题现在正确应用于整个界面
+  - 修复 Tailwind v4 `dark:` 变体配置（添加 `@custom-variant dark`）
+  - 修复 `useTheme()` 返回静态值而非响应式 signal，导致主题切换无响应
+  - 修复 `body` 背景色在暗色模式下不变化
+  - 设置面板 Light/Dark 按钮现在正确响应点击
+
+- **P-007**：Logo 和 apple-touch-icon 图片体积优化
+  - `logo.png`：972KB → 16KB（98% 压缩），1080×1080 → 128×128
+  - `apple-touch-icon.png`：972KB → 45KB，优化至 180×180
+  - 添加 `width`/`height`/`decoding` 属性优化加载
+
+[0.3.7]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.6...v0.3.7
+
 ## [0.3.6] - 2026-04-25
 
 ### Fixed
