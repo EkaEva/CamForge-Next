@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **M-001**：移动端安全区域适配
   - 移动端 header 添加 `env(safe-area-inset-top)` 适配系统状态栏
   - 解决侧边栏展开按钮进入状态栏区域的问题
+  - 侧边栏添加 `padding-top: env(safe-area-inset-top)` 防止遮挡状态栏
 
 - **E-001**：TIFF 导出性能优化
   - 重构 `src/exporters/tiff.ts` 使用异步分块处理
@@ -29,10 +30,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Toast 消息显示"已保存到下载目录"
   - 延长显示时间到 5 秒
 
+- **E-005**：导出 Tab 卡死修复
+  - 修复点击导出 Tab 导致应用卡死的问题
+  - 修复 `currentLang` 未定义导致的运行时错误
+  - 重构导出按钮组件避免响应式追踪问题
+
+- **F-002**：设置面板点击无反应修复
+  - 使用 `<Show when={...}>` 替代 `if (!props.isOpen) return null`
+
+- **E-006**：GIF 勾选栏大小不一致修复
+  - 统一 checkbox 尺寸为 `w-5 h-5`
+
 ### Added
 
-- **E-004**：自定义导出添加 JSON 预设选项
-  - 数据导出部分新增"预设 (JSON)"选项
+- **E-004**：自定义导出添加 JSON 配置选项
+  - 数据导出部分新增"配置 (JSON)"选项
 
 - **F-001**：新增设置面板
   - 新增 `src/components/layout/SettingsPanel.tsx` 设置面板组件
@@ -52,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 自定义导出默认格式从 PNG 改为 TIFF
 - 自定义导出数据部分布局改为 2x4 网格
+- "预设 (JSON)" 改为 "配置 (JSON)"
 
 ---
 

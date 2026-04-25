@@ -50,10 +50,9 @@ export function SettingsPanel(props: SettingsPanelProps) {
     updateSettings({ downloadDir: '' });
   };
 
-  if (!props.isOpen) return null;
-
   return (
-    <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <Show when={props.isOpen}>
+      <div class="fixed inset-0 z-50 flex items-center justify-center">
       {/* 遮罩层 */}
       <div
         class="absolute inset-0 bg-black/50"
@@ -231,6 +230,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </Show>
   );
 }

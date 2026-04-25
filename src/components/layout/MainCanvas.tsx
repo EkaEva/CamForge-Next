@@ -146,18 +146,43 @@ export function MainCanvas() {
     ),
   };
 
-  const exportItems = () => [
-    { id: 'motion_tiff', label: t().export.items.motion, icon: icons.chart },
-    { id: 'curvature_tiff', label: t().export.items.curvature, icon: icons.curvature },
-    { id: 'pressure_tiff', label: t().export.items.pressure, icon: icons.angle },
-    { id: 'profile_tiff', label: t().export.items.profile, icon: icons.profile },
-    { id: 'animation_gif', label: t().export.items.animation, icon: icons.animation },
-    { id: 'csv', label: 'CSV', icon: icons.csv },
-    { id: 'excel', label: 'Excel', icon: icons.excel },
-    { id: 'svg', label: 'SVG', icon: icons.svg },
-    { id: 'dxf', label: 'DXF', icon: icons.dxf },
-    { id: 'preset', label: t().export.items.preset, icon: icons.preset },
-  ];
+  // 导出按钮组件
+  const ExportButton = (props: { id: string; icon: JSX.Element; label: string }) => {
+    const isExportingThis = () => exporting() === props.id;
+    const isExportingOther = () => exporting() !== null && exporting() !== props.id;
+    const isIdle = () => exporting() === null;
+
+    return (
+      <button
+        type="button"
+        onClick={() => handleExport(props.id)}
+        disabled={exporting() !== null}
+        classList={{
+          'flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 group': true,
+          'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105 hover:shadow-md active:scale-95 cursor-pointer': isIdle(),
+          'bg-blue-100 dark:bg-blue-900/30 scale-105 shadow-md cursor-wait': isExportingThis(),
+          'bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed': isExportingOther(),
+        }}
+      >
+        <span
+          class="mb-1 transition-all duration-200"
+          classList={{
+            'text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:scale-110': isIdle(),
+            'text-blue-500 dark:text-blue-400 animate-bounce': isExportingThis(),
+            'text-gray-500 dark:text-gray-400': isExportingOther(),
+          }}
+        >{props.icon}</span>
+        <span
+          class="text-xs text-center transition-colors duration-200"
+          classList={{
+            'text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400': isIdle(),
+            'text-blue-500 dark:text-blue-400': isExportingThis(),
+            'text-gray-500 dark:text-gray-400': isExportingOther(),
+          }}
+        >{props.label}</span>
+      </button>
+    );
+  };
 
   const handleExport = async (id: string) => {
     const data = simulationData();
@@ -289,7 +314,7 @@ export function MainCanvas() {
     const startTime = Date.now();
     const minDuration = 300;
     const exportedFiles: string[] = [];
-    let savedPath = '';
+    let saveDir = ''; // 保存目录路径
 
     try {
       const charts = customExportCharts();
@@ -311,7 +336,7 @@ export function MainCanvas() {
           setExporting(null);
           return;
         }
-        savedPath = selectedDir as string;
+        saveDir = selectedDir as string;
       }
 
       const chartTypes: ('motion' | 'pressure' | 'curvature' | 'profile')[] = [];
@@ -330,16 +355,13 @@ export function MainCanvas() {
 
         if (format === 'svg') {
           const content = generateSVG();
-          const result = await saveFile(content, `${filename}.svg`, 'image/svg+xml', { saveDir: savedPath });
-          if (result.success && result.path) savedPath = result.path;
+          await saveFile(content, `${filename}.svg`, 'image/svg+xml', { saveDir });
         } else if (format === 'tiff') {
           const blob = await generateRealTIFF(type, currentLang, dpi);
-          const result = await saveFile(blob, `${filename}.tiff`, 'image/tiff', { saveDir: savedPath });
-          if (result.success && result.path) savedPath = result.path;
+          await saveFile(blob, `${filename}.tiff`, 'image/tiff', { saveDir });
         } else {
           const blob = await generateHighResPNG(type, currentLang, dpi);
-          const result = await saveFile(blob, `${filename}.png`, 'image/png', { saveDir: savedPath });
-          if (result.success && result.path) savedPath = result.path;
+          await saveFile(blob, `${filename}.png`, 'image/png', { saveDir });
         }
 
         exportedFiles.push(filename);
@@ -355,12 +377,10 @@ export function MainCanvas() {
           const blob = await generateGIF(currentLang, (progress) => {
             setExportProgress(Math.round(((currentItem + progress) / totalItems) * 100));
           }, animDpi);
-          const result = await saveFile(blob, `${filename}.gif`, 'image/gif', { saveDir: savedPath });
-          if (result.success && result.path) savedPath = result.path;
+          await saveFile(blob, `${filename}.gif`, 'image/gif', { saveDir });
         } else {
           const blob = await generateHighResPNG('profile', currentLang, animDpi);
-          const result = await saveFile(blob, `${filename}.png`, 'image/png', { saveDir: savedPath });
-          if (result.success && result.path) savedPath = result.path;
+          await saveFile(blob, `${filename}.png`, 'image/png', { saveDir });
         }
 
         exportedFiles.push(filename);
@@ -373,8 +393,7 @@ export function MainCanvas() {
         setExportStatus({ type: 'exporting', message: `${currentLang === 'zh' ? '正在导出' : 'Exporting'} ${filename}...` });
         const content = generateCSV(currentLang);
         const bom = '﻿';
-        const result = await saveFile(bom + content, `${filename}.csv`, 'text/csv;charset=utf-8', { saveDir: savedPath });
-        if (result.success && result.path) savedPath = result.path;
+        await saveFile(bom + content, `${filename}.csv`, 'text/csv;charset=utf-8', { saveDir });
         exportedFiles.push(filename);
         currentItem++;
       }
@@ -383,8 +402,7 @@ export function MainCanvas() {
         const filename = getExportFilename('excel', currentLang);
         setExportStatus({ type: 'exporting', message: `${currentLang === 'zh' ? '正在导出' : 'Exporting'} ${filename}...` });
         const blob = generateExcel(currentLang);
-        const result = await saveFile(blob, `${filename}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', { saveDir: savedPath });
-        if (result.success && result.path) savedPath = result.path;
+        await saveFile(blob, `${filename}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', { saveDir });
         exportedFiles.push(filename);
         currentItem++;
       }
@@ -393,8 +411,7 @@ export function MainCanvas() {
         const filename = getExportFilename('dxf', currentLang);
         setExportStatus({ type: 'exporting', message: `${currentLang === 'zh' ? '正在导出' : 'Exporting'} ${filename}...` });
         const content = generateDXF(true);
-        const result = await saveFile(content, `${filename}.dxf`, 'application/dxf', { saveDir: savedPath });
-        if (result.success && result.path) savedPath = result.path;
+        await saveFile(content, `${filename}.dxf`, 'application/dxf', { saveDir });
         exportedFiles.push(filename);
         currentItem++;
       }
@@ -403,14 +420,13 @@ export function MainCanvas() {
         const filename = getExportFilename('preset', currentLang);
         setExportStatus({ type: 'exporting', message: `${currentLang === 'zh' ? '正在导出' : 'Exporting'} ${filename}...` });
         const content = generatePresetJSON();
-        const result = await saveFile(content, `${filename}.json`, 'application/json', { saveDir: savedPath });
-        if (result.success && result.path) savedPath = result.path;
+        await saveFile(content, `${filename}.json`, 'application/json', { saveDir });
         exportedFiles.push(filename);
         currentItem++;
       }
 
       setExportProgress(100);
-      const pathInfo = savedPath ? ` → ${savedPath}` : '';
+      const pathInfo = saveDir ? ` → ${saveDir}` : '';
       setExportStatus({
         type: 'success',
         message: currentLang === 'zh' ? `已导出 ${exportedFiles.length} 个文件${pathInfo}` : `Exported ${exportedFiles.length} files${pathInfo}`,
@@ -685,44 +701,16 @@ export function MainCanvas() {
                       {t().export.quickExport}
                     </h2>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
-                      <For each={exportItems()}>
-                        {(item) => {
-                          const isExportingThis = () => exporting() === item.id;
-                          const isExportingOther = () => exporting() !== null && exporting() !== item.id;
-                          const isIdle = () => exporting() === null;
-
-                          return (
-                            <button
-                              type="button"
-                              onClick={() => handleExport(item.id)}
-                              disabled={exporting() !== null}
-                              classList={{
-                                'flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 group': true,
-                                'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105 hover:shadow-md active:scale-95 cursor-pointer': isIdle(),
-                                'bg-blue-100 dark:bg-blue-900/30 scale-105 shadow-md cursor-wait': isExportingThis(),
-                                'bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed': isExportingOther(),
-                              }}
-                            >
-                              <span
-                                class="mb-1 transition-all duration-200"
-                                classList={{
-                                  'text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:scale-110': isIdle(),
-                                  'text-blue-500 dark:text-blue-400 animate-bounce': isExportingThis(),
-                                  'text-gray-500 dark:text-gray-400': isExportingOther(),
-                                }}
-                              >{item.icon}</span>
-                              <span
-                                class="text-xs text-center transition-colors duration-200"
-                                classList={{
-                                  'text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400': isIdle(),
-                                  'text-blue-500 dark:text-blue-400': isExportingThis(),
-                                  'text-gray-500 dark:text-gray-400': isExportingOther(),
-                                }}
-                              >{item.label}</span>
-                            </button>
-                          );
-                        }}
-                      </For>
+                      <ExportButton id="motion_tiff" icon={icons.chart} label={t().export.items.motion} />
+                      <ExportButton id="curvature_tiff" icon={icons.curvature} label={t().export.items.curvature} />
+                      <ExportButton id="pressure_tiff" icon={icons.angle} label={t().export.items.pressure} />
+                      <ExportButton id="profile_tiff" icon={icons.profile} label={t().export.items.profile} />
+                      <ExportButton id="animation_gif" icon={icons.animation} label={t().export.items.animation} />
+                      <ExportButton id="csv" icon={icons.csv} label="CSV" />
+                      <ExportButton id="excel" icon={icons.excel} label="Excel" />
+                      <ExportButton id="svg" icon={icons.svg} label="SVG" />
+                      <ExportButton id="dxf" icon={icons.dxf} label="DXF" />
+                      <ExportButton id="preset" icon={icons.preset} label={t().export.items.preset} />
                     </div>
                     <Show when={exporting() === 'animation_gif' && exportProgress() > 0}>
                       <div class="mt-4">
@@ -840,7 +828,7 @@ export function MainCanvas() {
                       </div>
                       <div class="mt-4">
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportAnimation()} onChange={(e) => setCustomExportAnimation(e.currentTarget.checked)} class="accent-blue-500" />
+                          <input type="checkbox" checked={customExportAnimation()} onChange={(e) => setCustomExportAnimation(e.currentTarget.checked)} class="accent-blue-500 w-5 h-5" />
                           {t().export.exportAnimation}
                         </label>
                       </div>
@@ -866,7 +854,7 @@ export function MainCanvas() {
                         </label>
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
                           <input type="checkbox" checked={customExportData().preset} onChange={(e) => setCustomExportData({ ...customExportData(), preset: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
-                          {currentLang === 'zh' ? '预设 (JSON)' : 'Preset (JSON)'}
+                          {lang === 'zh' ? '配置 (JSON)' : 'Config (JSON)'}
                         </label>
                       </div>
                     </div>

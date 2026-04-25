@@ -119,7 +119,7 @@ export function Sidebar(props: SidebarProps) {
   };
 
   return (
-    <aside class={sidebarClass()}>
+    <aside class={sidebarClass()} style={props.isMobile ? { 'padding-top': 'env(safe-area-inset-top)' } : undefined}>
       {/* Logo */}
       <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 flex items-center gap-3">
         <a
