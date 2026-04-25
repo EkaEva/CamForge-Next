@@ -334,9 +334,6 @@ export const en = {
     select: 'Select',
     clear: 'Clear',
   },
-    aboutDesc: 'Modern cam mechanism kinematics simulator, built with Tauri + Solid.js',
-    techStack: 'Tech Stack: ',
-  },
   info: {
     angle: 'Angle',
     displacement: 'Displacement',
