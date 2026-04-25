@@ -1,10 +1,14 @@
 import { createSignal, onMount, onCleanup, Show } from 'solid-js';
+import { isMobilePlatform } from '../../utils/platform';
 
 export function TitleBar() {
   const [maximized, setMaximized] = createSignal(false);
 
   // 直接检测 Tauri 环境（同步）
   const isTauriEnv = typeof window !== 'undefined' && '__TAURI__' in window;
+
+  // 检测是否为移动端平台（Android/iOS）
+  const isMobile = isMobilePlatform();
 
   onMount(async () => {
     if (!isTauriEnv) return;
@@ -57,8 +61,9 @@ export function TitleBar() {
     }
   };
 
-  // 非 Tauri 环境不显示标题栏
-  if (!isTauriEnv) {
+  // 非 Tauri 环境或移动端平台不显示标题栏
+  // 移动端使用系统原生导航，不需要自定义窗口控制按钮
+  if (!isTauriEnv || isMobile) {
     return null;
   }
 

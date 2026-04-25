@@ -1,6 +1,7 @@
 import { onMount, onCleanup, createSignal } from 'solid-js';
 import { TitleBar, Sidebar, MainCanvas, StatusBar } from './components/layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ToastContainer } from './components/ui/Toast';
 import { initTheme } from './stores/settings';
 import { undoParams, redoParams, canUndo, canRedo } from './stores/simulation';
 import './index.css';
@@ -108,6 +109,8 @@ function App() {
           <MainCanvas />
         </div>
         <StatusBar />
+        {/* Toast 通知容器 */}
+        <ToastContainer />
       </div>
     </ErrorBoundary>
   );

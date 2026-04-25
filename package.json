@@ -1,6 +1,6 @@
 {
   "name": "camforge-next",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Cam mechanism kinematics simulator - Tauri v2 + SolidJS desktop application with mobile support",
   "type": "module",
   "scripts": {
@@ -25,6 +25,7 @@
     "@tauri-apps/plugin-opener": "^2",
     "gif.js": "^0.2.0",
     "solid-js": "^1.9.3",
+    "utif2": "^4.1.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

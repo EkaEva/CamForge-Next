@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-04-25
+
+### Fixed
+
+- **H-009**：移动端隐藏窗口控制按钮
+  - 新增 `src/utils/platform.ts` 平台检测工具函数
+  - TitleBar 组件在移动端平台（Android/iOS）自动隐藏
+- **H-010**：移动端导出状态提示优化
+  - 新增 `src/components/ui/Toast.tsx` Toast 通知组件
+  - 移动端导出成功后显示 Toast 提示
+- **H-011**：移动端自定义导出功能修复
+  - 移动端点击自定义导出显示提示而非报错
+- **H-006**：CSP 配置收紧
+  - 移除 `localhost:*/` 通配符，改为明确端口
+
+### Added
+
+- **M-001-B**：TIFF 导出功能实现
+  - 新增 `utif2` 依赖库
+  - 新增 `src/exporters/tiff.ts` TIFF 编码模块
+  - 支持 LZW 无损压缩和 DPI 元数据
+  - 快速导出 TIFF 格式现在输出真正的 TIFF 文件
+
+### Security
+
+- **S-001**：敏感文件泄露风险修复
+  - `.gitignore` 添加 `*.jks`、`*.keystore`、`*.ks` 模式
+
+---
+
 ## [0.3.2] - 2026-04-24
 
 ### Added
@@ -307,6 +337,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.3.3]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/EkaEva/CamForge-Next/compare/v0.2.2...v0.3.0

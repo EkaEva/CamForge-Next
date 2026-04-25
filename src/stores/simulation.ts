@@ -8,7 +8,7 @@ import { arrayMax, arrayMin, arrayMaxBy, arrayMinBy, filterFinite, findIndex } f
 import { isTauriEnv, invokeTauri } from '../utils/tauri';
 import { generateGifAsync, terminateGifWorker } from '../services/gifEncoder';
 import { createHistory, type HistoryActions } from './history';
-import { generateDXF as generateDXFCore, generateCSV as generateCSVCore, generateExcel as generateExcelCore } from '../exporters';
+import { generateDXF as generateDXFCore, generateCSV as generateCSVCore, generateExcel as generateExcelCore, generateTIFFBlob } from '../exporters';
 import { getApi } from '../api';
 
 // 检查是否在 Tauri 环境中
@@ -971,8 +971,58 @@ export function generateHighResPNG(
   });
 }
 
-// 保持向后兼容的别名
+// 保持向后兼容的别名（PNG 格式）
 export const generateTIFF = generateHighResPNG;
+
+// 生成真正的 TIFF 格式图像
+export async function generateRealTIFF(
+  type: 'motion' | 'curvature' | 'pressure' | 'profile',
+  lang: string,
+  customDpi?: number
+): Promise<Blob> {
+  const data = simulationData();
+  const p = params();
+  if (!data) {
+    return new Blob();
+  }
+
+  // DPI 上限保护
+  const MAX_DPI = 600;
+  const dpi = Math.min(customDpi || 600, MAX_DPI);
+  const width = type === 'profile' ? 6 * dpi : 8 * dpi;
+  const height = type === 'profile' ? 6 * dpi : 5 * dpi;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+
+  const options: ChartDrawOptions = {
+    width,
+    height,
+    isDark: false,
+    lang,
+    dpi
+  };
+
+  switch (type) {
+    case 'motion':
+      drawMotionCurves(ctx, data, options);
+      break;
+    case 'pressure':
+      drawPressureAngleChart(ctx, data, p, options);
+      break;
+    case 'curvature':
+      drawCurvatureChart(ctx, data, p, options);
+      break;
+    case 'profile':
+      drawCamProfileChart(ctx, data, p, options);
+      break;
+  }
+
+  // 使用 TIFF 编码
+  return generateTIFFBlob(canvas, dpi);
+}
 
 // 生成 GIF 动画（异步，使用 Web Worker 避免阻塞主线程）
 export async function generateGIF(

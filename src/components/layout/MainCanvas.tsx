@@ -1,8 +1,10 @@
 import { createSignal, Show, Switch, Match, For, createEffect, onCleanup } from 'solid-js';
-import { simulationData, isLoading, lastRunTime, paramsChanged, validationErrors, params, generateDXF, generateCSV, generateSVG, generateHighResPNG, generateGIF, generatePresetJSON, generateExcel, saveFile, getCurrentLang, getExportFilename, exportStatus, setExportStatus, paramsUpdated, setParamsUpdated } from '../../stores/simulation';
+import { simulationData, isLoading, lastRunTime, paramsChanged, validationErrors, params, generateDXF, generateCSV, generateSVG, generateHighResPNG, generateRealTIFF, generateGIF, generatePresetJSON, generateExcel, saveFile, getCurrentLang, getExportFilename, exportStatus, setExportStatus, paramsUpdated, setParamsUpdated } from '../../stores/simulation';
 import { t } from '../../i18n';
 import { CamAnimation } from '../animation';
 import { MotionCurves, GeometryChart, CurvatureChart } from '../charts';
+import { showToast } from '../ui/Toast';
+import { isMobilePlatform } from '../../utils/platform';
 
 type Tab = 'animation' | 'motion' | 'geometry' | 'curvature' | 'export' | 'help';
 
@@ -178,23 +180,23 @@ export function MainCanvas() {
 
       switch (id) {
         case 'motion_tiff': {
-          const blob = await generateHighResPNG('motion', lang);
-          result = await saveFile(blob, `${filename}.png`, 'image/png');
+          const blob = await generateRealTIFF('motion', lang);
+          result = await saveFile(blob, `${filename}.tiff`, 'image/tiff');
           break;
         }
         case 'curvature_tiff': {
-          const blob = await generateHighResPNG('curvature', lang);
-          result = await saveFile(blob, `${filename}.png`, 'image/png');
+          const blob = await generateRealTIFF('curvature', lang);
+          result = await saveFile(blob, `${filename}.tiff`, 'image/tiff');
           break;
         }
         case 'pressure_tiff': {
-          const blob = await generateHighResPNG('pressure', lang);
-          result = await saveFile(blob, `${filename}.png`, 'image/png');
+          const blob = await generateRealTIFF('pressure', lang);
+          result = await saveFile(blob, `${filename}.tiff`, 'image/tiff');
           break;
         }
         case 'profile_tiff': {
-          const blob = await generateHighResPNG('profile', lang);
-          result = await saveFile(blob, `${filename}.png`, 'image/png');
+          const blob = await generateRealTIFF('profile', lang);
+          result = await saveFile(blob, `${filename}.tiff`, 'image/tiff');
           break;
         }
         case 'animation_gif': {
@@ -235,8 +237,19 @@ export function MainCanvas() {
       if (result.success) {
         const pathInfo = result.path ? ` → ${result.path}` : '';
         setExportStatus({ type: 'success', message: `${t().export.exported}: ${filename}${pathInfo}`, files: [filename] });
+        // 移动端显示 Toast 通知
+        if (isMobilePlatform()) {
+          const toastMsg = result.path
+            ? `${t().export.exported}: ${filename}`
+            : `${t().export.exported}: ${filename}`;
+          showToast(toastMsg, 'success', 4000);
+        }
       } else if (result.error !== 'Cancelled') {
         setExportStatus({ type: 'error', message: `${t().export.exportFailed}: ${result.error}` });
+        // 移动端显示错误 Toast
+        if (isMobilePlatform()) {
+          showToast(`${t().export.exportFailed}`, 'error', 4000);
+        }
       }
     } catch (e) {
       console.error('Export error:', e);
@@ -255,6 +268,17 @@ export function MainCanvas() {
   const handleCustomExport = async () => {
     const data = simulationData();
     if (!data) return;
+
+    // 移动端不支持自定义导出（Tauri 文件对话框不可用）
+    if (isMobilePlatform()) {
+      const currentLang = getCurrentLang();
+      showToast(
+        currentLang === 'zh' ? '自定义导出仅支持桌面端' : 'Custom export is only available on desktop',
+        'info',
+        4000
+      );
+      return;
+    }
 
     setExporting('custom');
     setExportProgress(0);
@@ -376,9 +400,20 @@ export function MainCanvas() {
         message: currentLang === 'zh' ? `已导出 ${exportedFiles.length} 个文件${pathInfo}` : `Exported ${exportedFiles.length} files${pathInfo}`,
         files: exportedFiles
       });
+      // 移动端显示 Toast 通知
+      if (isMobilePlatform()) {
+        const toastMsg = currentLang === 'zh'
+          ? `已导出 ${exportedFiles.length} 个文件`
+          : `Exported ${exportedFiles.length} files`;
+        showToast(toastMsg, 'success', 4000);
+      }
     } catch (e) {
       console.error('Custom export error:', e);
       setExportStatus({ type: 'error', message: currentLang === 'zh' ? `导出失败: ${e}` : `Export failed: ${e}` });
+      // 移动端显示错误 Toast
+      if (isMobilePlatform()) {
+        showToast(currentLang === 'zh' ? `导出失败` : `Export failed`, 'error', 4000);
+      }
     }
 
     const elapsed = Date.now() - startTime;

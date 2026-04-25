@@ -33,3 +33,9 @@ src-tauri/WixTools/
 # Claude
 .claude/
 target/
+
+# Android signing (敏感文件，禁止提交)
+*.jks
+*.keystore
+*.ks
+camforge-next.keystore

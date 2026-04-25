@@ -5,3 +5,4 @@
 export { generateDXF } from './dxf';
 export { generateCSV } from './csv';
 export { generateExcel } from './excel';
+export { encodeCanvasToTIFF, generateTIFFBlob } from './tiff';
