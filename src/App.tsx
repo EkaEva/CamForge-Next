@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastContainer } from './components/ui/Toast';
 import { initTheme } from './stores/settings';
 import { undoParams, redoParams, canUndo, canRedo, runSimulation } from './stores/simulation';
+import { toggleTheme, isDark } from './stores/settings';
 import { Icon } from './components/ui/Icon';
 import './index.css';
 
@@ -70,12 +71,12 @@ function App() {
               <Icon name="menu" size={24} class="text-chrome-text-active" />
             </button>
             <h1 class="ml-3 text-lg font-semibold text-chrome-text-active font-display">CamForge</h1>
-            <div class="ml-auto flex items-center gap-1">
+            <div class="ml-auto flex items-center gap-0.5">
               <button
                 type="button"
                 onClick={undoParams}
                 disabled={!canUndo()}
-                class="w-11 h-11 flex items-center justify-center rounded-lg disabled:opacity-40 active:bg-chrome-active transition-colors"
+                class="w-10 h-10 flex items-center justify-center rounded-lg disabled:opacity-30 hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
                 aria-label="撤销"
               >
                 <Icon name="undo" size={20} class="text-chrome-text" />
@@ -84,15 +85,23 @@ function App() {
                 type="button"
                 onClick={redoParams}
                 disabled={!canRedo()}
-                class="w-11 h-11 flex items-center justify-center rounded-lg disabled:opacity-40 active:bg-chrome-active transition-colors"
+                class="w-10 h-10 flex items-center justify-center rounded-lg disabled:opacity-30 hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
                 aria-label="重做"
               >
                 <Icon name="redo" size={20} class="text-chrome-text" />
               </button>
               <button
                 type="button"
+                onClick={toggleTheme}
+                class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
+                aria-label="切换主题"
+              >
+                <Icon name={isDark() ? 'light_mode' : 'dark_mode'} size={20} class="text-chrome-text" />
+              </button>
+              <button
+                type="button"
                 onClick={handleOpenSettings}
-                class="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
+                class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
                 aria-label="设置"
               >
                 <Icon name="settings" size={20} class="text-chrome-text" />
@@ -100,7 +109,7 @@ function App() {
               <button
                 type="button"
                 onClick={handleOpenHelp}
-                class="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
+                class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
                 aria-label="帮助"
               >
                 <Icon name="help" size={20} class="text-chrome-text" />
@@ -110,7 +119,8 @@ function App() {
         )}
         {isMobile() && isMobileMenuOpen() && (
           <div
-            class="fixed inset-0 bg-black/50 z-40 md:hidden"
+            class="fixed inset-y-0 right-0 z-40 md:hidden"
+            style={{ left: '18rem', 'padding-top': 'env(safe-area-inset-top)' }}
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}

@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-04-28
+
+### Fixed
+
+- **移动端侧边栏关闭**：侧边栏展开时占据大部分屏幕，右侧留出空白区域，点击空白区域即可关闭
+  - 替换全屏半透明遮罩为右侧间隙点击区域
+  - 侧边栏宽度固定 w-72，间隙区域从侧边栏右边缘延伸至屏幕右侧
+
+- **移动端图表卡片高度**：分析卡片在移动端高度过大导致下方空白
+  - 机构模型卡片：移动端 320px / 桌面端 480px
+  - 分析卡片：移动端 min-h-280px / 桌面端 min-h-480px
+
+- **图表图例重复**：移除 Canvas 图表内的图例绘制，仅保留 HTML 图例
+  - MotionCurves、CurvatureChart、GeometryChart 的 draw() 函数不再绘制 Canvas 图例
+  - HTML 图例（MainCanvas 顶部栏）为唯一图例来源
+  - 导出图表不受影响，仍包含图例
+
+### Changed
+
+- **启动动画加速**：总时长从 2.93s 缩短至 1.8s
+  - 凸轮绘制：0.27s-1.5s → 0.15s-0.9s
+  - 标题入场：0.67s → 0.4s（阻尼 12→14）
+  - 副标题入场：1.0s → 0.6s（阻尼 14→16）
+  - 版本号入场：1.33s → 0.8s（阻尼 16→18）
+  - 曲线淡入：1.17s → 0.7s
+  - 凸轮旋转：1.5s-2.33s → 0.9s-1.4s
+  - 全局淡出：2.33s-2.93s → 1.4s-1.8s
+
+- **移动端视口缩放限制**：禁止双指缩放整个页面
+  - viewport 添加 `maximum-scale=1, user-scalable=no`
+
+- **移动端主题切换**：添加主题切换按钮到移动端头部
+
+- **移动端侧边栏样式**：侧边栏背景改为 `bg-surface-container-low`，添加 `shadow-xl`
+
 ## [0.4.0] - 2026-04-28
 
 ### Added
@@ -590,6 +625,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.4.1]: https://github.com/EkaEva/CamForge-Next/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.7...v0.4.0
 [0.3.7]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.6...v0.3.7
 [0.3.5]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.4...v0.3.5

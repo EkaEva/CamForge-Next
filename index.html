@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#3b82f6" />
     <meta name="description" content="凸轮机构运动学模拟器 - 在线凸轮机构运动学仿真工具 | Cam Mechanism Kinematics Simulator" />
     <meta name="robots" content="index,follow" />
@@ -81,7 +81,7 @@
       <div class="splash-text">
         <div class="splash-title">Cam<span class="splash-accent">Forge</span></div>
         <div class="splash-subtitle">凸轮机构运动学仿真</div>
-        <div class="splash-version">v0.4.0 · SolidJS + Tauri</div>
+        <div class="splash-version">v0.4.1 · SolidJS + Tauri</div>
       </div>
       <svg class="splash-cam-wrap" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
         <g id="splash-cam-group">
@@ -118,14 +118,14 @@
         var splash=document.getElementById('splash');
         if(!p)return;
 
-        // Remotion timeline (30fps, 90 frames = 3s):
-        // frame 8-45: cam draw (0.27s-1.5s)
-        // frame 20: title spring start (0.67s)
-        // frame 30: subtitle spring start (1.0s)
-        // frame 40: version spring start (1.33s)
-        // frame 35: curves fade in (1.17s)
-        // frame 45-70: cam rotation (1.5s-2.33s)
-        // frame 70-88: global fade out (2.33s-2.93s)
+        // Compressed timeline (~1.8s total):
+        // cam draw: 0.15s-0.9s
+        // title spring start: 0.4s
+        // subtitle spring start: 0.6s
+        // version spring start: 0.8s
+        // curves fade in: 0.7s
+        // cam rotation: 0.9s-1.4s
+        // global fade out: 1.4s-1.8s
 
         var t0=performance.now();
 
@@ -143,8 +143,8 @@
         function tick(now){
           var elapsed=now-t0;
 
-          // 1. Cam draw (progressive point reveal, matching Remotion CamPath)
-          var drawProg=Math.min(Math.max((elapsed-270)/1230,0),1); // 0.27s-1.5s
+          // 1. Cam draw (progressive point reveal)
+          var drawProg=Math.min(Math.max((elapsed-150)/750,0),1); // 0.15s-0.9s
           var visPts=Math.floor(n*drawProg);
           var d='';
           for(var i=0;i<=visPts;i++){d+=(i===0?'M ':'L ')+pts[i][0].toFixed(2)+' '+pts[i][1].toFixed(2)+' ';}
@@ -157,42 +157,42 @@
             camBase.style.transition='opacity 0.3s ease';
           }
 
-          // 3. Title spring (delay 0.67s, damping 12)
+          // 3. Title spring (delay 0.4s, damping 14)
           if(titleEl){
-            var ts=springVal(elapsed,670,12);
+            var ts=springVal(elapsed,400,14);
             titleEl.style.opacity=ts.v;
             titleEl.style.transform='translateY('+ts.y+'px)';
           }
 
-          // 4. Subtitle spring (delay 1.0s, damping 14)
+          // 4. Subtitle spring (delay 0.6s, damping 16)
           if(subEl){
-            var ss=springVal(elapsed,1000,14);
+            var ss=springVal(elapsed,600,16);
             subEl.style.opacity=ss.v;
             subEl.style.transform='translateY('+(30*(1-ss.v))+'px)';
           }
 
-          // 5. Version spring (delay 1.33s, damping 16)
+          // 5. Version spring (delay 0.8s, damping 18)
           if(verEl){
-            var vs=springVal(elapsed,1330,16);
+            var vs=springVal(elapsed,800,18);
             verEl.style.opacity=vs.v;
             verEl.style.transform='translateY('+(15*(1-vs.v))+'px)';
           }
 
-          // 6. Curves fade in (from 1.17s, target opacity 0.4)
+          // 6. Curves fade in (from 0.7s, target opacity 0.4)
           if(curvesEl){
-            var curveOp=Math.min(Math.max((elapsed-1170)/500,0),0.4);
+            var curveOp=Math.min(Math.max((elapsed-700)/300,0),0.4);
             curvesEl.style.opacity=curveOp;
           }
 
-          // 7. Cam rotation (1.5s-2.33s)
+          // 7. Cam rotation (0.9s-1.4s)
           if(camGroup&&drawProg>=1){
-            var rotProg=Math.min(Math.max((elapsed-1500)/830,0),1);
+            var rotProg=Math.min(Math.max((elapsed-900)/500,0),1);
             var rotEase=rotProg<0.5?2*rotProg*rotProg:1-Math.pow(-2*rotProg+2,2)/2;
             camGroup.setAttribute('transform','rotate('+(rotEase*360)+' 100 100)');
           }
 
-          // 8. Global fade out (2.33s-2.93s)
-          var fadeOut=Math.min(Math.max((elapsed-2330)/600,0),1);
+          // 8. Global fade out (1.4s-1.8s)
+          var fadeOut=Math.min(Math.max((elapsed-1400)/400,0),1);
           if(fadeOut>0){
             var op=1-fadeOut;
             splash.style.opacity=op;

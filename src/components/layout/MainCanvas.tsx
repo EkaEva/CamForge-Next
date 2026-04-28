@@ -638,7 +638,7 @@ export function MainCanvas(props: MainCanvasProps) {
           >
             <div class="w-full h-full overflow-auto bg-surface-container-low p-2 camforge-scrollbar">
               {/* 上方卡片：机构模型 */}
-              <section class="flex flex-col border border-outline-variant bg-surface-container-low rounded overflow-hidden h-[480px] relative">
+              <section class="flex flex-col border border-outline-variant bg-surface-container-low rounded overflow-hidden h-[320px] sm:h-[480px] relative">
                 <div class="h-10 border-b border-outline-variant flex items-center justify-between px-4 bg-surface flex-shrink-0">
                   <span class="font-display text-xs uppercase tracking-wider text-on-surface-variant">
                     {t().tabs.mechanismModel}
@@ -656,7 +656,7 @@ export function MainCanvas(props: MainCanvasProps) {
               </section>
 
               {/* 下方卡片：分析 */}
-              <section class="flex flex-col border border-outline-variant bg-surface-container-low rounded overflow-hidden min-h-[480px] mt-2 relative">
+              <section class="flex flex-col border border-outline-variant bg-surface-container-low rounded overflow-hidden min-h-[280px] sm:min-h-[480px] mt-2 relative">
                 <div class="h-10 border-b border-outline-variant flex items-center justify-between px-4 bg-surface flex-shrink-0">
                   <div class="flex items-center gap-2">
                     <button

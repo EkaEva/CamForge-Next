@@ -117,7 +117,7 @@ export function Sidebar(props: SidebarProps) {
 
   const sidebarClass = () => {
     if (props.isMobile) {
-      return `h-full bg-chrome-surface border-r border-chrome-border flex flex-col
+      return `w-72 h-full bg-surface-container-low border-r border-outline-variant flex flex-col shadow-xl
         fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out
         ${props.isOpen ? 'translate-x-0' : '-translate-x-full'}`;
     }

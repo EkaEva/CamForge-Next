@@ -251,34 +251,6 @@ export function CurvatureChart() {
       ctx.fillText(val.toFixed(1), padding.left - 5, py + 3);
     }
 
-    // 图例
-    const legendX = padding.left + 10;
-    let legendY = padding.top + 12;
-    ctx.font = '9px -apple-system, sans-serif';
-
-    ctx.strokeStyle = '#E07A5F';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.moveTo(legendX, legendY);
-    ctx.lineTo(legendX + 20, legendY);
-    ctx.stroke();
-    ctx.fillStyle = isDark ? '#FFF' : '#333';
-    ctx.textAlign = 'left';
-    ctx.fillText(currentT.chart.theoryRho, legendX + 25, legendY + 4);
-
-    if (r_r > 0 && data.rho_actual) {
-      legendY += 16;
-      ctx.strokeStyle = '#3D5A80';
-      ctx.setLineDash([4, 2]);
-      ctx.beginPath();
-      ctx.moveTo(legendX, legendY);
-      ctx.lineTo(legendX + 20, legendY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillText(currentT.chart.actualRho, legendX + 25, legendY + 4);
-    }
-
     // ===== 游标线 =====
     const cf = cursorFrame();
     if (cf >= 0 && cf < delta_deg.length) {

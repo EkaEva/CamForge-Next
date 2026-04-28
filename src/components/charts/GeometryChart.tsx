@@ -169,32 +169,6 @@ export function GeometryChart() {
       ctx.fillText(val.toFixed(0), padding.left - 5, py + 3);
     }
 
-    // 图例（两行）
-    const legendX = padding.left + 10;
-    let legendY = padding.top + 12;
-    ctx.font = '9px -apple-system, sans-serif';
-
-    ctx.strokeStyle = '#E07A5F';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.moveTo(legendX, legendY);
-    ctx.lineTo(legendX + 20, legendY);
-    ctx.stroke();
-    ctx.fillStyle = isDark ? '#FFF' : '#333';
-    ctx.textAlign = 'left';
-    ctx.fillText(currentT.chart.pressureAngle, legendX + 25, legendY + 4);
-
-    legendY += 16;
-    ctx.strokeStyle = '#C4A35A';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(legendX, legendY);
-    ctx.lineTo(legendX + 20, legendY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillText(`${currentT.chart.threshold} ${threshold}°`, legendX + 25, legendY + 4);
-
     // ===== 游标线 =====
     const cf = cursorFrame();
     if (cf >= 0 && cf < delta_deg.length) {

@@ -4,7 +4,7 @@
 
 **凸轮机构运动学模拟器 | Cam Mechanism Kinematics Simulator**
 
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/EkaEva/CamForge-Next/releases/tag/v0.4.0)
+[![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)](https://github.com/EkaEva/CamForge-Next/releases/tag/v0.4.1)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24c8db.svg)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-1.9-4f88c6.svg)](https://solidjs.com)
@@ -235,6 +235,10 @@ camforge-next/
 - [x] Material Design 3 设计系统重构
 - [x] 专业色板与图例交互
 - [x] 启动动画（Remotion 设计 + JS 驱动）
+- [x] 移动端侧边栏间隙关闭机制
+- [x] 移动端图表卡片响应式高度
+- [x] 图表图例去重（Canvas 图例移除，仅保留 HTML 图例）
+- [x] 启动动画加速（2.93s → 1.8s）
 - [ ] 凸轮机构优化算法
 - [ ] 更多从动件类型（平底、摆动）
 
