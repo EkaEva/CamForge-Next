@@ -11,7 +11,7 @@ interface SelectProps {
   value: number;
   options: SelectOption[];
   onChange: (value: number) => void;
-  onValidate?: (value: number) => boolean; // 全局校验回调，返回 true 表示校验通过
+  onValidate?: (value: number) => boolean;
 }
 
 export function Select(props: SelectProps) {
@@ -20,30 +20,28 @@ export function Select(props: SelectProps) {
     const newValue = parseInt(target.value, 10);
     props.onChange(newValue);
 
-    // 选择后触发校验和模拟
     if (props.onValidate) {
       props.onValidate(newValue);
     }
   };
 
-  // 使用函数形式，每次渲染时重新计算
   const getOptionLabel = (option: SelectOption): string => {
     return language() === 'zh' && option.labelZh ? option.labelZh : option.label;
   };
 
   return (
     <div class="flex flex-col space-y-1">
-      <label class="text-xs text-gray-500 dark:text-gray-400" id={`${props.label}-label`}>
+      <label class="font-display text-xs uppercase tracking-wider text-on-surface-variant" id={`${props.label}-label`}>
         {props.label}
       </label>
       <select
         value={props.value}
         onChange={handleChange}
         aria-labelledby={`${props.label}-label`}
-        class="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white appearance-none cursor-pointer"
+        class="w-full px-2 py-1.5 text-sm bg-surface-container border border-outline-variant rounded-md hover:border-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-on-surface font-display appearance-none cursor-pointer transition-colors"
       >
         {props.options.map((option) => (
-          <option value={option.value} class="bg-white dark:bg-gray-800">
+          <option value={option.value} class="bg-surface-container-lowest">
             {getOptionLabel(option)}
           </option>
         ))}

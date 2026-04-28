@@ -1,47 +1,35 @@
+import type { JSX } from 'solid-js';
+
 interface ToggleProps {
   label: string;
-  checked: boolean | (() => boolean);
-  onChange: (checked: boolean) => void;
+  checked: () => boolean;
+  onChange: (val: boolean) => void;
 }
 
-export function Toggle(props: ToggleProps) {
-  const getChecked = () => typeof props.checked === 'function' ? props.checked() : props.checked;
-
-  const handleClick = () => {
-    props.onChange(!getChecked());
-  };
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === ' ' || e.key === 'Enter') {
-      e.preventDefault();
-      props.onChange(!getChecked());
-    }
-  };
-
+export function Toggle(props: ToggleProps): JSX.Element {
   return (
-    <div class="flex items-center justify-between py-1.5 cursor-pointer min-h-[44px]" onClick={handleClick}>
-      <span class="text-xs text-gray-600 dark:text-gray-300">
-        {props.label}
-      </span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={getChecked()}
-        tabindex="0"
-        onKeyDown={handleKeyDown}
-        classList={{
-          'relative w-12 h-7 rounded-full transition-colors cursor-pointer border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation': true,
-          'bg-blue-500': getChecked(),
-          'bg-gray-300 dark:bg-gray-600': !getChecked(),
-        }}
-      >
-        <span
-          classList={{
-            'absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow transition-transform': true,
-            'translate-x-5': getChecked(),
+    <div class="group flex items-center justify-between py-1">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={props.checked()}
+          onClick={() => props.onChange(!props.checked())}
+          class="relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ease-out flex-shrink-0 active:scale-95 group-hover:shadow-md"
+          style={{
+            'background-color': props.checked() ? 'var(--on-surface-variant)' : 'var(--surface-container-highest)',
           }}
-        />
-      </button>
+        >
+          <span
+            class="inline-block h-3.5 w-3.5 rounded-full transition-all duration-300 ease-out shadow-sm group-hover:shadow-md group-hover:scale-110"
+            style={{
+              'background-color': 'var(--surface-container-lowest)',
+              transform: props.checked() ? 'translateX(1.25rem) scale(0.85)' : 'translateX(0.125rem) scale(1)',
+            }}
+          />
+        </button>
+        <span class="text-xs transition-all duration-300 group-hover:translate-x-0.5" style={{ color: 'var(--on-surface-variant)' }}>{props.label}</span>
+      </div>
     </div>
   );
 }

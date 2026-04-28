@@ -1,9 +1,12 @@
 import { onMount, onCleanup, createEffect, Show } from 'solid-js';
-import { simulationData, params } from '../../stores/simulation';
+import { simulationData, params, cursorFrame, setCursorFrame } from '../../stores/simulation';
+import { isDark as isDarkSignal } from '../../stores/settings';
 import { t } from '../../i18n';
 
 export function GeometryChart() {
   let canvasRef: HTMLCanvasElement | undefined;
+  let isDragging = false;
+  let hoverFrame = -1;
 
   const draw = () => {
     const data = simulationData();
@@ -40,7 +43,7 @@ export function GeometryChart() {
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
-    const isDark = document.documentElement.classList.contains('dark');
+    const isDark = isDarkSignal();
     ctx.fillStyle = isDark ? '#1C1C1E' : '#FFFFFF';
     ctx.fillRect(0, 0, width, height);
 
@@ -92,7 +95,7 @@ export function GeometryChart() {
     const alphaMax = Math.max(...alpha_all.map(Math.abs), threshold) * 1.15;
 
     // 压力角阈值线（橙色虚线）
-    ctx.strokeStyle = '#F59E0B';
+    ctx.strokeStyle = '#C4A35A';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
     const thresholdY1 = padding.top + (1 - threshold / alphaMax) * chartHeight;
@@ -103,7 +106,7 @@ export function GeometryChart() {
     ctx.setLineDash([]);
 
     // 压力角曲线（红色实线）
-    ctx.strokeStyle = '#DC2626';
+    ctx.strokeStyle = '#E07A5F';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([]);
     ctx.beginPath();
@@ -116,7 +119,7 @@ export function GeometryChart() {
     ctx.stroke();
 
     // 标记超限点
-    ctx.fillStyle = '#EF4444';
+    ctx.fillStyle = '#D4534B';
     for (let i = 0; i < alpha_all.length; i++) {
       if (Math.abs(alpha_all[i]) > threshold) {
         const px = padding.left + (delta_deg[i] / 360) * chartWidth;
@@ -149,7 +152,7 @@ export function GeometryChart() {
     }
 
     // 左侧Y轴 - 压力角α（红色）
-    ctx.fillStyle = '#DC2626';
+    ctx.fillStyle = '#E07A5F';
     ctx.textAlign = 'center';
     ctx.save();
     ctx.translate(16, padding.top + chartHeight / 2);
@@ -171,7 +174,7 @@ export function GeometryChart() {
     let legendY = padding.top + 12;
     ctx.font = '9px -apple-system, sans-serif';
 
-    ctx.strokeStyle = '#DC2626';
+    ctx.strokeStyle = '#E07A5F';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([]);
     ctx.beginPath();
@@ -183,7 +186,7 @@ export function GeometryChart() {
     ctx.fillText(currentT.chart.pressureAngle, legendX + 25, legendY + 4);
 
     legendY += 16;
-    ctx.strokeStyle = '#F59E0B';
+    ctx.strokeStyle = '#C4A35A';
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(legendX, legendY);
@@ -191,10 +194,170 @@ export function GeometryChart() {
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillText(`${currentT.chart.threshold} ${threshold}°`, legendX + 25, legendY + 4);
+
+    // ===== 游标线 =====
+    const cf = cursorFrame();
+    if (cf >= 0 && cf < delta_deg.length) {
+      const cursorX = padding.left + (delta_deg[cf] / 360) * chartWidth;
+
+      ctx.strokeStyle = isDark ? '#c8c6c5' : '#5f5e5e';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(cursorX, padding.top);
+      ctx.lineTo(cursorX, height - padding.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 曲线上的圆点
+      const y = padding.top + (1 - alpha_all[cf] / alphaMax) * chartHeight;
+      ctx.fillStyle = '#E07A5F';
+      ctx.beginPath();
+      ctx.arc(cursorX, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ===== Hover tooltip =====
+    if (hoverFrame >= 0 && hoverFrame < delta_deg.length) {
+      const hi = hoverFrame;
+      const hx = padding.left + (delta_deg[hi] / 360) * chartWidth;
+
+      // Vertical guide line
+      ctx.strokeStyle = isDark ? 'rgba(200,198,197,0.3)' : 'rgba(95,94,94,0.3)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(hx, padding.top);
+      ctx.lineTo(hx, height - padding.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Highlight dot on curve
+      const hy = padding.top + (1 - alpha_all[hi] / alphaMax) * chartHeight;
+      ctx.fillStyle = '#E07A5F';
+      ctx.beginPath();
+      ctx.arc(hx, hy, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = isDark ? '#1C1C1E' : '#FFFFFF';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(hx, hy, 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Tooltip box
+      const lines = [
+        `θ = ${delta_deg[hi].toFixed(1)}°`,
+        `α = ${alpha_all[hi].toFixed(2)}°`,
+        `${Math.abs(alpha_all[hi]) > threshold ? '⚠ ' : ''}${currentT.chart.threshold}: ${threshold}°`,
+      ];
+      ctx.font = '11px -apple-system, sans-serif';
+      const lineH = 16;
+      const padInner = 8;
+      const maxTextW = Math.max(...lines.map(l => ctx.measureText(l).width));
+      const boxW = maxTextW + padInner * 2;
+      const boxH = lines.length * lineH + padInner * 2 - 4;
+
+      let tx = hx + 12;
+      let ty = padding.top + 8;
+      if (tx + boxW > width - padding.right) tx = hx - boxW - 12;
+      if (ty + boxH > height - padding.bottom) ty = height - padding.bottom - boxH - 4;
+
+      ctx.fillStyle = isDark ? 'rgba(44,44,46,0.92)' : 'rgba(255,255,255,0.95)';
+      ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(tx, ty, boxW, boxH, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.font = '11px -apple-system, sans-serif';
+      lines.forEach((line, i) => {
+        ctx.fillStyle = i === 0 ? (isDark ? '#CCC' : '#555') : i === 1 ? '#E07A5F' : '#C4A35A';
+        ctx.fillText(line, tx + padInner, ty + padInner + (i + 1) * lineH - 4);
+      });
+    }
   };
+
+  // 鼠标交互
+  const getFrameFromX = (clientX: number): number => {
+    const data = simulationData();
+    if (!canvasRef || !data) return 0;
+
+    const rect = canvasRef.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const w = window.innerWidth;
+    const padding = w < 640 ? { left: 45, right: 20 } : w < 768 ? { left: 55, right: 50 } : { left: 70, right: 70 };
+    const chartWidth = rect.width - padding.left - padding.right;
+
+    if (chartWidth <= 0) return 0;
+
+    const angle = ((x - padding.left) / chartWidth) * 360;
+    const frame = Math.round((angle / 360) * (data.delta_deg.length - 1));
+    return Math.max(0, Math.min(data.delta_deg.length - 1, frame));
+  };
+
+  const handleMouseDown = (e: MouseEvent) => {
+    isDragging = true;
+    setCursorFrame(getFrameFromX(e.clientX));
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging) {
+      setCursorFrame(getFrameFromX(e.clientX));
+    } else {
+      handleHover(e);
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDragging = false;
+  };
+
+  const handleHover = (e: MouseEvent) => {
+    const data = simulationData();
+    if (!canvasRef || !data) return;
+    const rect = canvasRef.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const w = window.innerWidth;
+    const padding = w < 640 ? { left: 45, right: 20 } : w < 768 ? { left: 55, right: 50 } : { left: 70, right: 70 };
+    const chartWidth = rect.width - padding.left - padding.right;
+    if (chartWidth <= 0 || x < padding.left || x > rect.width - padding.right) {
+      hoverFrame = -1;
+      draw();
+      return;
+    }
+    const angle = ((x - padding.left) / chartWidth) * 360;
+    const frame = Math.round((angle / 360) * (data.delta_deg.length - 1));
+    hoverFrame = Math.max(0, Math.min(data.delta_deg.length - 1, frame));
+    draw();
+  };
+
+  const handleMouseLeave = () => {
+    hoverFrame = -1;
+    draw();
+  };
+
+  onMount(() => {
+    window.addEventListener('mouseup', handleMouseUp);
+  });
+
+  onCleanup(() => {
+    window.removeEventListener('mouseup', handleMouseUp);
+  });
 
   createEffect(() => {
     if (simulationData()) draw();
+  });
+
+  createEffect(() => {
+    cursorFrame();
+    draw();
+  });
+
+  createEffect(() => {
+    isDarkSignal();
+    draw();
   });
 
   onMount(() => {
@@ -216,7 +379,10 @@ export function GeometryChart() {
           <canvas
             ref={canvasRef}
             class="w-full h-full"
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%', cursor: 'crosshair' }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
             aria-hidden="true"
           />
           <span class="sr-only">

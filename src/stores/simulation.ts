@@ -73,6 +73,12 @@ export const [exportStatus, setExportStatus] = createSignal<{
   files?: string[];
 }>({ type: 'idle', message: '' });
 
+// 共享游标帧索引（图表拖动 ↔ 机构动画同步）
+export const [cursorFrame, setCursorFrame] = createSignal(0);
+
+// 曲线可见性（图例点击切换）
+export const [curveVisible, setCurveVisible] = createSignal({ s: true, v: true, a: true });
+
 // 保存上次运行的参数哈希
 let lastRunParamsHash = '';
 
@@ -1176,6 +1182,39 @@ export function validateParams(p: CamParams): { valid: boolean; errors: string[]
 // 获取当前参数校验错误（响应式）
 export function validationErrors(): string[] {
   return validateParams(params()).errors;
+}
+
+// 获取哪些参数有校验错误（响应式，用于输入框高亮）
+export function invalidParams(): Set<keyof CamParams> {
+  const p = params();
+  const invalid = new Set<keyof CamParams>();
+
+  const sum = p.delta_0 + p.delta_01 + p.delta_ret + p.delta_02;
+  if (Math.abs(sum - 360) > 0.01) {
+    invalid.add('delta_0');
+    invalid.add('delta_01');
+    invalid.add('delta_ret');
+    invalid.add('delta_02');
+  }
+
+  if (p.r_0 <= Math.abs(p.e)) {
+    invalid.add('r_0');
+    invalid.add('e');
+  }
+
+  if (p.h <= 0) {
+    invalid.add('h');
+  }
+
+  if (p.omega <= 0) {
+    invalid.add('omega');
+  }
+
+  if (p.n_points < 36 || p.n_points > 720) {
+    invalid.add('n_points');
+  }
+
+  return invalid;
 }
 
 // 随机生成可运行的参数（仅运动参数和几何参数，仿真设置保持不变）

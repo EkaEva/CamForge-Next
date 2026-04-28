@@ -1,14 +1,20 @@
 import { createSignal, onMount, onCleanup, Show } from 'solid-js';
 import { isTauriEnv as checkIsTauriEnv, isMobilePlatform } from '../../utils/platform';
+import { useTheme } from '../../stores/settings';
+import { t, language, setLang } from '../../i18n';
+import { Icon } from '../ui/Icon';
 
-export function TitleBar() {
+interface TitleBarProps {
+  onOpenSettings?: () => void;
+  onOpenHelp?: () => void;
+}
+
+export function TitleBar(props: TitleBarProps) {
   const [maximized, setMaximized] = createSignal(false);
 
-  // 使用工具函数检测 Tauri 环境（兼容 withGlobalTauri: false）
   const isTauriEnv = checkIsTauriEnv();
-
-  // 检测是否为移动端平台（Android/iOS）
   const isMobile = isMobilePlatform();
+  const { isDark, toggleTheme } = useTheme();
 
   onMount(async () => {
     if (!isTauriEnv) return;
@@ -17,10 +23,8 @@ export function TitleBar() {
       const { getCurrentWindow } = await import('@tauri-apps/api/window');
       const win = getCurrentWindow();
 
-      // 初始化时获取当前状态
       setMaximized(await win.isMaximized());
 
-      // 监听窗口状态变化
       const unlisten = win.onResized(async () => {
         setMaximized(await win.isMaximized());
       });
@@ -61,55 +65,105 @@ export function TitleBar() {
     }
   };
 
-  // 非 Tauri 环境或移动端平台不显示标题栏
-  // 移动端使用系统原生导航，不需要自定义窗口控制按钮
-  if (!isTauriEnv || isMobile) {
+  const getLanguageButtonText = () => {
+    return language() === 'zh' ? '中文' : 'EN';
+  };
+
+  // Action buttons shared between Tauri and Web modes
+  const actionButtons = (
+    <div class="flex items-center gap-0.5 text-chrome-text" onMouseDown={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => setLang(language() === 'en' ? 'zh' : 'en')}
+        class="titlebar-action-btn px-2 h-7 flex items-center justify-center text-chrome-text text-xs font-display"
+      >
+        {getLanguageButtonText()}
+      </button>
+      <button
+        type="button"
+        onClick={toggleTheme}
+        class="titlebar-action-btn w-8 h-7 flex items-center justify-center text-chrome-text"
+      >
+        <Show when={isDark()} fallback={
+          <Icon name="dark_mode" size={16} />
+        }>
+          <Icon name="light_mode" size={16} />
+        </Show>
+      </button>
+      <Show when={props.onOpenSettings}>
+        <button
+          type="button"
+          onClick={props.onOpenSettings}
+          class="titlebar-action-btn w-8 h-7 flex items-center justify-center text-chrome-text"
+          title={t().settings.title}
+        >
+          <Icon name="settings" size={16} />
+        </button>
+      </Show>
+      <Show when={props.onOpenHelp}>
+        <button
+          type="button"
+          onClick={props.onOpenHelp}
+          class="titlebar-action-btn w-8 h-7 flex items-center justify-center text-chrome-text"
+          title={t().help.title}
+        >
+          <Icon name="help" size={16} />
+        </button>
+      </Show>
+    </div>
+  );
+
+  // Mobile: no title bar
+  if (isMobile) {
     return null;
   }
 
-  return (
-    <div
-      class="h-8 flex items-center justify-end px-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 select-none"
-      data-tauri-drag-region
-    >
-      <div class="flex-1 h-full" data-tauri-drag-region />
-
-      <div class="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={handleMinimize}
-          class="w-10 h-7 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors rounded"
-        >
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" d="M20 12H4" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          onClick={handleMaximize}
-          class="w-10 h-7 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors rounded"
-        >
-          <Show when={maximized()} fallback={
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <rect x="4" y="4" width="16" height="16" rx="1" />
-            </svg>
-          }>
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <rect x="6" y="2" width="12" height="12" rx="1" />
-              <rect x="2" y="6" width="12" height="12" rx="1" />
-            </svg>
-          </Show>
-        </button>
-        <button
-          type="button"
-          onClick={handleClose}
-          class="w-10 h-7 flex items-center justify-center hover:bg-red-500 hover:text-white text-gray-500 dark:text-gray-400 transition-colors rounded"
-        >
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+  // Tauri desktop: drag region + action buttons + window controls
+  if (isTauriEnv) {
+    return (
+      <div
+        class="h-8 flex items-center justify-end px-3 bg-chrome-bg border-b border-chrome-border select-none"
+        data-tauri-drag-region
+      >
+        <div class="flex-1 h-full" data-tauri-drag-region />
+        {actionButtons}
+        <div class="border-l border-chrome-border mx-1 h-5" />
+        <div class="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={handleMinimize}
+            class="w-10 h-7 flex items-center justify-center hover:bg-chrome-surface-hover text-chrome-text transition-colors rounded"
+          >
+            <Icon name="remove" size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={handleMaximize}
+            class="w-10 h-7 flex items-center justify-center hover:bg-chrome-surface-hover text-chrome-text transition-colors rounded"
+          >
+            <Show when={maximized()} fallback={
+              <Icon name="crop_square" size={16} />
+            }>
+              <Icon name="filter_none" size={16} />
+            </Show>
+          </button>
+          <button
+            type="button"
+            onClick={handleClose}
+            class="w-10 h-7 flex items-center justify-center hover:bg-red-500 hover:text-white text-chrome-text transition-colors rounded"
+          >
+            <Icon name="close" size={16} />
+          </button>
+        </div>
       </div>
+    );
+  }
+
+  // Web: lightweight header bar with app name + action buttons
+  return (
+    <div class="h-8 flex items-center justify-between px-4 bg-chrome-bg border-b border-chrome-border select-none">
+      <span class="font-display text-sm font-semibold text-chrome-text-active tracking-tight">CamForge</span>
+      {actionButtons}
     </div>
   );
 }

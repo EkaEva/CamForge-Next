@@ -1,13 +1,8 @@
-/**
- * 设置面板组件
- *
- * 提供应用设置配置界面
- */
-
-import { createSignal, Show, createEffect } from 'solid-js';
+import { createSignal, createEffect, onMount, onCleanup, Show } from 'solid-js';
 import { useTheme, useExportSettings } from '../../stores/settings';
 import { isMobilePlatform, isTauriEnv } from '../../utils/platform';
 import { t, language, setLang } from '../../i18n';
+import { Icon } from '../ui/Icon';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -17,269 +12,234 @@ interface SettingsPanelProps {
 export function SettingsPanel(props: SettingsPanelProps) {
   const { theme, setThemeMode } = useTheme();
   const { settings, updateSettings } = useExportSettings();
-  const [selectingDir, setSelectingDir] = createSignal(false);
 
-  const currentT = t();
   const isMobile = isMobilePlatform();
   const isTauri = isTauriEnv();
 
-  let panelRef: HTMLDivElement | undefined;
+  const [pos, setPos] = createSignal({ x: 0, y: 0 });
+  const [dragging, setDragging] = createSignal(false);
+  const [dragOffset, setDragOffset] = createSignal({ x: 0, y: 0 });
+  const [initialized, setInitialized] = createSignal(false);
 
-  const getFocusableElements = (): HTMLElement[] => {
-    if (!panelRef) return [];
-    return Array.from(panelRef.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    )).filter(el => !el.hasAttribute('disabled') && el.tabIndex >= 0);
+  const resetPosition = () => {
+    const w = Math.min(520, window.innerWidth - 40);
+    const h = Math.min(560, window.innerHeight - 80);
+    setPos({
+      x: Math.max(20, (window.innerWidth - w) / 2),
+      y: Math.max(20, (window.innerHeight - h) / 2),
+    });
+    setInitialized(true);
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      props.onClose();
-      return;
-    }
-
-    if (e.key === 'Tab') {
-      const focusable = getFocusableElements();
-      if (focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    }
-  };
-
-  // Auto-focus first focusable element when panel opens
-  createEffect(() => {
-    if (props.isOpen && panelRef) {
-      // Use queueMicrotask to ensure DOM is rendered
-      queueMicrotask(() => {
-        const focusable = getFocusableElements();
-        if (focusable.length > 0) {
-          focusable[0].focus();
-        }
-      });
-    }
+  onMount(() => {
+    if (props.isOpen) resetPosition();
   });
 
-  // 选择下载目录
-  const handleSelectDir = async () => {
-    if (!isTauri || isMobile) return;
+  const handleMouseDown = (e: MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    setDragging(true);
+    setDragOffset({ x: e.clientX - pos().x, y: e.clientY - pos().y });
+    e.preventDefault();
+  };
 
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!dragging()) return;
+    const newX = Math.max(0, Math.min(window.innerWidth - 200, e.clientX - dragOffset().x));
+    const newY = Math.max(0, Math.min(window.innerHeight - 40, e.clientY - dragOffset().y));
+    setPos({ x: newX, y: newY });
+  };
+
+  const handleMouseUp = () => {
+    setDragging(false);
+  };
+
+  onMount(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  });
+
+  onCleanup(() => {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+  });
+
+  createEffect(() => {
+    if (props.isOpen && !initialized()) resetPosition();
+  });
+
+  const handleSelectDownloadDir = async () => {
     try {
-      setSelectingDir(true);
       const { open } = await import('@tauri-apps/plugin-dialog');
-      const selectedDir = await open({
+      const selected = await open({
         directory: true,
         multiple: false,
-        title: currentT.settings.selectDownloadDir,
+        title: t().settings.selectDownloadDir,
       });
-      if (selectedDir) {
-        updateSettings({ downloadDir: selectedDir as string });
+      if (selected) {
+        updateSettings({ downloadDir: selected as string });
       }
     } catch (e) {
-      console.error('Select directory error:', e);
-    } finally {
-      setSelectingDir(false);
+      console.error('Failed to select directory:', e);
     }
   };
 
-  // 清除下载目录
   const handleClearDir = () => {
     updateSettings({ downloadDir: '' });
   };
 
+  const optionBtn = (isActive: boolean) =>
+    `settings-option-btn flex-1 px-3 py-2 text-sm rounded-lg border font-display ` +
+    (isActive
+      ? 'bg-chrome-active border-chrome-text-active text-chrome-text-active'
+      : 'bg-surface-container border-outline-variant text-on-surface-variant');
+
   return (
     <Show when={props.isOpen}>
-      <div class="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 遮罩层 */}
       <div
-        class="absolute inset-0 bg-black/50"
-        onClick={props.onClose}
-      />
-
-      {/* 设置面板 */}
-      <div ref={panelRef} onKeyDown={handleKeyDown} class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
-        {/* 标题栏 */}
-        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {currentT.settings.title}
-          </h2>
+        class="fixed z-50 flex flex-col border border-chrome-border rounded-lg overflow-hidden"
+        classList={{ 'cursor-grabbing select-none': dragging(), 'cursor-grab': !dragging() }}
+        style={{
+          left: `${pos().x}px`,
+          top: `${pos().y}px`,
+          width: '520px',
+          'max-width': 'calc(100vw - 40px)',
+          'max-height': 'calc(100vh - 80px)',
+          'background-color': 'var(--chrome-surface)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Title bar - draggable */}
+        <div
+          class="flex items-center justify-between px-4 h-10 border-b border-chrome-border flex-shrink-0"
+          style={{ 'background-color': 'var(--chrome-bg)' }}
+          onMouseDown={handleMouseDown}
+        >
+          <div class="flex items-center gap-2">
+            <Icon name="settings" size={16} class="text-chrome-text" />
+            <span class="text-sm font-semibold text-chrome-text-active font-display">{t().settings.title}</span>
+          </div>
           <button
             type="button"
             onClick={props.onClose}
-            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+            class="w-7 h-7 flex items-center justify-center rounded hover:bg-chrome-surface-hover active:bg-chrome-active text-chrome-text transition-colors"
           >
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <Icon name="close" size={18} />
           </button>
         </div>
 
-        {/* 设置内容 */}
-        <div class="p-4 space-y-6">
-          {/* 语言设置 */}
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {currentT.settings.language}
+        {/* Content */}
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5 camforge-scrollbar">
+          {/* Language */}
+          <div class="space-y-3">
+            <h3 class="font-display text-xs uppercase tracking-wider text-on-surface-variant">
+              {t().settings.language}
             </h3>
             <div class="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setLang('zh')}
-                classList={{
-                  'px-4 py-2 rounded-lg text-sm transition-colors': true,
-                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': language() === 'zh',
-                  'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': language() !== 'zh',
-                }}
-              >
-                中文
-              </button>
-              <button
-                type="button"
-                onClick={() => setLang('en')}
-                classList={{
-                  'px-4 py-2 rounded-lg text-sm transition-colors': true,
-                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': language() === 'en',
-                  'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': language() !== 'en',
-                }}
-              >
-                English
-              </button>
+              {(['zh', 'en'] as const).map((lang) => (
+                <button
+                  type="button"
+                  onClick={() => setLang(lang)}
+                  class={optionBtn(language() === lang)}
+                >
+                  {lang === 'zh' ? '中文' : 'English'}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* 主题设置 */}
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {currentT.settings.theme}
+          {/* Theme */}
+          <div class="space-y-3">
+            <h3 class="font-display text-xs uppercase tracking-wider text-on-surface-variant">
+              {t().settings.theme}
             </h3>
             <div class="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setThemeMode('light')}
-                classList={{
-                  'px-4 py-2 rounded-lg text-sm transition-colors': true,
-                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': theme() === 'light',
-                  'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': theme !== 'light',
-                }}
-              >
-                {currentT.settings.themeLight}
-              </button>
-              <button
-                type="button"
-                onClick={() => setThemeMode('dark')}
-                classList={{
-                  'px-4 py-2 rounded-lg text-sm transition-colors': true,
-                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': theme() === 'dark',
-                  'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': theme !== 'dark',
-                }}
-              >
-                {currentT.settings.themeDark}
-              </button>
-              <button
-                type="button"
-                onClick={() => setThemeMode('system')}
-                classList={{
-                  'px-4 py-2 rounded-lg text-sm transition-colors': true,
-                  'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': theme() === 'system',
-                  'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': theme() !== 'system',
-                }}
-              >
-                {currentT.settings.themeSystem}
-              </button>
+              {(['light', 'dark', 'system'] as const).map((mode) => (
+                <button
+                  type="button"
+                  onClick={() => setThemeMode(mode)}
+                  class={optionBtn(theme() === mode)}
+                >
+                  {mode === 'light' ? t().settings.themeLight :
+                   mode === 'dark' ? t().settings.themeDark :
+                   t().settings.themeSystem}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* 导出设置 */}
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {currentT.settings.exportSettings}
+          {/* Export DPI */}
+          <div class="space-y-3">
+            <h3 class="font-display text-xs uppercase tracking-wider text-on-surface-variant">
+              {t().settings.defaultDpi}
             </h3>
-
-            {/* 默认 DPI */}
-            <div class="mb-3">
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                {currentT.settings.defaultDpi}
-              </label>
-              <select
-                value={settings().defaultDpi}
-                onChange={(e) => updateSettings({ defaultDpi: parseInt(e.currentTarget.value) })}
-                class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-              >
-                <option value="150">150 DPI</option>
-                <option value="300">300 DPI</option>
-                <option value="600">600 DPI</option>
-              </select>
+            <div class="flex gap-2">
+              {[150, 300, 600].map((dpi) => (
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ defaultDpi: dpi })}
+                  class={optionBtn(settings().defaultDpi === dpi)}
+                >
+                  {dpi}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* 默认格式 */}
-            <div class="mb-3">
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                {currentT.settings.defaultFormat}
-              </label>
-              <select
-                value={settings().defaultFormat}
-                onChange={(e) => updateSettings({ defaultFormat: e.currentTarget.value as 'png' | 'tiff' | 'svg' })}
-                class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-              >
-                <option value="tiff">TIFF</option>
-                <option value="png">PNG</option>
-                <option value="svg">SVG</option>
-              </select>
+          {/* Export Format */}
+          <div class="space-y-3">
+            <h3 class="font-display text-xs uppercase tracking-wider text-on-surface-variant">
+              {t().settings.defaultFormat}
+            </h3>
+            <div class="flex gap-2">
+              {(['png', 'tiff', 'svg'] as const).map((format) => (
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ defaultFormat: format })}
+                  class={optionBtn(settings().defaultFormat === format) + ' uppercase'}
+                >
+                  {format}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* 下载目录（仅桌面端） */}
-            <Show when={isTauri && !isMobile}>
-              <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  {currentT.settings.downloadDir}
-                </label>
-                <div class="flex gap-2">
-                  <input
-                    type="text"
-                    value={settings().downloadDir}
-                    readonly
-                    placeholder={currentT.settings.downloadDirPlaceholder}
-                    class="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                  />
+          {/* Download Directory (desktop only) */}
+          <Show when={isTauri && !isMobile}>
+            <div class="space-y-3">
+              <h3 class="font-display text-xs uppercase tracking-wider text-on-surface-variant">
+                {t().settings.downloadDir}
+              </h3>
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  value={settings().downloadDir}
+                  readOnly
+                  placeholder={t().settings.downloadDirPlaceholder}
+                  class="flex-1 px-3 py-2 text-sm bg-surface-container border border-outline-variant rounded-lg text-on-surface font-display"
+                />
+                <button
+                  type="button"
+                  onClick={handleSelectDownloadDir}
+                  class="px-3 py-2 text-sm bg-chrome-run-bg hover:opacity-90 active:opacity-80 active:scale-95 text-chrome-run-text rounded-lg transition-all duration-150 font-display"
+                >
+                  {t().settings.select}
+                </button>
+                <Show when={settings().downloadDir}>
                   <button
                     type="button"
-                    onClick={handleSelectDir}
-                    disabled={selectingDir()}
-                    class="px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-sm transition-colors"
+                    onClick={handleClearDir}
+                    class="px-3 py-2 text-sm bg-chrome-surface-hover hover:opacity-90 active:opacity-80 active:scale-95 text-chrome-text rounded-lg border border-chrome-border transition-all duration-150 font-display"
                   >
-                    {selectingDir() ? '...' : currentT.settings.select}
+                    {t().settings.clear}
                   </button>
-                  <Show when={settings().downloadDir}>
-                    <button
-                      type="button"
-                      onClick={handleClearDir}
-                      class="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-sm transition-colors"
-                    >
-                      {currentT.settings.clear}
-                    </button>
-                  </Show>
-                </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {currentT.settings.downloadDirHint}
-                </p>
+                </Show>
               </div>
-            </Show>
-          </div>
+              <p class="text-xs text-on-surface-variant font-display">
+                {t().settings.downloadDirHint}
+              </p>
+            </div>
+          </Show>
         </div>
-      </div>
       </div>
     </Show>
   );

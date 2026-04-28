@@ -34,6 +34,10 @@ function updateDarkMode() {
 
   setIsDark(dark);
 
+  // Set data-theme attribute for CSS custom properties
+  const resolvedTheme = dark ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', resolvedTheme);
+
   if (dark) {
     document.documentElement.classList.add('dark');
   } else {
@@ -69,18 +73,10 @@ export function initTheme() {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateDarkMode);
 }
 
-// 切换主题
+// 切换主题：直接在 light ↔ dark 之间切换
 export function toggleTheme() {
-  const currentTheme = theme();
-  let newTheme: Theme;
-
-  if (currentTheme === 'light') {
-    newTheme = 'dark';
-  } else if (currentTheme === 'dark') {
-    newTheme = 'system';
-  } else {
-    newTheme = 'light';
-  }
+  const currentDark = isDark();
+  const newTheme: Theme = currentDark ? 'light' : 'dark';
 
   setTheme(newTheme);
   localStorage.setItem('theme', newTheme);
