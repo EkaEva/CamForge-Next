@@ -45,13 +45,171 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
     <title>CamForge-Next</title>
+    <style>
+      #splash{position:fixed;inset:0;z-index:9999;background:#1c1b1b;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Inter',system-ui,sans-serif;transition:opacity 0.5s ease}
+      #splash.fade-out{opacity:0;pointer-events:none}
+      .splash-grid{position:absolute;inset:0;opacity:0.15}
+      .splash-text{position:relative;text-align:center;margin-bottom:40px}
+      .splash-title{font-size:48px;font-weight:700;color:#e5e2e1;letter-spacing:-0.02em;opacity:0}
+      .splash-accent{color:#E07A5F}
+      .splash-subtitle{font-size:14px;font-weight:400;color:#c4c7c7;letter-spacing:0.08em;text-transform:uppercase;margin-top:8px;opacity:0}
+      .splash-version{font-size:12px;font-weight:500;color:#8e9192;margin-top:20px;opacity:0}
+      .splash-cam-wrap{position:relative;width:160px;height:160px}
+      .splash-cam-base{opacity:0}
+      .splash-curves{position:absolute;bottom:60px;width:min(880px,70vw);height:60px;opacity:0}
+    </style>
   </head>
 
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+
+    <!-- 启动动画 -->
+    <div id="splash">
+      <svg class="splash-grid" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+        <defs>
+          <pattern id="splash-grid-p" width="50" height="50" patternUnits="userSpaceOnUse">
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#444748" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#splash-grid-p)"/>
+      </svg>
+      <div class="splash-text">
+        <div class="splash-title">Cam<span class="splash-accent">Forge</span></div>
+        <div class="splash-subtitle">凸轮机构运动学仿真</div>
+        <div class="splash-version">v0.4.0 · SolidJS + Tauri</div>
+      </div>
+      <svg class="splash-cam-wrap" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <g id="splash-cam-group">
+          <circle cx="100" cy="100" r="55" fill="none" stroke="#444748" stroke-width="0.8" stroke-dasharray="4,4"/>
+          <path id="splash-cam-path" fill="none" stroke="#E07A5F" stroke-width="2"/>
+        </g>
+        <circle cx="100" cy="100" r="3" fill="none" stroke="#c4c7c7" stroke-width="1.5"/>
+        <polygon id="splash-cam-base" points="100,106 90,120 110,120" fill="#c4c7c7" class="splash-cam-base"/>
+      </svg>
+      <svg class="splash-curves" viewBox="0 0 880 60" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 0 30 Q 110 10 220 30 Q 330 50 440 30 Q 550 10 660 30 Q 770 50 880 30" fill="none" stroke="#E07A5F" stroke-width="1.5"/>
+        <path d="M 0 30 Q 110 5 220 30 Q 330 55 440 30 Q 550 5 660 30 Q 770 55 880 30" fill="none" stroke="#3D5A80" stroke-width="1" stroke-dasharray="6,4"/>
+        <path d="M 0 30 Q 110 0 220 30 Q 330 60 440 30 Q 550 0 660 30 Q 770 60 880 30" fill="none" stroke="#5B8C5A" stroke-width="1" stroke-dasharray="2,3"/>
+      </svg>
+    </div>
+
     <div id="root"></div>
 
+    <script>
+      (function(){
+        // Pre-compute cam profile points
+        var cx=100,cy=100,r0=55,h=20,n=120;
+        var pts=[];
+        for(var i=0;i<=n;i++){var a=(i/n)*2*Math.PI,s=h*(0.5-0.5*Math.cos(a)),r=r0+s;pts.push([cx+r*Math.sin(a),cy-r*Math.cos(a)]);}
+
+        var p=document.getElementById('splash-cam-path');
+        var camGroup=document.getElementById('splash-cam-group');
+        var camBase=document.getElementById('splash-cam-base');
+        var titleEl=document.querySelector('.splash-title');
+        var subEl=document.querySelector('.splash-subtitle');
+        var verEl=document.querySelector('.splash-version');
+        var curvesEl=document.querySelector('.splash-curves');
+        var gridEl=document.querySelector('.splash-grid');
+        var splash=document.getElementById('splash');
+        if(!p)return;
+
+        // Remotion timeline (30fps, 90 frames = 3s):
+        // frame 8-45: cam draw (0.27s-1.5s)
+        // frame 20: title spring start (0.67s)
+        // frame 30: subtitle spring start (1.0s)
+        // frame 40: version spring start (1.33s)
+        // frame 35: curves fade in (1.17s)
+        // frame 45-70: cam rotation (1.5s-2.33s)
+        // frame 70-88: global fade out (2.33s-2.93s)
+
+        var t0=performance.now();
+
+        // Spring simulation helper
+        function springVal(elapsed,delay,damping){
+          var t=Math.max(0,(elapsed-delay)/1000);
+          if(t<=0)return{v:0,y:30};
+          // Damped spring: x(t) = 1 - e^(-damping*t) * cos(omega*t)
+          var omega=8;
+          var val=1-Math.exp(-damping*t)*Math.cos(omega*t);
+          val=Math.min(1,Math.max(0,val));
+          return{v:val,y:30*(1-val)};
+        }
+
+        function tick(now){
+          var elapsed=now-t0;
+
+          // 1. Cam draw (progressive point reveal, matching Remotion CamPath)
+          var drawProg=Math.min(Math.max((elapsed-270)/1230,0),1); // 0.27s-1.5s
+          var visPts=Math.floor(n*drawProg);
+          var d='';
+          for(var i=0;i<=visPts;i++){d+=(i===0?'M ':'L ')+pts[i][0].toFixed(2)+' '+pts[i][1].toFixed(2)+' ';}
+          if(drawProg>=1)d+='Z';
+          p.setAttribute('d',d);
+
+          // 2. Cam base triangle appears when draw > 30%
+          if(camBase){
+            camBase.style.opacity=drawProg>0.3?'1':'0';
+            camBase.style.transition='opacity 0.3s ease';
+          }
+
+          // 3. Title spring (delay 0.67s, damping 12)
+          if(titleEl){
+            var ts=springVal(elapsed,670,12);
+            titleEl.style.opacity=ts.v;
+            titleEl.style.transform='translateY('+ts.y+'px)';
+          }
+
+          // 4. Subtitle spring (delay 1.0s, damping 14)
+          if(subEl){
+            var ss=springVal(elapsed,1000,14);
+            subEl.style.opacity=ss.v;
+            subEl.style.transform='translateY('+(30*(1-ss.v))+'px)';
+          }
+
+          // 5. Version spring (delay 1.33s, damping 16)
+          if(verEl){
+            var vs=springVal(elapsed,1330,16);
+            verEl.style.opacity=vs.v;
+            verEl.style.transform='translateY('+(15*(1-vs.v))+'px)';
+          }
+
+          // 6. Curves fade in (from 1.17s, target opacity 0.4)
+          if(curvesEl){
+            var curveOp=Math.min(Math.max((elapsed-1170)/500,0),0.4);
+            curvesEl.style.opacity=curveOp;
+          }
+
+          // 7. Cam rotation (1.5s-2.33s)
+          if(camGroup&&drawProg>=1){
+            var rotProg=Math.min(Math.max((elapsed-1500)/830,0),1);
+            var rotEase=rotProg<0.5?2*rotProg*rotProg:1-Math.pow(-2*rotProg+2,2)/2;
+            camGroup.setAttribute('transform','rotate('+(rotEase*360)+' 100 100)');
+          }
+
+          // 8. Global fade out (2.33s-2.93s)
+          var fadeOut=Math.min(Math.max((elapsed-2330)/600,0),1);
+          if(fadeOut>0){
+            var op=1-fadeOut;
+            splash.style.opacity=op;
+            if(gridEl)gridEl.style.opacity=0.15*op;
+          }
+
+          // Stop when fully faded
+          if(fadeOut>=1){
+            splash.remove();
+            return;
+          }
+
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      })();
+    </script>
     <script src="/src/index.tsx" type="module"></script>
   </body>
 </html>

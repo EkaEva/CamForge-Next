@@ -1,34 +1,34 @@
 import { onMount, onCleanup, createSignal } from 'solid-js';
-import { TitleBar, Sidebar, MainCanvas, StatusBar } from './components/layout';
+import { TitleBar, Sidebar, MainCanvas } from './components/layout';
+import { SettingsPanel } from './components/layout/SettingsPanel';
+import { HelpPanel } from './components/layout/HelpPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastContainer } from './components/ui/Toast';
 import { initTheme } from './stores/settings';
-import { undoParams, redoParams, canUndo, canRedo } from './stores/simulation';
+import { undoParams, redoParams, canUndo, canRedo, runSimulation } from './stores/simulation';
+import { Icon } from './components/ui/Icon';
 import './index.css';
 
-// 初始化主题
 initTheme();
 
 function App() {
-  // 移动端菜单状态
   const [isMobileMenuOpen, setIsMobileMenuOpen] = createSignal(false);
   const [isMobile, setIsMobile] = createSignal(false);
+  const [showSettings, setShowSettings] = createSignal(false);
+  const [activeTab, setActiveTab] = createSignal<'simulation' | 'export'>('simulation');
+  const [showHelp, setShowHelp] = createSignal(false);
 
-  // 检测移动端
   const checkMobile = () => {
     setIsMobile(window.innerWidth < 768);
   };
 
-  // 键盘快捷键处理
   const handleKeyDown = (e: KeyboardEvent) => {
-    // Ctrl+Z 或 Cmd+Z: 撤销
     if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
       e.preventDefault();
       if (canUndo()) {
         undoParams();
       }
     }
-    // Ctrl+Y 或 Cmd+Shift+Z: 重做
     if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
       e.preventDefault();
       if (canRedo()) {
@@ -48,52 +48,66 @@ function App() {
     window.removeEventListener('resize', checkMobile);
   });
 
+  const handleOpenSettings = () => setShowSettings(true);
+  const handleOpenHelp = () => setShowHelp(true);
+
+  onMount(() => {
+    runSimulation();
+  });
+
   return (
     <ErrorBoundary>
-      <div class="h-screen h-[100dvh] flex flex-col bg-white dark:bg-gray-900">
-        <TitleBar />
-        {/* 移动端顶部导航栏 */}
+      <div class="h-screen h-[100dvh] flex flex-col bg-surface-container-low">
+        <TitleBar onOpenSettings={handleOpenSettings} onOpenHelp={handleOpenHelp} />
         {isMobile() && (
-          <header class="h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 md:hidden flex-shrink-0" style={{ 'margin-top': 'env(safe-area-inset-top)' }}>
+          <header class="h-14 bg-chrome-bg border-b border-chrome-border flex items-center px-4 md:hidden flex-shrink-0" style={{ 'margin-top': 'env(safe-area-inset-top)' }}>
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen())}
-              class="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors"
+              class="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
               aria-label="打开菜单"
             >
-              <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <Icon name="menu" size={24} class="text-chrome-text-active" />
             </button>
-            <h1 class="ml-3 text-lg font-semibold text-gray-900 dark:text-white">CamForge</h1>
-            {/* 移动端撤销/重做按钮 */}
+            <h1 class="ml-3 text-lg font-semibold text-chrome-text-active font-display">CamForge</h1>
             <div class="ml-auto flex items-center gap-1">
               <button
                 type="button"
                 onClick={undoParams}
                 disabled={!canUndo()}
-                class="w-11 h-11 flex items-center justify-center rounded-lg disabled:opacity-40 active:bg-gray-200 dark:active:bg-gray-600 transition-colors"
+                class="w-11 h-11 flex items-center justify-center rounded-lg disabled:opacity-40 active:bg-chrome-active transition-colors"
                 aria-label="撤销"
               >
-                <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                </svg>
+                <Icon name="undo" size={20} class="text-chrome-text" />
               </button>
               <button
                 type="button"
                 onClick={redoParams}
                 disabled={!canRedo()}
-                class="w-11 h-11 flex items-center justify-center rounded-lg disabled:opacity-40 active:bg-gray-200 dark:active:bg-gray-600 transition-colors"
+                class="w-11 h-11 flex items-center justify-center rounded-lg disabled:opacity-40 active:bg-chrome-active transition-colors"
                 aria-label="重做"
               >
-                <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
-                </svg>
+                <Icon name="redo" size={20} class="text-chrome-text" />
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenSettings}
+                class="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
+                aria-label="设置"
+              >
+                <Icon name="settings" size={20} class="text-chrome-text" />
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenHelp}
+                class="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
+                aria-label="帮助"
+              >
+                <Icon name="help" size={20} class="text-chrome-text" />
               </button>
             </div>
           </header>
         )}
-        {/* 移动端遮罩层 */}
         {isMobile() && isMobileMenuOpen() && (
           <div
             class="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -106,10 +120,10 @@ function App() {
             isOpen={isMobile() ? isMobileMenuOpen() : true}
             onClose={() => setIsMobileMenuOpen(false)}
           />
-          <MainCanvas />
+          <MainCanvas activeTab={activeTab()} onTabChange={setActiveTab} />
         </div>
-        <StatusBar />
-        {/* Toast 通知容器 */}
+        <SettingsPanel isOpen={showSettings()} onClose={() => setShowSettings(false)} />
+        <HelpPanel isOpen={showHelp()} onClose={() => setShowHelp(false)} />
         <ToastContainer />
       </div>
     </ErrorBoundary>

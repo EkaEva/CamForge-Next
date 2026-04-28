@@ -1,18 +1,25 @@
 import { createSignal, Show, Switch, Match, createEffect, onCleanup, JSX } from 'solid-js';
-import { simulationData, isLoading, lastRunTime, validationErrors, params, generateDXF, generateCSV, generateSVG, generateHighResPNG, generateRealTIFF, generateGIF, generatePresetJSON, generateExcel, saveFile, getCurrentLang, getExportFilename, exportStatus, setExportStatus, paramsUpdated, setParamsUpdated } from '../../stores/simulation';
+import { simulationData, isLoading, lastRunTime, validationErrors, params, generateDXF, generateCSV, generateSVG, generateHighResPNG, generateRealTIFF, generateGIF, generatePresetJSON, generateExcel, saveFile, getCurrentLang, getExportFilename, exportStatus, setExportStatus, paramsUpdated, setParamsUpdated, curveVisible, setCurveVisible } from '../../stores/simulation';
 import { t } from '../../i18n';
 import { CamAnimation } from '../animation';
 import { MotionCurves, GeometryChart, CurvatureChart } from '../charts';
 import { showToast } from '../ui/Toast';
 import { isMobilePlatform, isTauriEnv as checkIsTauriEnv } from '../../utils/platform';
 import { getDownloadDir } from '../../stores/settings';
+import { Icon } from '../ui/Icon';
+type Tab = 'simulation' | 'export';
+type AnalysisView = 'kinematics' | 'curvature' | 'pressure';
 
-type Tab = 'animation' | 'motion' | 'geometry' | 'curvature' | 'export' | 'help';
+interface MainCanvasProps {
+  activeTab: Tab;
+  onTabChange: (tab: Tab) => void;
+}
 
-export function MainCanvas() {
-  const [activeTab, setActiveTab] = createSignal<Tab>('animation');
+export function MainCanvas(props: MainCanvasProps) {
   const [exporting, setExporting] = createSignal<string | null>(null);
   const [exportProgress, setExportProgress] = createSignal(0);
+  const [analysisView, setAnalysisView] = createSignal<AnalysisView>('kinematics');
+  const [zoomPercent, setZoomPercent] = createSignal(100);
 
   // 自定义导出状态
   const [customExportFormat, setCustomExportFormat] = createSignal<'png' | 'tiff' | 'svg'>('tiff');
@@ -63,23 +70,15 @@ export function MainCanvas() {
   });
 
   const tabs: { id: Tab; labelKey: string }[] = [
-    { id: 'animation', labelKey: 'camProfile' },
-    { id: 'motion', labelKey: 'motionCurves' },
-    { id: 'curvature', labelKey: 'curvatureRadius' },
-    { id: 'geometry', labelKey: 'pressureAngle' },
+    { id: 'simulation', labelKey: 'simulation' },
     { id: 'export', labelKey: 'export' },
-    { id: 'help', labelKey: 'help' },
   ];
 
   const getTabLabel = (labelKey: string): string => {
     const currentT = t();
     switch (labelKey) {
-      case 'camProfile': return currentT.tabs.camProfile;
-      case 'motionCurves': return currentT.tabs.motionCurves;
-      case 'pressureAngle': return currentT.tabs.pressureAngle;
-      case 'curvatureRadius': return currentT.tabs.curvatureRadius;
+      case 'simulation': return currentT.tabs.simulation;
       case 'export': return currentT.export.title;
-      case 'help': return currentT.help.title;
       default: return labelKey;
     }
   };
@@ -93,94 +92,52 @@ export function MainCanvas() {
 
   // SVG 线性图标
   const icons = {
-    chart: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-      </svg>
-    ),
-    curvature: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18A2.25 2.25 0 0118 20.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-    angle: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-      </svg>
-    ),
-    profile: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12a3 3 0 106 0 3 3 0 00-6 0z" />
-      </svg>
-    ),
-    animation: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-      </svg>
-    ),
-    csv: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-      </svg>
-    ),
-    excel: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5" />
-      </svg>
-    ),
-    svg: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-      </svg>
-    ),
-    dxf: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
-      </svg>
-    ),
-    preset: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217-.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
+    chart: <Icon name="bar_chart" size={20} />,
+    curvature: <Icon name="radio_button_unchecked" size={20} />,
+    angle: <Icon name="wb_sunny" size={20} />,
+    profile: <Icon name="circle" size={20} />,
+    animation: <Icon name="smart_display" size={20} />,
+    csv: <Icon name="description" size={20} />,
+    excel: <Icon name="table_chart" size={20} />,
+    svg: <Icon name="draw" size={20} />,
+    dxf: <Icon name="code" size={20} />,
+    preset: <Icon name="settings" size={20} />,
   };
 
   // 导出按钮组件
-  const ExportButton = (props: { id: string; icon: JSX.Element; label: string }) => {
-    const isExportingThis = () => exporting() === props.id;
-    const isExportingOther = () => exporting() !== null && exporting() !== props.id;
+  const ExportButton = (eprops: { id: string; icon: JSX.Element; label: string }) => {
+    const isExportingThis = () => exporting() === eprops.id;
+    const isExportingOther = () => exporting() !== null && exporting() !== eprops.id;
     const isIdle = () => exporting() === null;
 
     return (
       <button
         type="button"
-        onClick={() => handleExport(props.id)}
+        onClick={() => handleExport(eprops.id)}
         disabled={exporting() !== null}
         classList={{
           'flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 group': true,
-          'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105 hover:shadow-md active:scale-95 cursor-pointer': isIdle(),
-          'bg-blue-100 dark:bg-blue-900/30 scale-105 shadow-md cursor-wait': isExportingThis(),
-          'bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed': isExportingOther(),
+          'bg-surface-container hover:bg-surface-container-high hover:scale-105 hover:shadow-md active:scale-95 cursor-pointer': isIdle(),
+          'bg-surface-container-high scale-105 shadow-md cursor-wait': isExportingThis(),
+          'bg-surface-container opacity-50 cursor-not-allowed': isExportingOther(),
         }}
       >
         <span
           class="mb-1 transition-all duration-200"
           classList={{
-            'text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:scale-110': isIdle(),
-            'text-blue-500 dark:text-blue-400 animate-bounce': isExportingThis(),
-            'text-gray-500 dark:text-gray-400': isExportingOther(),
+            'text-on-surface-variant group-hover:text-on-surface group-hover:scale-110': isIdle(),
+            'text-on-surface animate-bounce': isExportingThis(),
+            'text-on-surface-variant': isExportingOther(),
           }}
-        >{props.icon}</span>
+        >{eprops.icon}</span>
         <span
           class="text-xs text-center transition-colors duration-200"
           classList={{
-            'text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400': isIdle(),
-            'text-blue-500 dark:text-blue-400': isExportingThis(),
-            'text-gray-500 dark:text-gray-400': isExportingOther(),
+            'text-on-surface-variant group-hover:text-on-surface': isIdle(),
+            'text-on-surface': isExportingThis(),
+            'text-on-surface-variant': isExportingOther(),
           }}
-        >{props.label}</span>
+        >{eprops.label}</span>
       </button>
     );
   };
@@ -197,7 +154,6 @@ export function MainCanvas() {
     const startTime = Date.now();
     const minDuration = 300;
 
-    // 让 UI 有时间更新，避免卡顿
     await new Promise(resolve => requestAnimationFrame(resolve));
 
     try {
@@ -264,7 +220,6 @@ export function MainCanvas() {
       if (result.success) {
         const pathInfo = result.path ? ` → ${result.path}` : '';
         setExportStatus({ type: 'success', message: `${t().export.exported}: ${filename}${pathInfo}`, files: [filename] });
-        // 移动端显示 Toast 通知
         if (isMobilePlatform()) {
           const currentLang = getCurrentLang();
           const exportPath = result.path || filename;
@@ -275,7 +230,6 @@ export function MainCanvas() {
         }
       } else if (result.error !== 'Cancelled') {
         setExportStatus({ type: 'error', message: `${t().export.exportFailed}: ${result.error}` });
-        // 移动端显示错误 Toast
         if (isMobilePlatform()) {
           showToast(`${t().export.exportFailed}`, 'error', 4000);
         }
@@ -306,7 +260,7 @@ export function MainCanvas() {
     const minDuration = 300;
     const exportedFiles: string[] = [];
     const failedFiles: string[] = [];
-    let saveDir = getDownloadDir() || ''; // 先读取用户配置的默认目录
+    let saveDir = getDownloadDir() || '';
 
     try {
       const charts = customExportCharts();
@@ -317,7 +271,6 @@ export function MainCanvas() {
       const animDpi = customExportAnimDPI();
 
       const isTauriEnv = checkIsTauriEnv();
-      // 桌面端且无默认目录时，弹出目录选择器
       if (isTauriEnv && !isMobilePlatform() && !saveDir) {
         const { open } = await import('@tauri-apps/plugin-dialog');
         const selectedDir = await open({
@@ -425,7 +378,6 @@ export function MainCanvas() {
         message: currentLang === 'zh' ? `已导出 ${exportedFiles.length} 个文件${pathInfo}` : `Exported ${exportedFiles.length} files${pathInfo}`,
         files: exportedFiles
       });
-      // 移动端显示 Toast 通知
       if (isMobilePlatform()) {
         const toastMsg = currentLang === 'zh'
           ? `已保存 ${exportedFiles.length} 个文件到下载目录`
@@ -435,7 +387,6 @@ export function MainCanvas() {
     } catch (e) {
       console.error('Custom export error:', e);
       setExportStatus({ type: 'error', message: currentLang === 'zh' ? `导出失败: ${e}` : `Export failed: ${e}` });
-      // 移动端显示错误 Toast
       if (isMobilePlatform()) {
         showToast(currentLang === 'zh' ? `导出失败` : `Export failed`, 'error', 4000);
       }
@@ -458,22 +409,125 @@ export function MainCanvas() {
     return data.max_alpha > p.alpha_threshold;
   };
 
+  // 状态文字
+  const getStatus = () => {
+    const currentT = t();
+    if (isLoading()) return currentT.status.running;
+    if (validationErrors().length > 0) return validationErrors()[0];
+    return currentT.status.ready;
+  };
+
+  // 状态颜色：红色=参数错误，绿色=正常/计算中，黄色=压力角超限
+  const getStatusColor = () => {
+    if (validationErrors().length > 0) return 'text-error';
+    if (isPressureAngleExceeded()) return 'text-warning';
+    return 'text-success';
+  };
+
+  // 图例线段 SVG — 与 canvas 图表颜色和线型一致
+  const LegendLine = (lp: { color: string; dash?: string }) => (
+    <svg width="16" height="4" viewBox="0 0 16 4" class="inline-block flex-shrink-0">
+      <line x1="0" y1="2" x2="16" y2="2" stroke={lp.color} stroke-width="2" stroke-dasharray={lp.dash ?? 'none'} />
+    </svg>
+  );
+
+  // 图例渲染 — 颜色与 canvas 图表一致
+  const renderKinematicsLegend = () => {
+    const vis = curveVisible();
+    return (
+      <div class="flex items-center gap-4 font-display text-[11px] text-on-surface-variant">
+        <button
+          type="button"
+          onClick={() => setCurveVisible(p => ({ ...p, s: !p.s }))}
+          classList={{
+            'flex items-center gap-1.5 cursor-pointer transition-opacity': true,
+            'opacity-40 line-through': !vis.s,
+            'opacity-100': vis.s,
+          }}
+        >
+          <LegendLine color="#E07A5F" />
+          {t().chart.displacement}
+        </button>
+        <button
+          type="button"
+          onClick={() => setCurveVisible(p => ({ ...p, v: !p.v }))}
+          classList={{
+            'flex items-center gap-1.5 cursor-pointer transition-opacity': true,
+            'opacity-40 line-through': !vis.v,
+            'opacity-100': vis.v,
+          }}
+        >
+          <LegendLine color="#3D5A80" dash="6,4" />
+          {t().chart.velocity}
+        </button>
+        <button
+          type="button"
+          onClick={() => setCurveVisible(p => ({ ...p, a: !p.a }))}
+          classList={{
+            'flex items-center gap-1.5 cursor-pointer transition-opacity': true,
+            'opacity-40 line-through': !vis.a,
+            'opacity-100': vis.a,
+          }}
+        >
+          <LegendLine color="#5B8C5A" dash="2,3" />
+          {t().chart.acceleration}
+        </button>
+      </div>
+    );
+  };
+
+  const renderCurvatureLegend = () => {
+    const p = params();
+    const hasRoller = p.r_r > 0;
+    return (
+      <div class="flex items-center gap-4 font-display text-[11px] text-on-surface-variant">
+        <span class="flex items-center gap-1.5">
+          <LegendLine color="#E07A5F" />
+          {t().chart.theoryRho}
+        </span>
+        <Show when={hasRoller}>
+          <span class="flex items-center gap-1.5">
+            <LegendLine color="#3D5A80" dash="4,2" />
+            {t().chart.actualRho}
+          </span>
+          <span class="flex items-center gap-1.5">
+            <LegendLine color="#6D9DC5" dash="4,4" />
+            {t().chart.threshold}
+          </span>
+        </Show>
+      </div>
+    );
+  };
+
+  const renderPressureLegend = () => (
+    <div class="flex items-center gap-4 font-display text-[11px] text-on-surface-variant">
+      <span class="flex items-center gap-1.5">
+        <LegendLine color="#E07A5F" />
+        {t().chart.pressureAngle}
+      </span>
+      <span class="flex items-center gap-1.5">
+        <LegendLine color="#C4A35A" dash="4,4" />
+        {t().chart.threshold}
+      </span>
+    </div>
+  );
+
   return (
-    <main class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      {/* Tab Bar - 移动端垂直布局，桌面端水平布局 */}
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        {/* Tab 栏 - 移动端独占一行，支持横向滚动 */}
-        <div role="tablist" class="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0">
+    <main class="flex-1 flex flex-col bg-surface-container-low overflow-hidden">
+      {/* Tab Bar */}
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 border-b border-outline-variant bg-surface-container-lowest">
+        {/* Tab 栏 */}
+        <div role="tablist" class="flex items-center gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0">
           {tabs.map((tab) => (
             <button
               type="button"
               role="tab"
-              aria-selected={activeTab() === tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              aria-selected={props.activeTab === tab.id}
+              onClick={() => props.onTabChange(tab.id)}
               classList={{
-                'px-3 py-2 text-sm rounded-md transition-colors min-h-[44px] min-w-[44px] whitespace-nowrap flex-shrink-0': true,
-                'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': activeTab() === tab.id,
-                'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600': activeTab() !== tab.id,
+                'tab-btn px-4 py-1.5 text-sm rounded-md transition-all duration-200 min-h-[36px] min-w-[44px] whitespace-nowrap flex-shrink-0 font-medium': true,
+                'tab-btn-active': props.activeTab === tab.id,
+                'tab-btn-inactive': props.activeTab !== tab.id,
               }}
             >
               {getTabLabel(tab.labelKey)}
@@ -481,32 +535,21 @@ export function MainCanvas() {
           ))}
         </div>
 
-        {/* 状态信息 - 桌面端显示 */}
-        <div class="hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 min-w-0">
-          {/* 校验错误 */}
+        {/* 状态信息 - 桌面端 */}
+        <div class="hidden sm:flex items-center gap-3 text-xs font-display min-w-0 flex-1 justify-end">
+          <Show when={isLoading()}>
+            <div classList={{ 'w-3 h-3 border-2 border-t-transparent rounded-full animate-spin': true, [getStatusColor()]: true }} style={{ 'border-color': 'currentColor', 'border-top-color': 'transparent' }} />
+          </Show>
+          <span class={`${getStatusColor()}`}>{getStatus()}</span>
           <Show when={validationErrors().length > 0}>
-            <span class="flex items-center gap-1.5 text-red-500 truncate max-w-[200px]" title={validationErrors()[0]}>
-              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            <span class="flex items-center gap-1.5 text-error truncate max-w-[200px]" title={validationErrors()[0]}>
+              <Icon name="warning" size={14} class="text-error flex-shrink-0" />
               <span class="truncate">{validationErrors()[0]}</span>
             </span>
           </Show>
-          {/* 参数已更新 */}
-          <Show when={paramsUpdated() && validationErrors().length === 0}>
-            <span class="flex items-center gap-1.5 text-green-500 flex-shrink-0">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {t().status.paramsUpdated}
-            </span>
-          </Show>
-          {/* 压力角超限警告 */}
           <Show when={isPressureAngleExceeded()}>
-            <span class="flex items-center gap-1.5 text-amber-500 flex-shrink-0">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            <span class="flex items-center gap-1.5 text-warning flex-shrink-0">
+              <Icon name="warning" size={14} class="text-warning" />
               {t().status.pressureAngleExceeded}
             </span>
           </Show>
@@ -515,9 +558,9 @@ export function MainCanvas() {
               class="truncate max-w-[500px]"
               title={exportStatus().message}
               classList={{
-                'text-green-500': exportStatus().type === 'success',
-                'text-red-500': exportStatus().type === 'error',
-                'text-blue-500': exportStatus().type === 'exporting',
+                'text-success': exportStatus().type === 'success',
+                'text-error': exportStatus().type === 'error',
+                'text-on-surface-variant': exportStatus().type === 'exporting',
               }}
             >
               {exportStatus().message}
@@ -530,363 +573,351 @@ export function MainCanvas() {
       </div>
 
       {/* 移动端状态提示 */}
-      <div class="sm:hidden px-4 py-1.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-xs" style={{ 'padding-bottom': 'calc(0.375rem + env(safe-area-inset-bottom))' }}>
+      <div class="sm:hidden px-4 py-1.5 bg-surface-container-low border-b border-outline-variant text-xs" style={{ 'padding-bottom': 'calc(0.375rem + env(safe-area-inset-bottom))' }}>
         <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-          {/* 校验错误 */}
+          <Show when={isLoading()}>
+            <div classList={{ 'w-3 h-3 border-2 border-t-transparent rounded-full animate-spin': true, [getStatusColor()]: true }} style={{ 'border-color': 'currentColor', 'border-top-color': 'transparent' }} />
+          </Show>
+          <span class={`${getStatusColor()} whitespace-nowrap truncate max-w-[150px]`}>{getStatus()}</span>
           <Show when={validationErrors().length > 0}>
-            <span class="flex items-center gap-1 text-red-500 whitespace-nowrap">
-              <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            <span class="flex items-center gap-1 text-error whitespace-nowrap">
+              <Icon name="warning" size={12} class="text-error" />
               <span class="truncate max-w-[150px]">{validationErrors()[0]}</span>
             </span>
           </Show>
-          {/* 参数已更新 */}
-          <Show when={paramsUpdated() && validationErrors().length === 0}>
-            <span class="flex items-center gap-1 text-green-500 whitespace-nowrap">
-              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {t().status.paramsUpdated}
-            </span>
-          </Show>
-          {/* 压力角超限警告 */}
           <Show when={isPressureAngleExceeded()}>
-            <span class="flex items-center gap-1 text-amber-500 whitespace-nowrap">
-              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            <span class="flex items-center gap-1 text-warning whitespace-nowrap">
+              <Icon name="warning" size={12} class="text-warning" />
               {t().status.pressureAngleExceeded}
             </span>
           </Show>
-          {/* 导出状态 */}
           <Show when={exportStatus().type !== 'idle'}>
             <span
               class="truncate max-w-[60vw] whitespace-nowrap"
               classList={{
-                'text-green-500': exportStatus().type === 'success',
-                'text-red-500': exportStatus().type === 'error',
-                'text-blue-500': exportStatus().type === 'exporting',
+                'text-success': exportStatus().type === 'success',
+                'text-error': exportStatus().type === 'error',
+                'text-on-surface-variant': exportStatus().type === 'exporting',
               }}
             >
               {exportStatus().message}
             </span>
           </Show>
-          {/* 运行时间 */}
           <Show when={lastRunTime() && validationErrors().length === 0}>
-            <span class="text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatTime(lastRunTime())}</span>
+            <span class="text-on-surface-variant whitespace-nowrap">{formatTime(lastRunTime())}</span>
           </Show>
         </div>
       </div>
 
       {/* Content */}
       <div class="flex-1 overflow-hidden">
-        {/* 帮助页面始终显示 */}
-        <Show when={activeTab() === 'help'}>
-          <div role="tabpanel" class="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-900 p-6">
-            <div class="max-w-3xl mx-auto space-y-6">
-              {/* 快捷键 */}
-              <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  {t().help.keyboardShortcuts}
-                </h2>
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">{t().help.playPause}</span>
-                    <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">Space</kbd>
-                  </div>
-                  <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">{t().help.stepBackward}</span>
-                    <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">←</kbd>
-                  </div>
-                  <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">{t().help.stepForward}</span>
-                    <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">→</kbd>
-                  </div>
-                  <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">{t().help.undo}</span>
-                    <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">Ctrl+Z</kbd>
-                  </div>
-                  <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">{t().help.redo}</span>
-                    <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">Ctrl+Y</kbd>
-                  </div>
-                </div>
-                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                  {t().help.shortcutsNote}
-                </p>
-              </div>
-
-              {/* 关于 */}
-              <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  {t().help.about}
-                </h2>
-                <div class="text-sm text-gray-600 dark:text-gray-300 space-y-2">
-                  <p>
-                    <a
-                      href="https://github.com/EkaEva/CamForge-Next"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="font-semibold text-gray-900 dark:text-white hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                    >
-                      CamForge-Next
-                    </a>
-                  </p>
-                  <p class="text-gray-500 dark:text-gray-400">
-                    {t().help.aboutDesc}
-                  </p>
-                  <div class="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-500 dark:text-gray-400">
-                      {t().help.techStack}
-                      <span class="text-gray-400">Tauri 2.0 · Rust · Solid.js · TypeScript · Tailwind CSS</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Show>
-
-        {/* 其他页面需要模拟数据 */}
-        <Show
-          when={simulationData()}
-          fallback={
-            <Show when={activeTab() !== 'help'}>
-              <div class="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        {/* 仿真页面 - 双卡片布局 */}
+        <Show when={props.activeTab === 'simulation'}>
+          <Show
+            when={simulationData()}
+            fallback={
+              <div class="w-full h-full flex items-center justify-center bg-surface-container-low">
                 <Show when={isLoading()} fallback={
                   <div class="text-center">
-                    <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600" viewBox="0 0 100 100">
+                    <svg class="w-24 h-24 mx-auto text-outline-variant" viewBox="0 0 100 100">
                       <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1"/>
-                      <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-500"/>
+                      <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="currentColor" stroke-width="2" class="text-on-surface-variant"/>
                     </svg>
-                    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-4 text-sm text-on-surface-variant">
                       {t().mainCanvas.clickToStart}
                     </p>
                   </div>
                 }>
                   <div class="flex flex-col items-center gap-3">
-                    <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{t().status.running}</p>
+                    <div class="w-8 h-8 border-2 border-on-surface-variant border-t-transparent rounded-full animate-spin" />
+                    <p class="text-sm text-on-surface-variant">{t().status.running}</p>
                   </div>
                 </Show>
               </div>
-            </Show>
-          }
-        >
-          {/* CamAnimation always mounted - paused when not on animation tab */}
-          <div classList={{ 'w-full h-full': activeTab() === 'animation', 'hidden': activeTab() !== 'animation' }}>
-            <CamAnimation isActive={activeTab() === 'animation'} />
-          </div>
-          <Show when={activeTab() !== 'animation'}>
-            <Switch>
-            <Match when={activeTab() === 'motion'}>
-              <div role="tabpanel"><MotionCurves /></div>
-            </Match>
-            <Match when={activeTab() === 'curvature'}>
-              <div role="tabpanel"><CurvatureChart /></div>
-            </Match>
-            <Match when={activeTab() === 'geometry'}>
-              <div role="tabpanel"><GeometryChart /></div>
-            </Match>
-            <Match when={activeTab() === 'export'}>
-              <div role="tabpanel" class="w-full h-full overflow-auto bg-gray-50 dark:bg-gray-900 p-6">
-                <div class="max-w-4xl mx-auto space-y-6">
-                  {/* 快速导出 */}
-                  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      {t().export.quickExport}
-                    </h2>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
-                      <ExportButton id="motion_tiff" icon={icons.chart} label={t().export.items.motion} />
-                      <ExportButton id="curvature_tiff" icon={icons.curvature} label={t().export.items.curvature} />
-                      <ExportButton id="pressure_tiff" icon={icons.angle} label={t().export.items.pressure} />
-                      <ExportButton id="profile_tiff" icon={icons.profile} label={t().export.items.profile} />
-                      <ExportButton id="animation_gif" icon={icons.animation} label={t().export.items.animation} />
-                      <ExportButton id="csv" icon={icons.csv} label="CSV" />
-                      <ExportButton id="excel" icon={icons.excel} label="Excel" />
-                      <ExportButton id="svg" icon={icons.svg} label="SVG" />
-                      <ExportButton id="dxf" icon={icons.dxf} label="DXF" />
-                      <ExportButton id="preset" icon={icons.preset} label={t().export.items.preset} />
-                    </div>
-                    <Show when={exporting() === 'animation_gif' && exportProgress() > 0}>
-                      <div class="mt-4">
-                        <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                          <span>{t().export.generatingAnimation}</span>
-                          <span>{exportProgress()}%</span>
-                        </div>
-                        <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            class="h-full bg-blue-500 transition-all duration-300"
-                            style={{ width: `${exportProgress()}%` }}
-                          />
-                        </div>
-                      </div>
-                    </Show>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
-                      {t().export.downloadTip}
-                    </p>
-                  </div>
-
-                  {/* 自定义导出 */}
-                  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      {t().export.customExport}
-                    </h2>
-
-                    {/* 图表导出 */}
-                    <div class="mb-6">
-                      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        {t().export.chartExport}
-                      </h3>
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                          <label class="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">
-                            {t().export.imageFormat}
-                          </label>
-                          <select
-                            value={customExportFormat()}
-                            onChange={(e) => setCustomExportFormat(e.currentTarget.value as 'png' | 'tiff' | 'svg')}
-                            class="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                          >
-                            <option value="png">PNG</option>
-                            <option value="tiff">TIFF</option>
-                            <option value="svg">SVG</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label class="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">
-                            DPI
-                          </label>
-                          <select
-                            value={customExportDPI()}
-                            onChange={(e) => setCustomExportDPI(parseInt(e.currentTarget.value))}
-                            class="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                          >
-                            <option value="150">150 DPI</option>
-                            <option value="300">300 DPI</option>
-                            <option value="600">600 DPI</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportCharts().motion} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), motion: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
-                          {t().export.charts.motion}
-                        </label>
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportCharts().pressure} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), pressure: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
-                          {t().export.charts.pressure}
-                        </label>
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportCharts().curvature} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), curvature: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
-                          {t().export.charts.curvature}
-                        </label>
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportCharts().profile} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), profile: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
-                          {t().export.charts.profile}
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* 动画导出 */}
-                    <div class="mb-6">
-                      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        {t().export.animationExport}
-                      </h3>
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                          <label class="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">
-                            {t().export.animationFormat}
-                          </label>
-                          <select
-                            value={customExportAnimFormat()}
-                            onChange={(e) => setCustomExportAnimFormat(e.currentTarget.value as 'gif' | 'png')}
-                            class="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                          >
-                            <option value="gif">GIF</option>
-                            <option value="png">PNG 序列</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label class="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">
-                            DPI
-                          </label>
-                          <select
-                            value={customExportAnimDPI()}
-                            onChange={(e) => setCustomExportAnimDPI(parseInt(e.currentTarget.value))}
-                            class="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                          >
-                            <option value="100">100 DPI</option>
-                            <option value="150">150 DPI</option>
-                            <option value="200">200 DPI</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="mt-4">
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportAnimation()} onChange={(e) => setCustomExportAnimation(e.currentTarget.checked)} class="accent-blue-500 w-5 h-5" />
-                          {t().export.exportAnimation}
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* 数据导出 */}
-                    <div class="mb-6">
-                      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        {t().export.dataExport}
-                      </h3>
-                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportData().csv} onChange={(e) => setCustomExportData({ ...customExportData(), csv: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
-                          CSV
-                        </label>
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportData().excel} onChange={(e) => setCustomExportData({ ...customExportData(), excel: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
-                          Excel
-                        </label>
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportData().dxf} onChange={(e) => setCustomExportData({ ...customExportData(), dxf: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
-                          DXF
-                        </label>
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-                          <input type="checkbox" checked={customExportData().preset} onChange={(e) => setCustomExportData({ ...customExportData(), preset: e.currentTarget.checked })} class="accent-blue-500 w-5 h-5" />
-                          {lang === 'zh' ? '配置 (JSON)' : 'Config (JSON)'}
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* 导出按钮 */}
-                    <div class="flex justify-center">
-                      <button
-                        type="button"
-                        onClick={handleCustomExport}
-                        disabled={exporting() !== null || !hasCustomSelection()}
-                        class="px-6 py-2 text-sm font-medium bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:dark:bg-gray-600 text-white rounded-lg transition-colors"
-                      >
-                        {t().export.exportSelected}
-                      </button>
-                    </div>
-
-                    <Show when={exporting() === 'custom' && exportProgress() > 0}>
-                      <div class="mt-4">
-                        <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                          <span>{t().export.exporting}</span>
-                          <span>{exportProgress()}%</span>
-                        </div>
-                        <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            class="h-full bg-blue-500 transition-all duration-300"
-                            style={{ width: `${exportProgress()}%` }}
-                          />
-                        </div>
-                      </div>
-                    </Show>
+            }
+          >
+            <div class="w-full h-full overflow-auto bg-surface-container-low p-2 camforge-scrollbar">
+              {/* 上方卡片：机构模型 */}
+              <section class="flex flex-col border border-outline-variant bg-surface-container-low rounded overflow-hidden h-[480px] relative">
+                <div class="h-10 border-b border-outline-variant flex items-center justify-between px-4 bg-surface flex-shrink-0">
+                  <span class="font-display text-xs uppercase tracking-wider text-on-surface-variant">
+                    {t().tabs.mechanismModel}
+                  </span>
+                  <div class="flex items-center gap-3 font-display text-xs text-on-surface-variant">
+                    <span>{t().info.zoom}: {zoomPercent()}%</span>
                   </div>
                 </div>
+                <div class="flex-1 relative overflow-hidden">
+                  <CamAnimation
+                    isActive={true}
+                    onZoomChange={(z: number) => setZoomPercent(Math.round(z * 100))}
+                  />
+                </div>
+              </section>
+
+              {/* 下方卡片：分析 */}
+              <section class="flex flex-col border border-outline-variant bg-surface-container-low rounded overflow-hidden min-h-[480px] mt-2 relative">
+                <div class="h-10 border-b border-outline-variant flex items-center justify-between px-4 bg-surface flex-shrink-0">
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const views: AnalysisView[] = ['kinematics', 'curvature', 'pressure'];
+                        const idx = views.indexOf(analysisView());
+                        setAnalysisView(views[(idx + 1) % views.length]);
+                      }}
+                      class="analysis-cycle-btn flex items-center gap-1.5"
+                    >
+                      <span class="cycle-label" key={analysisView()}>
+                        {analysisView() === 'kinematics' ? t().chart.kinematicsLabel :
+                         analysisView() === 'curvature' ? t().tabs.curvatureRadius :
+                         t().tabs.pressureAngle}
+                      </span>
+                    </button>
+                  </div>
+                  {/* 横向图例 */}
+                  <Switch>
+                    <Match when={analysisView() === 'kinematics'}>{renderKinematicsLegend()}</Match>
+                    <Match when={analysisView() === 'curvature'}>{renderCurvatureLegend()}</Match>
+                    <Match when={analysisView() === 'pressure'}>{renderPressureLegend()}</Match>
+                  </Switch>
+                </div>
+                <div class="flex-1 relative overflow-hidden">
+                  <Switch>
+                    <Match when={analysisView() === 'kinematics'}>
+                      <div role="tabpanel" class="w-full h-full"><MotionCurves hideLegend /></div>
+                    </Match>
+                    <Match when={analysisView() === 'curvature'}>
+                      <div role="tabpanel" class="w-full h-full"><CurvatureChart hideLegend /></div>
+                    </Match>
+                    <Match when={analysisView() === 'pressure'}>
+                      <div role="tabpanel" class="w-full h-full"><GeometryChart hideLegend /></div>
+                    </Match>
+                  </Switch>
+                </div>
+              </section>
+            </div>
+          </Show>
+        </Show>
+
+        {/* 导出页面 */}
+        <Show when={props.activeTab === 'export'}>
+          <Show
+            when={simulationData()}
+            fallback={
+              <div class="w-full h-full flex items-center justify-center bg-surface-container-low">
+                <Show when={isLoading()} fallback={
+                  <div class="text-center">
+                    <p class="text-sm text-on-surface-variant">{t().mainCanvas.clickToStart}</p>
+                  </div>
+                }>
+                  <div class="flex flex-col items-center gap-3">
+                    <div class="w-8 h-8 border-2 border-on-surface-variant border-t-transparent rounded-full animate-spin" />
+                    <p class="text-sm text-on-surface-variant">{t().status.running}</p>
+                  </div>
+                </Show>
               </div>
-            </Match>
-          </Switch>
+            }
+          >
+            <div role="tabpanel" class="w-full h-full overflow-auto bg-surface-container-low p-6">
+              <div class="max-w-4xl mx-auto space-y-6">
+                {/* 快速导出 */}
+                <div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-6">
+                  <h2 class="text-lg font-semibold text-on-surface mb-4">
+                    {t().export.quickExport}
+                  </h2>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
+                    <ExportButton id="motion_tiff" icon={icons.chart} label={t().export.items.motion} />
+                    <ExportButton id="curvature_tiff" icon={icons.curvature} label={t().export.items.curvature} />
+                    <ExportButton id="pressure_tiff" icon={icons.angle} label={t().export.items.pressure} />
+                    <ExportButton id="profile_tiff" icon={icons.profile} label={t().export.items.profile} />
+                    <ExportButton id="animation_gif" icon={icons.animation} label={t().export.items.animation} />
+                    <ExportButton id="csv" icon={icons.csv} label="CSV" />
+                    <ExportButton id="excel" icon={icons.excel} label="Excel" />
+                    <ExportButton id="svg" icon={icons.svg} label="SVG" />
+                    <ExportButton id="dxf" icon={icons.dxf} label="DXF" />
+                    <ExportButton id="preset" icon={icons.preset} label={t().export.items.preset} />
+                  </div>
+                  <p class="text-xs text-on-surface-variant mt-4 text-center">
+                    {t().export.downloadTip}
+                  </p>
+                  <Show when={exporting() === 'animation_gif' && exportProgress() > 0}>
+                    <div class="mt-4">
+                      <div class="flex items-center justify-between text-xs text-on-surface-variant mb-1">
+                        <span>{t().export.generatingAnimation}</span>
+                        <span>{exportProgress()}%</span>
+                      </div>
+                      <div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+                        <div
+                          class="h-full transition-all duration-300 rounded-full silver-progress-bar"
+                          style={{ width: `${exportProgress()}%` }}
+                        />
+                      </div>
+                    </div>
+                  </Show>
+                </div>
+
+                {/* 自定义导出 */}
+                <div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-6">
+                  <h2 class="text-lg font-semibold text-on-surface mb-4">
+                    {t().export.customExport}
+                  </h2>
+
+                  {/* 图表导出 */}
+                  <div class="mb-6">
+                    <h3 class="text-sm font-medium text-on-surface font-display mb-3">
+                      {t().export.chartExport}
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label class="text-xs text-on-surface-variant font-display mb-1.5 block">
+                          {t().export.imageFormat}
+                        </label>
+                        <select
+                          value={customExportFormat()}
+                          onChange={(e) => setCustomExportFormat(e.currentTarget.value as 'png' | 'tiff' | 'svg')}
+                          class="w-full px-3 py-1.5 text-sm bg-surface-container border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-outline text-on-surface font-display"
+                        >
+                          <option value="png">PNG</option>
+                          <option value="tiff">TIFF</option>
+                          <option value="svg">SVG</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="text-xs text-on-surface-variant font-display mb-1.5 block">
+                          DPI
+                        </label>
+                        <select
+                          value={customExportDPI()}
+                          onChange={(e) => setCustomExportDPI(parseInt(e.currentTarget.value))}
+                          class="w-full px-3 py-1.5 text-sm bg-surface-container border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-outline text-on-surface font-display"
+                        >
+                          <option value="150">150 DPI</option>
+                          <option value="300">300 DPI</option>
+                          <option value="600">600 DPI</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" checked={customExportCharts().motion} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), motion: e.currentTarget.checked })} class="w-5 h-5" style={{ 'accent-color': 'var(--on-surface-variant)' }} />
+                        {t().export.charts.motion}
+                      </label>
+                      <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" checked={customExportCharts().pressure} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), pressure: e.currentTarget.checked })} class="w-5 h-5" style={{ 'accent-color': 'var(--on-surface-variant)' }} />
+                        {t().export.charts.pressure}
+                      </label>
+                      <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" checked={customExportCharts().curvature} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), curvature: e.currentTarget.checked })} class="w-5 h-5" style={{ 'accent-color': 'var(--on-surface-variant)' }} />
+                        {t().export.charts.curvature}
+                      </label>
+                      <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" checked={customExportCharts().profile} onChange={(e) => setCustomExportCharts({ ...customExportCharts(), profile: e.currentTarget.checked })} class="w-5 h-5" style={{ 'accent-color': 'var(--on-surface-variant)' }} />
+                        {t().export.charts.profile}
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* 动画导出 */}
+                  <div class="mb-6">
+                    <h3 class="text-sm font-medium text-on-surface font-display mb-3">
+                      {t().export.animationExport}
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label class="text-xs text-on-surface-variant font-display mb-1.5 block">
+                          {t().export.animationFormat}
+                        </label>
+                        <select
+                          value={customExportAnimFormat()}
+                          onChange={(e) => setCustomExportAnimFormat(e.currentTarget.value as 'gif' | 'png')}
+                          class="w-full px-3 py-1.5 text-sm bg-surface-container border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-outline text-on-surface font-display"
+                        >
+                          <option value="gif">GIF</option>
+                          <option value="png">PNG 序列</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="text-xs text-on-surface-variant font-display mb-1.5 block">
+                          DPI
+                        </label>
+                        <select
+                          value={customExportAnimDPI()}
+                          onChange={(e) => setCustomExportAnimDPI(parseInt(e.currentTarget.value))}
+                          class="w-full px-3 py-1.5 text-sm bg-surface-container border border-outline-variant rounded-md focus:outline-none focus:ring-2 focus:ring-outline text-on-surface font-display"
+                        >
+                          <option value="100">100 DPI</option>
+                          <option value="150">150 DPI</option>
+                          <option value="200">200 DPI</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="mt-4">
+                      <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" checked={customExportAnimation()} onChange={(e) => setCustomExportAnimation(e.currentTarget.checked)} class="w-5 h-5" style={{ 'accent-color': 'var(--on-surface-variant)' }} />
+                        {t().export.exportAnimation}
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* 数据导出 */}
+                  <div class="mb-6">
+                    <h3 class="text-sm font-medium text-on-surface font-display mb-3">
+                      {t().export.dataExport}
+                    </h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" checked={customExportData().csv} onChange={(e) => setCustomExportData({ ...customExportData(), csv: e.currentTarget.checked })} class="w-5 h-5" style={{ 'accent-color': 'var(--on-surface-variant)' }} />
+                        CSV
+                      </label>
+                      <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" checked={customExportData().excel} onChange={(e) => setCustomExportData({ ...customExportData(), excel: e.currentTarget.checked })} class="w-5 h-5" style={{ 'accent-color': 'var(--on-surface-variant)' }} />
+                        Excel
+                      </label>
+                      <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" checked={customExportData().dxf} onChange={(e) => setCustomExportData({ ...customExportData(), dxf: e.currentTarget.checked })} class="w-5 h-5" style={{ 'accent-color': 'var(--on-surface-variant)' }} />
+                        DXF
+                      </label>
+                      <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" checked={customExportData().preset} onChange={(e) => setCustomExportData({ ...customExportData(), preset: e.currentTarget.checked })} class="w-5 h-5" style={{ 'accent-color': 'var(--on-surface-variant)' }} />
+                        {lang === 'zh' ? '配置 (JSON)' : 'Config (JSON)'}
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* 导出按钮 */}
+                  <div class="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleCustomExport}
+                      disabled={exporting() !== null || !hasCustomSelection()}
+                      class="px-6 py-2 text-sm font-medium border-2 rounded-lg transition-all duration-200 disabled:opacity-40 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
+                      style={{
+                        'background-color': 'transparent',
+                        'border-color': 'var(--primary)',
+                        color: 'var(--primary)',
+                      }}
+                    >
+                      {t().export.exportSelected}
+                    </button>
+                  </div>
+                  <Show when={exporting() === 'custom' && exportProgress() > 0}>
+                    <div class="mt-4">
+                      <div class="flex items-center justify-between text-xs text-on-surface-variant mb-1">
+                        <span>{t().export.exporting}</span>
+                        <span>{exportProgress()}%</span>
+                      </div>
+                      <div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+                        <div
+                          class="h-full transition-all duration-300 rounded-full silver-progress-bar"
+                          style={{ width: `${exportProgress()}%` }}
+                        />
+                      </div>
+                    </div>
+                  </Show>
+                </div>
+              </div>
+            </div>
           </Show>
         </Show>
       </div>

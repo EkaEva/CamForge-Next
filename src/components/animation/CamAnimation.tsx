@@ -1,17 +1,45 @@
 import { createSignal, createMemo, onCleanup, onMount, Show, createEffect } from 'solid-js';
-import { simulationData, params, displayOptions } from '../../stores/simulation';
+import { simulationData, params, displayOptions, cursorFrame, setCursorFrame } from '../../stores/simulation';
 import { t } from '../../i18n';
 import { TARGET_FPS, EPSILON } from '../../constants/numeric';
+import { Icon } from '../ui/Icon';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
 interface CamAnimationProps {
   isActive?: boolean;
+  onZoomChange?: (zoom: number) => void;
 }
 
 export function CamAnimation(props: CamAnimationProps) {
-  const [frame, setFrame] = createSignal(0);
   const [playing, setPlaying] = createSignal(false);
   const [speed, setSpeed] = createSignal(3);
-  const [zoom, setZoom] = createSignal(0.8);
+  const [zoom, setZoom] = createSignal(1.0);
+
+  // Responsive chart padding (must match chart components)
+  const windowSize = useWindowSize();
+  const chartPadding = createMemo(() => {
+    const w = windowSize().width;
+    if (w < 640) return { left: 45, right: 20 };
+    if (w < 768) return { left: 55, right: 50 };
+    return { left: 70, right: 70 };
+  });
+
+  // Use shared cursorFrame as frame source
+  const frame = cursorFrame;
+  const setFrame = setCursorFrame;
+
+  // Notify parent of zoom changes
+  createEffect(() => {
+    const z = zoom();
+    props.onZoomChange?.(z);
+  });
+
+  // Mouse wheel zoom handler
+  const handleWheel = (e: WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom(Math.max(0.2, Math.min(3.0, zoom() + delta)));
+  };
 
   let animationId: number | undefined;
   let lastTime = 0;
@@ -342,7 +370,7 @@ export function CamAnimation(props: CamAnimationProps) {
       const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
       if (touchStartDistance > 0) {
         const scale = currentDistance / touchStartDistance;
-        const newZoom = Math.max(0.1, Math.min(1, touchStartZoom * scale));
+        const newZoom = Math.max(0.2, Math.min(3.0, touchStartZoom * scale));
         setZoom(newZoom);
       }
     } else if (e.touches.length === 1 && !playing()) {
@@ -363,7 +391,7 @@ export function CamAnimation(props: CamAnimationProps) {
 
   if (!data) {
     return (
-      <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg">
+      <div class="w-full h-full flex items-center justify-center text-on-surface-variant text-sm bg-surface-container-lowest rounded-lg font-display">
         {t().mainCanvas.clickToStart}
       </div>
     );
@@ -373,21 +401,50 @@ export function CamAnimation(props: CamAnimationProps) {
 
   return (
     <div
-      class="relative w-full h-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden touch-manipulation"
+      class="relative w-full h-full bg-surface-container-lowest drafting-grid rounded-lg overflow-hidden touch-manipulation"
       role="img"
       aria-label={t().tabs.camProfile}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
+      onWheel={handleWheel}
     >
       <svg viewBox={viewBoxData().viewBox} class="w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        {/* Coordinate axes and tick marks */}
+        <Show when={displayOptions().showCenterLine}>
+          {(() => {
+            const rMax = viewBoxData().r_max;
+            const z = zoom();
+            const extent = rMax * z;
+            const tickSpacing = 10 * z;
+            const nTicks = Math.floor(extent / tickSpacing);
+            return (
+              <g>
+                <line x1={-extent} y1={0} x2={extent} y2={0} stroke="var(--outline)" stroke-width={0.6 * z} />
+                <line x1={0} y1={-extent} x2={0} y2={extent} stroke="var(--outline)" stroke-width={0.6 * z} />
+                <circle cx={0} cy={0} r={1.5 * z} fill="var(--outline)" />
+                {Array.from({ length: nTicks }, (_, i) => {
+                  const pos = (i + 1) * tickSpacing;
+                  return (
+                    <g>
+                      <line x1={pos} y1={-1.5 * z} x2={pos} y2={1.5 * z} stroke="var(--outline-variant)" stroke-width={0.4 * z} />
+                      <line x1={-pos} y1={-1.5 * z} x2={-pos} y2={1.5 * z} stroke="var(--outline-variant)" stroke-width={0.4 * z} />
+                      <line x1={-1.5 * z} y1={pos} x2={1.5 * z} y2={pos} stroke="var(--outline-variant)" stroke-width={0.4 * z} />
+                      <line x1={-1.5 * z} y1={-pos} x2={1.5 * z} y2={-pos} stroke="var(--outline-variant)" stroke-width={0.4 * z} />
+                    </g>
+                  );
+                })}
+              </g>
+            );
+          })()}
+        </Show>
         {/* 基圆 */}
         <Show when={displayOptions().showBaseCircle}>
-          <circle cx="0" cy="0" r={s_0 * zoom()} fill="none" stroke="#9CA3AF" stroke-width={0.5 * zoom()} stroke-dasharray="2,2" />
+          <circle cx="0" cy="0" r={s_0 * zoom()} fill="none" stroke="var(--outline-variant)" stroke-width={0.5 * zoom()} stroke-dasharray="2,2" />
         </Show>
 
         {/* 偏距圆 */}
         <Show when={displayOptions().showOffsetCircle && params().e !== 0}>
-          <circle cx="0" cy="0" r={Math.abs(params().e) * zoom()} fill="none" stroke="#9CA3AF" stroke-width={0.5 * zoom()} stroke-dasharray="2,2" />
+          <circle cx="0" cy="0" r={Math.abs(params().e) * zoom()} fill="none" stroke="var(--outline-variant)" stroke-width={0.5 * zoom()} stroke-dasharray="2,2" />
         </Show>
 
         {/* 理论轮廓（滚子从动件时显示） */}
@@ -404,8 +461,8 @@ export function CamAnimation(props: CamAnimationProps) {
           <>
             <polygon
               points={`${frameData()!.followerX * zoom() - params().r_0 * 0.075 * zoom()},${-frameData()!.contactY * zoom() - params().r_0 * 0.1 * zoom()} ${frameData()!.followerX * zoom()},${-frameData()!.contactY * zoom() - 0.4 * zoom()} ${frameData()!.followerX * zoom() + params().r_0 * 0.075 * zoom()},${-frameData()!.contactY * zoom() - params().r_0 * 0.1 * zoom()}`}
-              fill="#4B5563"
-              stroke="#4B5563"
+              fill="var(--on-surface)"
+              stroke="var(--on-surface)"
               stroke-width={0.8 * zoom()}
             />
             <line
@@ -413,7 +470,7 @@ export function CamAnimation(props: CamAnimationProps) {
               y1={-frameData()!.contactY * zoom() - params().r_0 * 0.1 * zoom()}
               x2={frameData()!.followerX * zoom()}
               y2={-frameData()!.contactY * zoom() - viewBoxData().r_max * 0.3 * zoom()}
-              stroke="#4B5563"
+              stroke="var(--on-surface)"
               stroke-width={0.8 * zoom()}
             />
           </>
@@ -425,7 +482,7 @@ export function CamAnimation(props: CamAnimationProps) {
             cy={-frameData()!.contactY * zoom()}
             r={params().r_r * zoom()}
             fill="none"
-            stroke="#4B5563"
+            stroke="var(--on-surface)"
             stroke-width={0.8 * zoom()}
           />
           {/* 滚子中心点 */}
@@ -433,7 +490,7 @@ export function CamAnimation(props: CamAnimationProps) {
             cx={frameData()!.followerX * zoom()}
             cy={-frameData()!.contactY * zoom()}
             r={params().r_0 * 0.02 * zoom()}
-            fill="#4B5563"
+            fill="var(--on-surface)"
           />
           {/* 推杆杆身 */}
           <line
@@ -441,7 +498,7 @@ export function CamAnimation(props: CamAnimationProps) {
             y1={-frameData()!.contactY * zoom()}
             x2={frameData()!.followerX * zoom()}
             y2={-frameData()!.contactY * zoom() - viewBoxData().r_max * 0.3 * zoom()}
-            stroke="#4B5563"
+            stroke="var(--on-surface)"
             stroke-width={0.8 * zoom()}
           />
         </Show>
@@ -477,7 +534,7 @@ export function CamAnimation(props: CamAnimationProps) {
             y1={-frameData()!.contactY * zoom()}
             x2={frameData()!.followerX * zoom()}
             y2={(-frameData()!.contactY + p.r_0 * 0.5) * zoom()}
-            stroke="#4B5563"
+            stroke="var(--on-surface)"
             stroke-width={0.3 * zoom()}
           />
         </Show>
@@ -494,7 +551,7 @@ export function CamAnimation(props: CamAnimationProps) {
               p.r_0 * 0.3 * zoom()
             )}
             fill="none"
-            stroke="#4B5563"
+            stroke="var(--on-surface)"
             stroke-width={0.3 * zoom()}
           />
         </Show>
@@ -559,7 +616,7 @@ export function CamAnimation(props: CamAnimationProps) {
                   y1={0}
                   x2={xEnd}
                   y2={yEnd}
-                  stroke="#9CA3AF"
+                  stroke="var(--outline-variant)"
                   stroke-width={0.3 * zoom()}
                 />
               );
@@ -583,14 +640,14 @@ export function CamAnimation(props: CamAnimationProps) {
             return (
               <g>
                 {/* 铰链小圆圈（空心） */}
-                <circle cx={0} cy={0} r={circleR} fill="none" stroke="#4B5563" stroke-width={0.7 * zoom()} />
+                <circle cx={0} cy={0} r={circleR} fill="none" stroke="var(--on-surface)" stroke-width={0.7 * zoom()} />
                 {/* 三角形支座（实心） */}
                 <polygon
                   points={`0,${triTopY} ${-sz},${triBotY} ${sz},${triBotY}`}
-                  fill="#4B5563"
+                  fill="var(--on-surface)"
                 />
                 {/* 底座横线 */}
-                <line x1={-hw} y1={baseY} x2={hw} y2={baseY} stroke="#4B5563" stroke-width={1 * zoom()} />
+                <line x1={-hw} y1={baseY} x2={hw} y2={baseY} stroke="var(--on-surface)" stroke-width={1 * zoom()} />
                 {/* 斜线阴影 */}
                 {Array.from({ length: nHatch }).map((_, j) => {
                   const x0 = -hw + (2 * hw) * (j + 0.5) / nHatch;
@@ -600,7 +657,7 @@ export function CamAnimation(props: CamAnimationProps) {
                       y1={baseY}
                       x2={x0 - hatchLen * 0.6}
                       y2={baseY + hatchLen}
-                      stroke="#4B5563"
+                      stroke="var(--on-surface)"
                       stroke-width={0.5 * zoom()}
                     />
                   );
@@ -611,36 +668,36 @@ export function CamAnimation(props: CamAnimationProps) {
         }
       </svg>
 
-      {/* 信息面板 */}
-      <div class="absolute top-3 right-3 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-lg p-3 text-xs">
+      {/* Info panel */}
+      <div class="data-overlay top-2 left-2">
         <div class="grid grid-cols-2 gap-x-4 gap-y-1">
-          <span class="text-gray-500 dark:text-gray-400">{t().info.angle}:</span>
-          <span class="font-medium text-gray-900 dark:text-white tabular-nums w-16 text-right">{frameData()?.angleDeg.toFixed(1) ?? 0}°</span>
-          <span class="text-gray-500 dark:text-gray-400">{t().info.displacement}:</span>
-          <span class="font-medium text-gray-900 dark:text-white tabular-nums w-16 text-right">{frameData()?.sI.toFixed(3) ?? 0} mm</span>
-          <span class="text-gray-500 dark:text-gray-400">{t().info.pressureAngle}:</span>
-          <span class="font-medium text-gray-900 dark:text-white tabular-nums w-16 text-right">{frameData()?.alphaI.toFixed(2) ?? 0}°</span>
+          <span class="text-on-surface-variant">{t().info.angle}:</span>
+          <span class="font-medium text-on-surface tabular-nums w-16 text-right">{frameData()?.angleDeg.toFixed(1) ?? 0}°</span>
+          <span class="text-on-surface-variant">{t().info.displacement}:</span>
+          <span class="font-medium text-on-surface tabular-nums w-16 text-right">{frameData()?.sI.toFixed(3) ?? 0} mm</span>
+          <span class="text-on-surface-variant">{t().info.pressureAngle}:</span>
+          <span class="font-medium text-on-surface tabular-nums w-16 text-right">{frameData()?.alphaI.toFixed(2) ?? 0}°</span>
         </div>
       </div>
 
-      {/* 播放控制 */}
-      <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3 bg-white/90 dark:bg-gray-800/90 rounded-full px-3 sm:px-4 py-2 shadow-lg">
-        <button
-          type="button"
-          onClick={togglePlay}
-          class="w-11 h-11 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors touch-manipulation"
-        >
-          <Show when={playing()} fallback={
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          }>
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-            </svg>
-          </Show>
-        </button>
+      {/* Bottom playback bar */}
+      <div class="absolute bottom-0 inset-x-0 h-10 flex items-center gap-2" style={{ 'background-color': 'var(--chrome-bg)', 'border-top': '1px solid var(--chrome-border)' }}>
+        {/* Left padding zone: play button inside chart left margin */}
+        <div class="flex items-center justify-end pr-1 shrink-0" style={{ width: `${chartPadding().left}px` }}>
+          <button
+            type="button"
+            onClick={togglePlay}
+            class="w-7 h-7 flex items-center justify-center rounded-full text-chrome-text-active transition-all duration-200 touch-manipulation hover:bg-chrome-surface-hover hover:shadow-md hover:-translate-y-0.5 active:bg-chrome-active active:translate-y-0 active:shadow-none active:scale-90"
+          >
+            <Show when={playing()} fallback={
+              <Icon name="play_arrow" size={18} fill />
+            }>
+              <Icon name="pause" size={18} fill />
+            </Show>
+          </button>
+        </div>
 
+        {/* Slider - exactly spans chart plot area */}
         <input
           type="range"
           min={0}
@@ -650,17 +707,28 @@ export function CamAnimation(props: CamAnimationProps) {
             const newFrame = parseInt(e.currentTarget.value);
             setFrame(Math.min(newFrame, maxFrame()));
           }}
-          class="w-24 sm:w-32 h-2 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer"
+          class="flex-1 min-w-0 h-1.5 rounded-full appearance-none cursor-pointer"
+          style={{
+            'background-color': 'var(--chrome-border)',
+            'accent-color': 'var(--chrome-text-active)',
+          }}
         />
 
-        <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-center">
-          {frameData()?.angleDeg.toFixed(0) ?? 0}°
-        </span>
+        {/* Right padding zone: partial spacer */}
+        <div class="shrink-0" style={{ width: `${Math.round(chartPadding().right * 0.4)}px` }} />
 
+        {/* Controls outside chart area */}
+        <span class="text-xs text-chrome-text-active font-display tabular-nums whitespace-nowrap shrink-0">
+          {(frameData()?.angleDeg.toFixed(0) ?? '0').padStart(3, ' ')}°/360°
+        </span>
         <select
           value={speed()}
           onChange={(e) => setSpeed(parseInt(e.currentTarget.value))}
-          class="text-xs bg-transparent border-none text-gray-500 dark:text-gray-400 cursor-pointer min-h-[44px]"
+          class="text-xs font-display cursor-pointer h-6 px-1 rounded border-none shrink-0 mr-3"
+          style={{
+            'background-color': 'var(--chrome-surface-hover)',
+            'color': 'var(--chrome-text-active)',
+          }}
         >
           <option value="1">1x</option>
           <option value="2">2x</option>
@@ -670,38 +738,6 @@ export function CamAnimation(props: CamAnimationProps) {
         </select>
       </div>
 
-      {/* 缩放控制 - 移动端隐藏，使用双指缩放手势 */}
-      <div class="hidden sm:flex absolute bottom-3 right-3 items-center gap-2 bg-white/90 dark:bg-gray-800/90 rounded-full px-3 py-1.5 shadow-lg">
-        <button
-          type="button"
-          onClick={() => setZoom(Math.max(0.1, zoom() - 0.05))}
-          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" d="M20 12H4" />
-          </svg>
-        </button>
-
-        <input
-          type="range"
-          min={0.1}
-          max={1}
-          step={0.05}
-          value={zoom()}
-          onInput={(e) => setZoom(parseFloat(e.currentTarget.value))}
-          class="w-20 h-2 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer"
-        />
-
-        <button
-          type="button"
-          onClick={() => setZoom(Math.min(1, zoom() + 0.05))}
-          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-      </div>
     </div>
   );
 }

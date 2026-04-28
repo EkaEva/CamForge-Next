@@ -1,6 +1,6 @@
 {
   "name": "camforge-next",
-  "version": "0.3.7",
+  "version": "0.4.0",
   "description": "Cam mechanism kinematics simulator - Tauri v2 + SolidJS desktop application with mobile support",
   "type": "module",
   "scripts": {
@@ -10,7 +10,9 @@
     "serve": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "splash:preview": "npx remotion studio src/splash/index.ts",
+    "splash:render": "npx tsx src/splash/render.ts"
   },
   "license": "MIT",
   "dependencies": {
@@ -29,14 +31,22 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@remotion/bundler": "^4.0.452",
+    "@remotion/cli": "^4.0.452",
+    "@remotion/renderer": "^4.0.452",
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/postcss": "^4.2.3",
     "@tauri-apps/cli": "^2",
     "@types/gif.js": "^0.2.5",
     "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.5.0",
     "jsdom": "^29.0.2",
     "postcss": "^8.5.10",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "remotion": "^4.0.452",
     "tailwindcss": "^4.2.3",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",

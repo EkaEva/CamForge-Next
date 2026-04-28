@@ -5,6 +5,89 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-04-28
+
+### Added
+
+- **启动动画**：应用启动时播放 CamForge 品牌动画
+  - 凸轮轮廓逐点绘制动画（progressive point reveal）
+  - 绘制完成后凸轮旋转动画（基圆+轮廓同步旋转）
+  - 标题/副标题/版本号弹性入场动画（阻尼弹簧模拟）
+  - 底部运动曲线装饰线淡入
+  - 全局淡出退场，动画结束后自动移除
+  - 基于 Remotion 设计稿还原，JS `requestAnimationFrame` 驱动
+
+- **专业色板**：图表颜色替换为低饱和度专业色
+  - 位移 s / 理论 ρ / 压力角 α：#DC2626 → #E07A5F（珊瑚红）
+  - 速度 v / 实际 ρ：#2563EB → #3D5A80（深蓝）
+  - 加速度 a：#16A34A → #5B8C5A（翡翠绿）
+  - 阈值线：#F59E0B → #C4A35A（柔金）
+  - 滚子半径线：#06B6D4 → #6D9DC5（灰蓝）
+  - 超限标记：#EF4444 → #D4534B（柔红）
+  - 同步更新 MotionCurves、CurvatureChart、GeometryChart、MainCanvas 图例
+
+- **图例可点击切换曲线**：运动曲线图图例支持点击显示/隐藏对应曲线
+  - 新增 `curveVisible` signal 控制位移/速度/加速度曲线可见性
+  - 图例按钮带删除线+透明度反馈
+
+- **导出动画网格与信息面板**：GIF/视频导出帧与演示动画一致
+  - 制图网格背景（10mm 细线 + 50mm 粗线）
+  - 坐标轴与刻度标识
+  - 信息面板移至左上角，匹配 `.data-overlay` 样式
+
+- **Remotion 视频框架**：集成 Remotion v4 用于启动动画预览与渲染
+  - `src/splash/` 目录：CamForgeSplash 组件、Root 配置、render 脚本
+  - `npm run splash:preview` / `npm run splash:render` 命令
+
+### Changed
+
+- **UI 设计系统重构**：基于 Material Design 3 暗色主题参考设计，全面升级视觉风格
+  - CSS 自定义属性双套 token（亮色 `:root` + 暗色 `.dark`）
+  - MD3 Surface token 用于内容面板、图表、输入控件
+  - Zinc 系 Chrome token 用于标题栏、侧边栏、状态栏
+  - 语义 token：`success`、`warning`、`error`
+  - Tailwind `theme.extend.colors` 引用所有 CSS 变量
+
+- **字体系统**：
+  - Space Grotesk（技术标签、标题、数值）→ `font-display`
+  - Inter（正文）→ `font-sans`
+  - Google Fonts CDN 加载
+
+- **图标系统**：
+  - Material Symbols Outlined 替代内联 SVG
+  - 新增 `Icon` 组件（支持 size/weight/fill 控制）
+
+- **组件样式升级**：
+  - TitleBar、Sidebar、StatusBar：Chrome token + Icon 组件
+  - NumberInput、Select、Toggle：Surface token + font-display
+  - 侧边栏参数组：技术面板头（panel-header CSS 类）
+  - CamAnimation：制图网格背景（drafting-grid）+ 浮动数据叠加层（data-overlay）
+  - 图表组件：CSS 变量驱动颜色 + Space Grotesk 字体
+  - MainCanvas：Surface token 替代所有 Tailwind 默认色
+  - SettingsPanel：Chrome surface + 按钮组选择器
+  - Toast、ErrorBoundary：语义 token
+
+- **CSS 基础设施**：
+  - 自定义滚动条（`.camforge-scrollbar`）
+  - 制图网格背景（`.drafting-grid`、`.drafting-grid-major`）
+  - 技术面板头（`.panel-header`）
+  - 浮动数据叠加层（`.data-overlay`）
+  - `data-theme` 属性驱动 CSS 变量切换
+
+- **导出界面优化**：
+  - 进度条改为内联式（快速导出 + 自定义导出卡片内），流动银色渐变动画
+  - 亮色/暗色主题下进度条颜色分别优化
+  - 自定义导出复选框颜色匹配主题（`accent-color: var(--on-surface-variant)`）
+  - 自定义导出按钮改为描边样式，添加悬停上浮+点击下沉动效
+
+- **重置按钮**：点击重置后自动运行一次仿真
+
+- **播放按钮**：添加悬停上浮+阴影动效、点击下沉+缩放动效
+
+### Added (Components)
+
+- `src/components/ui/Icon.tsx`：Material Symbols Outlined 包装组件
+
 ## [0.3.7] - 2026-04-25
 
 ### Fixed
@@ -24,7 +107,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `apple-touch-icon.png`：972KB → 45KB，优化至 180×180
   - 添加 `width`/`height`/`decoding` 属性优化加载
 
-[0.3.7]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.6...v0.3.7
 
 ## [0.3.6] - 2026-04-25
 
@@ -508,6 +590,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.4.0]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.7...v0.4.0
+[0.3.7]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.6...v0.3.7
 [0.3.5]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/EkaEva/CamForge-Next/compare/v0.3.2...v0.3.3

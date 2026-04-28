@@ -1,87 +1,359 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+}
+
+/* ===== CamForge Design System Tokens ===== */
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  /* MD3 Surface (light) */
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f5f5f7;
+  --surface-container: #eceaec;
+  --surface-container-high: #e0dedf;
+  --surface-container-highest: #d5d3d4;
+  --on-surface: #1c1b1b;
+  --on-surface-variant: #494546;
+  --outline: #7b7576;
+  --outline-variant: #cac4c5;
+  --primary: #5f5e5e;
+  --surface-bright: #f0eeef;
+  --error: #ff0000;
+
+  /* Chrome (light) */
+  --chrome-bg: #f0f0f0;
+  --chrome-surface: #e4e4e7;
+  --chrome-surface-hover: #d4d4d8;
+  --chrome-active: #d4d4d8;
+  --chrome-text: #3f3f46;
+  --chrome-text-active: #18181b;
+  --chrome-border: #d4d4d8;
+  --chrome-run-bg: #18181b;
+  --chrome-run-text: #ffffff;
+
+  /* Semantic */
+  --success: #2e7d32;
+  --warning: #ed6c02;
+}
+
+.dark {
+  /* MD3 Surface (dark) */
+  --surface-container-lowest: #0e0e0e;
+  --surface-container-low: #1c1b1b;
+  --surface-container: #201f1f;
+  --surface-container-high: #2b2a2a;
+  --surface-container-highest: #353434;
+  --on-surface: #e5e2e1;
+  --on-surface-variant: #c4c7c7;
+  --outline: #8e9192;
+  --outline-variant: #444748;
+  --primary: #c8c6c5;
+  --surface-bright: #3a3939;
+  --error: #ff0000;
+
+  /* Chrome (dark) */
+  --chrome-bg: #09090b;
+  --chrome-surface: #18181b;
+  --chrome-surface-hover: #27272a;
+  --chrome-active: #27272a;
+  --chrome-text: #a1a1aa;
+  --chrome-text-active: #e4e4e7;
+  --chrome-border: #27272a;
+  --chrome-run-bg: #e4e4e7;
+  --chrome-run-text: #09090b;
+
+  /* Semantic */
+  --success: #66bb6a;
+  --warning: #ffa726;
+}
+
+/* ===== Base Styles ===== */
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--surface-container-low);
+  color: var(--on-surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
-body {
-  background: #f5f5f7;
-}
-
 .dark body {
-  background: #111827;
+  background: var(--surface-container-low);
 }
 
-#root {
-  height: 100%;
+/* ===== Custom Scrollbar ===== */
+
+.camforge-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-/* 屏幕阅读器专用样式 */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+.camforge-scrollbar::-webkit-scrollbar-track {
+  background: var(--surface-container-lowest);
+  border-radius: 4px;
 }
 
-/* 触摸反馈优化 - 移动端 */
-@media (hover: none) and (pointer: coarse) {
-  /* 移动端：添加 active 效果替代 hover */
-  .touch-feedback:active {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-
-  /* 禁用 hover 状态粘滞 */
-  button:hover,
-  a:hover,
-  [role="button"]:hover {
-    background-color: inherit;
-  }
+.camforge-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--surface-container-highest);
+  border-radius: 4px;
 }
 
-/* 触摸操作优化 */
-.touch-manipulation {
-  touch-action: manipulation;  /* 禁用双击缩放 */
+.camforge-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--outline);
 }
 
-/* 防止文本选择 */
-.no-select {
+/* ===== Drafting Grid Background ===== */
+
+.drafting-grid {
+  background-color: var(--surface-container-lowest);
+  background-image:
+    linear-gradient(var(--outline-variant) 1px, transparent 1px),
+    linear-gradient(90deg, var(--outline-variant) 1px, transparent 1px),
+    linear-gradient(var(--outline) 1px, transparent 1px),
+    linear-gradient(90deg, var(--outline) 1px, transparent 1px);
+  background-size: 10px 10px, 10px 10px, 50px 50px, 50px 50px;
+  background-position: -1px -1px;
+}
+
+.drafting-grid-major {
+  background-color: var(--surface-container-lowest);
+  background-image:
+    linear-gradient(var(--outline-variant) 1px, transparent 1px),
+    linear-gradient(90deg, var(--outline-variant) 1px, transparent 1px),
+    linear-gradient(var(--outline) 1px, transparent 1px),
+    linear-gradient(90deg, var(--outline) 1px, transparent 1px);
+  background-size: 10px 10px, 10px 10px, 50px 50px, 50px 50px;
+  background-position: -1px -1px;
+}
+
+/* ===== Technical Panel Header ===== */
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  padding: 0.625rem 0.75rem;
+  gap: 0.5rem;
+  background: var(--surface-container);
+  border-bottom: 1px solid var(--outline-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
   user-select: none;
-  -webkit-user-select: none;
 }
 
-/* 防止长按菜单 */
-.no-callout {
-  -webkit-touch-callout: none;
+/* ===== Floating Data Overlay ===== */
+
+.data-overlay {
+  position: absolute;
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--surface-container-highest) 80%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.5rem;
+  font-family: 'Space Grotesk', monospace;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  pointer-events: none;
 }
 
-/* 移动端滚动优化 */
-.overflow-y-auto {
-  -webkit-overflow-scrolling: touch;
+/* ===== Analysis View Cycle Button ===== */
+
+@keyframes cycle-icon-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(180deg); }
 }
 
-/* 隐藏滚动条但保持滚动功能 */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+@keyframes cycle-text-in {
+  0% { opacity: 0; transform: translateX(6px); }
+  100% { opacity: 1; transform: translateX(0); }
 }
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+
+.analysis-cycle-btn {
+  position: relative;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-family: 'Space Grotesk', monospace;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+}
+
+.analysis-cycle-btn:hover {
+  background: var(--surface-container-highest);
+  border-color: var(--outline);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--on-surface) 8%, transparent);
+}
+
+.analysis-cycle-btn:active {
+  background: var(--surface-container);
+  transform: scale(0.97);
+  transition: background 0.08s ease, transform 0.08s ease;
+}
+
+.analysis-cycle-btn .cycle-icon {
+  display: inline-flex;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analysis-cycle-btn:active .cycle-icon {
+  transform: rotate(180deg);
+}
+
+.analysis-cycle-btn .cycle-label {
+  display: inline-block;
+  animation: cycle-text-in 0.25s ease-out;
+}
+
+/* ===== Material Symbols ===== */
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  user-select: none;
+}
+
+/* ===== Settings Option Button ===== */
+
+.settings-option-btn {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.settings-option-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--on-surface) 10%, transparent);
+}
+
+.settings-option-btn:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: none;
+}
+
+/* ===== Tab Buttons ===== */
+
+.tab-btn {
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-btn-active {
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  border-color: var(--outline-variant);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--on-surface) 6%, transparent);
+}
+
+.tab-btn-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 1px 1px 0 0;
+}
+
+.tab-btn-inactive {
+  background: transparent;
+  color: var(--on-surface-variant);
+  border-color: transparent;
+}
+
+.tab-btn-inactive:hover {
+  background: var(--surface-container);
+  color: var(--on-surface);
+  border-color: var(--outline-variant);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--on-surface) 8%, transparent);
+}
+
+.tab-btn-inactive:active {
+  background: var(--surface-container-high);
+  transform: translateY(0) scale(0.97);
+  box-shadow: none;
+  transition-duration: 0.08s;
+}
+
+/* ===== TitleBar Action Buttons ===== */
+
+.titlebar-action-btn {
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 4px;
+}
+
+.titlebar-action-btn:hover {
+  background: var(--chrome-surface-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--on-surface) 8%, transparent);
+}
+
+.titlebar-action-btn:active {
+  background: var(--chrome-active);
+  transform: translateY(0) scale(0.92);
+  box-shadow: none;
+  transition-duration: 0.08s;
+}
+
+/* ===== Accordion ===== */
+
+.accordion-content {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.accordion-content.collapsed {
+  grid-template-rows: 0fr;
+}
+
+.accordion-inner {
+  overflow: hidden;
+}
+
+/* ===== Silver Progress Bar ===== */
+
+.silver-progress-bar {
+  background: linear-gradient(
+    90deg,
+    #8A8A8A 0%,
+    #A8A8A8 25%,
+    #B8B8B8 50%,
+    #A8A8A8 75%,
+    #8A8A8A 100%
+  );
+  background-size: 200% 100%;
+  animation: silver-flow 1.5s linear infinite;
+}
+
+.dark .silver-progress-bar {
+  background: linear-gradient(
+    90deg,
+    #6B6B6B 0%,
+    #8A8A8A 25%,
+    #A0A0A0 50%,
+    #8A8A8A 75%,
+    #6B6B6B 100%
+  );
+  background-size: 200% 100%;
+  animation: silver-flow 1.5s linear infinite;
+}
+
+@keyframes silver-flow {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
