@@ -6,11 +6,6 @@ import { motionLawOptions, defaultParams, defaultDisplayOptions } from '../../co
 import { version } from '../../../package.json';
 import { Icon } from '../ui/Icon';
 
-const rotationOptions = [
-  { value: 1, label: 'Clockwise', labelZh: '顺时针' },
-  { value: -1, label: 'Counter-clockwise', labelZh: '逆时针' },
-];
-
 interface SidebarProps {
   isMobile?: boolean;
   isOpen?: boolean;
@@ -18,6 +13,10 @@ interface SidebarProps {
 }
 
 export function Sidebar(props: SidebarProps) {
+  const rotationOptions = () => [
+    { value: 'cw', label: t().sidebar.option.cw, labelZh: t().sidebar.option.cw },
+    { value: 'ccw', label: t().sidebar.option.ccw, labelZh: t().sidebar.option.ccw },
+  ];
   const [presets, setPresets] = createSignal<string[]>([]);
   const [presetName, setPresetName] = createSignal('');
   const [loadError, setLoadError] = createSignal<string | null>(null);
@@ -230,7 +229,7 @@ export function Sidebar(props: SidebarProps) {
                     <Select
                       label={t().sidebar.label.sn}
                       value={params().sn}
-                      options={rotationOptions}
+                      options={rotationOptions()}
                       onChange={(v) => updateParam('sn', v)}
                       onValidate={validateAndRun}
                     />

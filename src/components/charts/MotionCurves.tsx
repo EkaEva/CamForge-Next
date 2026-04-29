@@ -33,7 +33,7 @@ export function MotionCurves() {
     const getResponsivePadding = () => {
       const w = window.innerWidth;
       if (w < 640) {
-        return { top: 35, right: 130, bottom: 40, left: 45 };
+        return { top: 35, right: 105, bottom: 40, left: 45 };
       } else if (w < 768) {
         return { top: 40, right: 155, bottom: 45, left: 55 };
       }
@@ -157,7 +157,7 @@ export function MotionCurves() {
 
     // 右侧Y轴2 - 加速度a（绿色，向外偏移）
     {
-      const aAxisOffset = window.innerWidth < 640 ? 50 : window.innerWidth < 768 ? 60 : 75;
+      const aAxisOffset = window.innerWidth < 640 ? 45 : window.innerWidth < 768 ? 60 : 75;
       const aAxisX = width - padding.right + aAxisOffset;
       ctx.strokeStyle = '#5B8C5A';
       ctx.lineWidth = 1;
@@ -181,7 +181,7 @@ export function MotionCurves() {
       ctx.textAlign = 'center';
       ctx.font = axisTitleFont;
       ctx.save();
-      ctx.translate(aAxisX + (isMobile ? 28 : 32), padding.top + chartHeight / 2);
+      ctx.translate(aAxisX + (isMobile ? 22 : 32), padding.top + chartHeight / 2);
       ctx.rotate(-Math.PI / 2);
       ctx.fillText(currentT.chart.accelerationY, 0, 0);
       ctx.restore();
@@ -234,7 +234,7 @@ export function MotionCurves() {
     ctx.textAlign = 'center';
     ctx.font = axisTitleFont;
     ctx.save();
-    ctx.translate(vAxisX + (isMobile ? 28 : 32), padding.top + chartHeight / 2);
+    ctx.translate(vAxisX + (isMobile ? 22 : 32), padding.top + chartHeight / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText(currentT.chart.velocityY, 0, 0);
     ctx.restore();

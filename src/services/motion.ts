@@ -26,7 +26,7 @@ export enum MotionLaw {
  * 运动规律名称映射
  */
 export const MotionLawNames: Record<MotionLaw, { zh: string; en: string }> = {
-  [MotionLaw.ConstantVelocity]: { zh: '等速运动', en: 'Constant Velocity' },
+  [MotionLaw.ConstantVelocity]: { zh: '等速运动', en: 'Uniform Motion' },
   [MotionLaw.ConstantAccel]: { zh: '等加速等减速', en: 'Constant Acceleration' },
   [MotionLaw.SimpleHarmonic]: { zh: '简谐运动', en: 'Simple Harmonic' },
   [MotionLaw.Cycloidal]: { zh: '摆线运动', en: 'Cycloidal' },

@@ -299,10 +299,10 @@ export const en = {
     animationFormat: 'Animation Format',
     animationFrames: 'Frames',
     items: {
-      motion: 'Motion',
-      curvature: 'Curvature',
-      pressure: 'Pressure',
-      profile: 'Profile',
+      motion: 'Motion Curves',
+      curvature: 'Curvature Radius',
+      pressure: 'Pressure Angle',
+      profile: 'Cam Profile',
       animation: 'Animation',
       preset: 'Config',
     },
@@ -351,7 +351,7 @@ export const en = {
     zoom: 'Zoom',
   },
   chart: {
-    motionTitle: 'Follower Motion Curves',
+    motionTitle: 'Motion Curves',
     pressureTitle: 'Pressure Angle Curve',
     curvatureTitle: 'Curvature Radius Curve',
     kinematicsLabel: 'Kinematics Analysis',

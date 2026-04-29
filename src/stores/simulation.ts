@@ -12,6 +12,7 @@ import { createHistory, type HistoryActions } from './history';
 import { generateDXF as generateDXFCore, generateCSV as generateCSVCore, generateExcel as generateExcelCore, generateTIFFBlob } from '../exporters';
 import { getApi } from '../api';
 import { getDownloadDir, getDefaultDpi } from './settings';
+import { t } from '../i18n';
 
 // 检查是否在 Tauri 环境中
 const isTauri = isTauriEnv();
@@ -83,7 +84,8 @@ export const [curveVisible, setCurveVisible] = createSignal({ s: true, v: true, 
 let lastRunParamsHash = '';
 
 // 生成模拟数据
-function generateMockData(p: CamParams): SimulationData {
+// Fallback: mirrors camforge-core::compute_full_motion. Keep formulas in sync with Rust.
+function computeSimulationLocally(p: CamParams): SimulationData {
   const n = p.n_points;
   const delta_deg: number[] = [];
   const s: number[] = [];
@@ -331,7 +333,7 @@ export async function runSimulation() {
       } catch (apiError) {
         console.warn('HTTP API unavailable, using frontend calculation:', apiError);
         await new Promise(resolve => setTimeout(resolve, 100));
-        const data = generateMockData(currentParams);
+        const data = computeSimulationLocally(currentParams);
         setSimulationData(() => data);
       }
     }
@@ -342,7 +344,7 @@ export async function runSimulation() {
   } catch (e) {
     console.error('Simulation error:', e);
     // 错误时使用前端计算作为 fallback
-    const data = generateMockData(params());
+    const data = computeSimulationLocally(params());
     setSimulationData(() => data);
   } finally {
     setIsLoading(false);
@@ -972,7 +974,8 @@ export function generateHighResPNG(
       height,
       isDark: false,
       lang,
-      dpi
+      dpi,
+      translations: t()
     };
 
     switch (type) {
@@ -1027,7 +1030,8 @@ export async function generateRealTIFF(
     height,
     isDark: false,
     lang,
-    dpi
+    dpi,
+    translations: t()
   };
 
   switch (type) {

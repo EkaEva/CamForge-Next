@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-04-29
+
+### Fixed
+
+- **英文版文本溢出修复**：机构模型卡片头部信息栏、图表图例在英文模式下溢出截断
+  - 移除 `shrink-0`，添加 `truncate min-w-0`，允许长文本优雅截断
+  - 图例容器添加 `overflow-hidden min-w-0`
+
+- **术语一致性修复**：统一 "Uniform Motion"（原 "Constant Velocity"），"Motion Curves"（原 "Follower Motion Curves"）
+  - 导出面板 items 名称从缩写改为全称（"Motion Curves", "Curvature Radius", "Pressure Angle", "Cam Profile"）
+
+- **chartDrawing.ts 硬编码字符串 i18n 化**：所有 `lang === 'zh' ? '...' : '...'` 替换为 `tr()` 翻译函数
+  - `ChartDrawOptions` 新增可选 `translations` 字段，绘图函数优先使用翻译对象
+  - 动画信息面板 "Disp:" → "Disp.:"（带点号更专业）
+
+- **侧边栏英文标签溢出修复**：NumberInput label 添加 `overflow-hidden text-ellipsis whitespace-nowrap`
+
+- **侧边栏旋转选项 i18n 化**：`rotationOptions` 从硬编码改为使用 `t().sidebar.option.cw/ccw`
+
+- **移动端运动曲线绘图区优化**：right padding 从 130→105，aAxisOffset 从 50→45，轴标题 translate 从 28→22
+  - 绘图区向右扩展约 25px，Y 轴组整体右移
+
+- **Canvas 图表右侧 padding 优化**：chartDrawing.ts 运动曲线图 right padding 从 130→155 scale，加速度轴偏移从 60→70 scale
+
+- **启动动画版本号更新**：index.html 中 v0.4.2 → v0.4.4
+
+- **图标字体 CSP 修复**：tauri.conf.json `font-src` 添加 `https://fonts.googleapis.com`
+
+- **架构优化**：
+  - `generateMockData` 重命名为 `computeSimulationLocally`，添加与 Rust 端对应关系的注释
+  - 移除未使用的 `ndarray` 和 `rayon` 依赖（camforge-core、src-tauri、workspace Cargo.toml）
+  - CI 分支配置修复：`.github/workflows/test.yml` 和 `docker.yml` 中 `main` → `master`
+
 ## [0.4.3] - 2026-04-29
 
 ### Fixed

@@ -105,7 +105,7 @@ export function NumberInput(props: NumberInputProps) {
 
   return (
     <div class="flex flex-col space-y-1">
-      <label class="text-xs" id={`${props.label}-label`}
+      <label class="text-xs overflow-hidden text-ellipsis whitespace-nowrap" id={`${props.label}-label`}
         classList={{
           'text-on-surface-variant': !hasError(),
           'text-error': hasError(),

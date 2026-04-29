@@ -647,10 +647,10 @@ export function MainCanvas(props: MainCanvasProps) {
               {/* 上方卡片：机构模型 */}
               <section class="flex flex-col border border-outline-variant bg-surface-container-low rounded overflow-hidden h-[320px] sm:h-[480px] relative">
                 <div class="h-10 border-b border-outline-variant flex items-center justify-between px-4 bg-surface flex-shrink-0 overflow-hidden">
-                  <span class="font-display text-xs uppercase tracking-wider text-on-surface-variant shrink-0">
+                  <span class="font-display text-xs uppercase tracking-wider text-on-surface-variant truncate min-w-0">
                     {t().tabs.mechanismModel}
                   </span>
-                  <div class="flex items-center gap-2 font-display text-xs text-on-surface-variant shrink-0 min-w-0">
+                  <div class="flex items-center gap-2 font-display text-xs text-on-surface-variant overflow-hidden min-w-0">
                     <Show when={simulationData()}>
                       <span class="whitespace-nowrap">{t().info.displacement}: <span class="tabular-nums inline-block w-[3.5rem] text-right">{animFrameData().sI.toFixed(3)}</span>mm</span>
                       <span class="whitespace-nowrap">{t().info.pressureAngle}: <span class="tabular-nums inline-block w-[2.5rem] text-right">{animFrameData().alphaI.toFixed(2)}</span>°</span>

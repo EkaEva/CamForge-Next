@@ -4,6 +4,7 @@
 import type { SimulationData } from '../types';
 import type { CamParams, DisplayOptions } from '../types';
 import { DATA_RANGE_MARGIN, PERCENTILE_CLIP_LOW, PERCENTILE_CLIP_HIGH, PERCENTILE_CLIP_MID_LOW, PERCENTILE_CLIP_MID_HIGH, EPSILON } from '../constants/numeric';
+import type { Translation } from '../i18n/translations';
 
 export interface ChartDrawOptions {
   width: number;
@@ -11,6 +12,7 @@ export interface ChartDrawOptions {
   isDark: boolean;
   lang: string;
   dpi?: number;
+  translations?: Translation;
 }
 
 export interface AnimationFrameOptions {
@@ -28,6 +30,100 @@ const DEFAULT_DPI = 100;
 // DPI 上限保护
 const MAX_DPI = 600;
 const MAX_DIMENSION = 10000;
+
+// i18n fallback strings (used when translations object is not provided)
+const zhFallback = {
+  motionTitle: '推杆运动线图',
+  pressureTitle: '压力角曲线',
+  curvatureTitle: '曲率半径曲线',
+  angleX: '转角 δ (°)',
+  displacementY: '位移 s (mm)',
+  velocityY: '速度 v (mm/s)',
+  accelerationY: '加速度 a (mm/s²)',
+  pressureY: '压力角 α (°)',
+  curvatureY: '曲率半径 ρ (mm)',
+  displacement: '位移 s',
+  velocity: '速度 v',
+  acceleration: '加速度 a',
+  pressureAngle: '压力角 α',
+  theoryRho: '理论轮廓 ρ',
+  actualRho: '实际轮廓 ρₐ',
+  threshold: '阈值',
+  noData: '无有效曲率数据',
+  theoryProfile: '理论廓形',
+  actualProfile: '实际廓形',
+  baseCircle: '基圆',
+  camProfile: '凸轮廓形',
+  animAngle: '角度:',
+  animDisp: '位移:',
+  animAlpha: '压力角:',
+};
+
+const enFallback = {
+  motionTitle: 'Motion Curves',
+  pressureTitle: 'Pressure Angle Curve',
+  curvatureTitle: 'Curvature Radius Curve',
+  angleX: 'Angle δ (°)',
+  displacementY: 'Displacement s (mm)',
+  velocityY: 'Velocity v (mm/s)',
+  accelerationY: 'Acceleration a (mm/s²)',
+  pressureY: 'Pressure Angle α (°)',
+  curvatureY: 'Curvature Radius ρ (mm)',
+  displacement: 'Displacement s',
+  velocity: 'Velocity v',
+  acceleration: 'Acceleration a',
+  pressureAngle: 'Pressure Angle α',
+  theoryRho: 'Theory ρ',
+  actualRho: 'Actual ρₐ',
+  threshold: 'Threshold',
+  noData: 'No valid curvature data',
+  theoryProfile: 'Theory Profile',
+  actualProfile: 'Actual Profile',
+  baseCircle: 'Base Circle',
+  camProfile: 'Cam Profile',
+  animAngle: 'Angle:',
+  animDisp: 'Disp.:',
+  animAlpha: 'α:',
+};
+
+function tr(lang: string, key: keyof typeof enFallback, translations?: Translation): string {
+  if (translations) {
+    const chartKeys: Partial<Record<keyof typeof enFallback, string>> = {
+      motionTitle: 'motionTitle',
+      pressureTitle: 'pressureTitle',
+      curvatureTitle: 'curvatureTitle',
+      angleX: 'angleX',
+      displacementY: 'displacementY',
+      velocityY: 'velocityY',
+      accelerationY: 'accelerationY',
+      pressureY: 'pressureY',
+      curvatureY: 'curvatureY',
+      displacement: 'displacement',
+      velocity: 'velocity',
+      acceleration: 'acceleration',
+      pressureAngle: 'pressureAngle',
+      theoryRho: 'theoryRho',
+      actualRho: 'actualRho',
+      threshold: 'threshold',
+      noData: 'noData',
+    };
+    const chartKey = chartKeys[key];
+    if (chartKey && chartKey in translations.chart) {
+      return (translations.chart as Record<string, string>)[chartKey];
+    }
+    const specialKeys: Partial<Record<keyof typeof enFallback, string>> = {
+      theoryProfile: lang === 'zh' ? '理论廓形' : 'Theory Profile',
+      actualProfile: lang === 'zh' ? '实际廓形' : 'Actual Profile',
+      baseCircle: translations.sidebar?.cb?.baseCircle ?? (lang === 'zh' ? '基圆' : 'Base Circle'),
+      camProfile: translations.tabs?.camProfile ?? (lang === 'zh' ? '凸轮廓形' : 'Cam Profile'),
+      animAngle: lang === 'zh' ? '角度:' : 'Angle:',
+      animDisp: lang === 'zh' ? '位移:' : 'Disp.:',
+      animAlpha: lang === 'zh' ? '压力角:' : 'α:',
+    };
+    if (key in specialKeys) return specialKeys[key]!;
+  }
+  return (lang === 'zh' ? zhFallback : enFallback)[key];
+}
 
 export function sanitizeNumber(value: number, fallback = 0): number {
   return Number.isFinite(value) ? value : fallback;
@@ -95,7 +191,7 @@ export function drawMotionCurves(
   }
 
   const normalizedOptions = normalizeChartOptions(options);
-  const { width, height, isDark, lang, dpi = DEFAULT_DPI } = normalizedOptions;
+  const { width, height, isDark, lang, dpi = DEFAULT_DPI, translations } = normalizedOptions;
   const { delta_deg, s, v, a, phase_bounds, h } = data;
 
   // DPI 缩放因子
@@ -104,7 +200,7 @@ export function drawMotionCurves(
   // 根据 DPI 缩放 padding（增加顶部空间给标题）
   const padding = {
     top: Math.round(55 * scale),
-    right: Math.round(130 * scale),
+    right: Math.round(155 * scale),
     bottom: Math.round(55 * scale),
     left: Math.round(70 * scale)
   };
@@ -119,7 +215,7 @@ export function drawMotionCurves(
   ctx.fillStyle = isDark ? '#FFF' : '#333';
   ctx.font = `bold ${Math.round(14 * scale)}px -apple-system, sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText(lang === 'zh' ? '推杆运动线图' : 'Follower Motion Curves', width / 2, Math.round(25 * scale));
+  ctx.fillText(tr(lang, 'motionTitle', translations), width / 2, Math.round(25 * scale));
 
   // 网格线（点线）
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
@@ -221,7 +317,7 @@ export function drawMotionCurves(
   ctx.stroke();
 
   // 右侧Y轴2 - 加速度a（绿色，向外偏移）
-  const aAxisX = width - padding.right + Math.round(60 * scale);
+  const aAxisX = width - padding.right + Math.round(70 * scale);
   ctx.strokeStyle = '#16A34A';
   ctx.lineWidth = Math.round(1 * scale);
   ctx.beginPath();
@@ -233,7 +329,7 @@ export function drawMotionCurves(
   ctx.fillStyle = isDark ? '#CCC' : '#333';
   ctx.font = `${Math.round(10 * scale)}px -apple-system, sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText(lang === 'zh' ? '转角 δ (°)' : 'Angle δ (°)', padding.left + chartWidth / 2, height - Math.round(10 * scale));
+  ctx.fillText(tr(lang, 'angleX', translations), padding.left + chartWidth / 2, height - Math.round(10 * scale));
 
   ctx.textAlign = 'center';
   for (let x = 0; x <= 360; x += 30) {
@@ -247,7 +343,7 @@ export function drawMotionCurves(
   ctx.save();
   ctx.translate(Math.round(16 * scale), padding.top + chartHeight / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText(lang === 'zh' ? '位移 s (mm)' : 'Displacement s (mm)', 0, 0);
+  ctx.fillText(tr(lang, 'displacementY', translations), 0, 0);
   ctx.restore();
 
   ctx.textAlign = 'right';
@@ -264,9 +360,9 @@ export function drawMotionCurves(
   ctx.textAlign = 'center';
   ctx.font = `${Math.round(10 * scale)}px -apple-system, sans-serif`;
   ctx.save();
-  ctx.translate(vAxisX + Math.round(22 * scale), padding.top + chartHeight / 2);
+  ctx.translate(vAxisX + Math.round(28 * scale), padding.top + chartHeight / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText(lang === 'zh' ? '速度 v (mm/s)' : 'Velocity v (mm/s)', 0, 0);
+  ctx.fillText(tr(lang, 'velocityY', translations), 0, 0);
   ctx.restore();
 
   ctx.textAlign = 'left';
@@ -283,9 +379,9 @@ export function drawMotionCurves(
   ctx.textAlign = 'center';
   ctx.font = `${Math.round(10 * scale)}px -apple-system, sans-serif`;
   ctx.save();
-  ctx.translate(aAxisX + Math.round(22 * scale), padding.top + chartHeight / 2);
+  ctx.translate(aAxisX + Math.round(28 * scale), padding.top + chartHeight / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText(lang === 'zh' ? '加速度 a (mm/s²)' : 'Acceleration a (mm/s²)', 0, 0);
+  ctx.fillText(tr(lang, 'accelerationY', translations), 0, 0);
   ctx.restore();
 
   ctx.textAlign = 'left';
@@ -312,7 +408,7 @@ export function drawMotionCurves(
   ctx.stroke();
   ctx.fillStyle = isDark ? '#FFF' : '#333';
   ctx.textAlign = 'left';
-  ctx.fillText(lang === 'zh' ? '位移 s' : 'Displacement s', legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
+  ctx.fillText(tr(lang, 'displacement', translations), legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
 
   // 速度图例
   legendY += Math.round(16 * scale);
@@ -322,7 +418,7 @@ export function drawMotionCurves(
   ctx.moveTo(legendX, legendY);
   ctx.lineTo(legendX + Math.round(20 * scale), legendY);
   ctx.stroke();
-  ctx.fillText(lang === 'zh' ? '速度 v' : 'Velocity v', legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
+  ctx.fillText(tr(lang, 'velocity', translations), legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
 
   // 加速度图例
   legendY += Math.round(16 * scale);
@@ -333,7 +429,7 @@ export function drawMotionCurves(
   ctx.lineTo(legendX + Math.round(20 * scale), legendY);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillText(lang === 'zh' ? '加速度 a' : 'Acceleration a', legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
+  ctx.fillText(tr(lang, 'acceleration', translations), legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
 }
 
 // 绘制压力角图
@@ -350,7 +446,7 @@ export function drawPressureAngleChart(
   }
 
   const normalizedOptions = normalizeChartOptions(options);
-  const { width, height, isDark, lang, dpi = DEFAULT_DPI } = normalizedOptions;
+  const { width, height, isDark, lang, dpi = DEFAULT_DPI, translations } = normalizedOptions;
   const { delta_deg, alpha_all, phase_bounds } = data;
 
   // DPI 缩放因子
@@ -374,7 +470,7 @@ export function drawPressureAngleChart(
   ctx.fillStyle = isDark ? '#FFF' : '#333';
   ctx.font = `bold ${Math.round(14 * scale)}px -apple-system, sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText(lang === 'zh' ? '压力角曲线' : 'Pressure Angle Curve', width / 2, Math.round(25 * scale));
+  ctx.fillText(tr(lang, 'pressureTitle', translations), width / 2, Math.round(25 * scale));
 
   // 网格线（点线）
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
@@ -466,7 +562,7 @@ export function drawPressureAngleChart(
   ctx.fillStyle = isDark ? '#CCC' : '#333';
   ctx.font = `${Math.round(10 * scale)}px -apple-system, sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText(lang === 'zh' ? '转角 δ (°)' : 'Angle δ (°)', padding.left + chartWidth / 2, height - Math.round(10 * scale));
+  ctx.fillText(tr(lang, 'angleX', translations), padding.left + chartWidth / 2, height - Math.round(10 * scale));
 
   ctx.textAlign = 'center';
   for (let x = 0; x <= 360; x += 30) {
@@ -480,7 +576,7 @@ export function drawPressureAngleChart(
   ctx.save();
   ctx.translate(Math.round(16 * scale), padding.top + chartHeight / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText(lang === 'zh' ? '压力角 α (°)' : 'Pressure Angle α (°)', 0, 0);
+  ctx.fillText(tr(lang, 'pressureY', translations), 0, 0);
   ctx.restore();
 
   ctx.textAlign = 'right';
@@ -506,7 +602,7 @@ export function drawPressureAngleChart(
   ctx.stroke();
   ctx.fillStyle = isDark ? '#FFF' : '#333';
   ctx.textAlign = 'left';
-  ctx.fillText(lang === 'zh' ? '压力角 α' : 'Pressure Angle α', legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
+  ctx.fillText(tr(lang, 'pressureAngle', translations), legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
 
   legendY += Math.round(16 * scale);
   ctx.strokeStyle = '#F59E0B';
@@ -516,7 +612,7 @@ export function drawPressureAngleChart(
   ctx.lineTo(legendX + Math.round(20 * scale), legendY);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillText(`${lang === 'zh' ? '阈值' : 'Threshold'} ${threshold}°`, legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
+  ctx.fillText(`${tr(lang, 'threshold', translations)} ${threshold}°`, legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
 }
 
 // 绘制曲率半径图
@@ -533,7 +629,7 @@ export function drawCurvatureChart(
   }
 
   const normalizedOptions = normalizeChartOptions(options);
-  const { width, height, isDark, lang, dpi = DEFAULT_DPI } = normalizedOptions;
+  const { width, height, isDark, lang, dpi = DEFAULT_DPI, translations } = normalizedOptions;
   const { delta_deg, rho, rho_actual, phase_bounds, min_rho, min_rho_idx, min_rho_actual, min_rho_actual_idx } = data;
 
   // DPI 缩放因子
@@ -557,7 +653,7 @@ export function drawCurvatureChart(
   ctx.fillStyle = isDark ? '#FFF' : '#333';
   ctx.font = `bold ${Math.round(14 * scale)}px -apple-system, sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText(lang === 'zh' ? '曲率半径曲线' : 'Curvature Radius Curve', width / 2, Math.round(25 * scale));
+  ctx.fillText(tr(lang, 'curvatureTitle', translations), width / 2, Math.round(25 * scale));
 
   // 网格线（点线）
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
@@ -605,7 +701,7 @@ export function drawCurvatureChart(
     ctx.fillStyle = isDark ? '#FFF' : '#000';
     ctx.font = `${Math.round(12 * scale)}px -apple-system, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(lang === 'zh' ? '无有效曲率数据' : 'No valid curvature data', width / 2, height / 2);
+    ctx.fillText(tr(lang, 'noData', translations), width / 2, height / 2);
     return;
   }
 
@@ -731,7 +827,7 @@ export function drawCurvatureChart(
   ctx.fillStyle = isDark ? '#CCC' : '#333';
   ctx.font = `${Math.round(10 * scale)}px -apple-system, sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText(lang === 'zh' ? '转角 δ (°)' : 'Angle δ (°)', padding.left + chartWidth / 2, height - Math.round(10 * scale));
+  ctx.fillText(tr(lang, 'angleX', translations), padding.left + chartWidth / 2, height - Math.round(10 * scale));
 
   ctx.textAlign = 'center';
   for (let x = 0; x <= 360; x += 30) {
@@ -745,7 +841,7 @@ export function drawCurvatureChart(
   ctx.save();
   ctx.translate(Math.round(16 * scale), padding.top + chartHeight / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText(lang === 'zh' ? '曲率半径 ρ (mm)' : 'Curvature Radius ρ (mm)', 0, 0);
+  ctx.fillText(tr(lang, 'curvatureY', translations), 0, 0);
   ctx.restore();
 
   ctx.textAlign = 'right';
@@ -772,7 +868,7 @@ export function drawCurvatureChart(
   ctx.stroke();
   ctx.fillStyle = isDark ? '#FFF' : '#333';
   ctx.textAlign = 'left';
-  ctx.fillText(lang === 'zh' ? '理论轮廓 ρ' : 'Theory ρ', legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
+  ctx.fillText(tr(lang, 'theoryRho', translations), legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
 
   // 实际轮廓曲率半径（仅滚子从动件）
   if (r_r > 0) {
@@ -786,7 +882,7 @@ export function drawCurvatureChart(
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = isDark ? '#FFF' : '#333';
-    ctx.fillText(lang === 'zh' ? '实际轮廓 ρₐ' : 'Actual ρₐ', legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
+    ctx.fillText(tr(lang, 'actualRho', translations), legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
   }
 
   // 显示理论轮廓最小曲率半径值
@@ -841,7 +937,7 @@ export function drawCurvatureChart(
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = isDark ? '#FFF' : '#333';
-    ctx.fillText(`${lang === 'zh' ? '阈值' : 'Threshold'} ${r_r} mm`, legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
+    ctx.fillText(`${tr(lang, 'threshold', translations)} ${r_r} mm`, legendX + Math.round(25 * scale), legendY + Math.round(4 * scale));
   }
 }
 
@@ -859,7 +955,7 @@ export function drawCamProfileChart(
   }
 
   const normalizedOptions = normalizeChartOptions(options);
-  const { width, height, isDark, lang, dpi = DEFAULT_DPI } = normalizedOptions;
+  const { width, height, isDark, lang, dpi = DEFAULT_DPI, translations } = normalizedOptions;
   const { x, y, x_actual, y_actual, r_max } = data;
 
   // DPI 缩放因子
@@ -939,7 +1035,7 @@ export function drawCamProfileChart(
   ctx.stroke();
   ctx.fillStyle = isDark ? '#FFF' : '#333';
   ctx.textAlign = 'left';
-  ctx.fillText(lang === 'zh' ? '理论廓形' : 'Theory Profile', legendX + Math.round(40 * dpiScale), legendY + Math.round(4 * dpiScale));
+  ctx.fillText(tr(lang, 'theoryProfile', translations), legendX + Math.round(40 * dpiScale), legendY + Math.round(4 * dpiScale));
 
   // 实际廓形
   if (params.r_r > 0) {
@@ -949,7 +1045,7 @@ export function drawCamProfileChart(
     ctx.moveTo(legendX, legendY);
     ctx.lineTo(legendX + Math.round(30 * dpiScale), legendY);
     ctx.stroke();
-    ctx.fillText(lang === 'zh' ? '实际廓形' : 'Actual Profile', legendX + Math.round(40 * dpiScale), legendY + Math.round(4 * dpiScale));
+    ctx.fillText(tr(lang, 'actualProfile', translations), legendX + Math.round(40 * dpiScale), legendY + Math.round(4 * dpiScale));
   }
 
   // 基圆
@@ -961,13 +1057,13 @@ export function drawCamProfileChart(
   ctx.lineTo(legendX + Math.round(30 * dpiScale), legendY);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillText(lang === 'zh' ? '基圆' : 'Base Circle', legendX + Math.round(40 * dpiScale), legendY + Math.round(4 * dpiScale));
+  ctx.fillText(tr(lang, 'baseCircle', translations), legendX + Math.round(40 * dpiScale), legendY + Math.round(4 * dpiScale));
 
   // 标题
   ctx.fillStyle = isDark ? '#FFF' : '#333';
   ctx.font = `${Math.round(14 * dpiScale)}px -apple-system, sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText(lang === 'zh' ? '凸轮廓形' : 'Cam Profile', width / 2, Math.round(25 * dpiScale));
+  ctx.fillText(tr(lang, 'camProfile', translations), width / 2, Math.round(25 * dpiScale));
 }
 
 // 绘制动画单帧（用于 GIF 导出）
@@ -1294,9 +1390,9 @@ export function drawAnimationFrame(
   ctx.textAlign = 'left';
 
   const animLang = options.lang || 'zh';
-  ctx.fillText(animLang === 'zh' ? '角度:' : 'Angle:', panelX + 5, panelY + 12);
-  ctx.fillText(animLang === 'zh' ? '位移:' : 'Disp:', panelX + 5, panelY + 24);
-  ctx.fillText(animLang === 'zh' ? '压力角:' : 'α:', panelX + 5, panelY + 36);
+  ctx.fillText(tr(animLang, 'animAngle'), panelX + 5, panelY + 12);
+  ctx.fillText(tr(animLang, 'animDisp'), panelX + 5, panelY + 24);
+  ctx.fillText(tr(animLang, 'animAlpha'), panelX + 5, panelY + 36);
 
   ctx.fillStyle = '#111827';
   ctx.textAlign = 'right';
