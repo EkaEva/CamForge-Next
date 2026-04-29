@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-04-29
+
+### Fixed
+
+- **移动端侧边栏背景透明**：侧边栏弹出时背景透明，可透过侧边栏看到主界面内容
+  - 使用内联样式 `background-color: var(--surface-container-lowest)` 替代 Tailwind 类名，确保背景色生效
+
+- **运动线图Y轴标签与刻度重叠**：右侧速度轴和加速度轴的标题文字与刻度数字重叠
+  - 调整绘制顺序：先画刻度标签（紧贴轴线），再画轴标题（在刻度外侧）
+  - 增大右侧 padding（桌面端 130→170px）和加速度轴偏移量（60→75px）
+  - 轴标题距轴线距离从 22px 调整为 32px，确保与刻度标签不重叠
+  - 修复 `axisTitleFont` / `tickFont` 变量在声明前被引用导致的 TDZ 错误，该错误使整个 `draw()` 函数崩溃，所有Y轴标签消失
+
+- **位移/压力角数值不更新**：仿真卡片标题栏中的位移和压力角始终显示为 0
+  - 移除不可靠的 callback 模式（`onFrameDataChange`），改为 `createMemo` 直接从 `cursorFrame()` 和 `simulationData()` 派生，确保响应式链路完整
+
+### Changed
+
+- **信息面板优化**：移除仿真动画中的信息面板 overlay（角度、位移、压力角）
+  - 位移和压力角移至卡片标题栏，与缩放百分比并列显示
+  - 角度信息已在底部播放条显示，无需重复
+
+- **数值显示防抖动**：位移、压力角、缩放数值使用固定宽度 + 右对齐
+  - 位移数值：`w-[3.5rem]`，压力角数值：`w-[2.5rem]`，缩放数值：`w-[1.5rem]`
+  - `tabular-nums` 确保数字等宽，避免数值变化时布局抖动
+
+- **默认参数更新**：更新项目默认凸轮设计参数
+  - 推程角 90°→60°，远休止角 60°→70°，回程角 120°→100°，近休止角 90°→130°
+  - 偏距 5→-5，滚子半径 0→5，旋向 1→-1，偏距方向 1→-1
+
+- **版本号更新**：v0.4.3
+
 ## [0.4.2] - 2026-04-29
 
 ### Fixed

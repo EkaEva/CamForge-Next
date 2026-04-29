@@ -668,18 +668,6 @@ export function CamAnimation(props: CamAnimationProps) {
         }
       </svg>
 
-      {/* Info panel */}
-      <div class="data-overlay top-2 left-2">
-        <div class="grid grid-cols-2 gap-x-4 gap-y-1">
-          <span class="text-on-surface-variant">{t().info.angle}:</span>
-          <span class="font-medium text-on-surface tabular-nums w-16 text-right">{frameData()?.angleDeg.toFixed(1) ?? 0}°</span>
-          <span class="text-on-surface-variant">{t().info.displacement}:</span>
-          <span class="font-medium text-on-surface tabular-nums w-16 text-right">{frameData()?.sI.toFixed(3) ?? 0} mm</span>
-          <span class="text-on-surface-variant">{t().info.pressureAngle}:</span>
-          <span class="font-medium text-on-surface tabular-nums w-16 text-right">{frameData()?.alphaI.toFixed(2) ?? 0}°</span>
-        </div>
-      </div>
-
       {/* Bottom playback bar */}
       <div class="absolute bottom-0 inset-x-0 h-10 flex items-center gap-2" style={{ 'background-color': 'var(--chrome-bg)', 'border-top': '1px solid var(--chrome-border)' }}>
         {/* Left padding zone: play button inside chart left margin */}

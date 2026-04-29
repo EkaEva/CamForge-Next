@@ -4,7 +4,7 @@
 
 **凸轮机构运动学模拟器 | Cam Mechanism Kinematics Simulator**
 
-[![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)](https://github.com/EkaEva/CamForge/releases/tag/v0.4.2)
+[![Version](https://img.shields.io/badge/version-0.4.3-blue.svg)](https://github.com/EkaEva/CamForge/releases/tag/v0.4.3)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24c8db.svg)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-1.9-4f88c6.svg)](https://solidjs.com)
@@ -246,6 +246,10 @@ camforge/
 - [x] 英文模式侧边栏标签溢出修复
 - [x] 英文模式导出动画信息面板国际化
 - [x] GIF导出闪烁修复（全局调色板+FloydSteinberg抖动）
+- [x] 移动端侧边栏不透明背景
+- [x] 运动线图三轴标签与刻度防重叠
+- [x] 仿真卡片信息面板优化（位移/压力角移至标题栏）
+- [x] 数值显示防抖动（固定宽度+右对齐）
 - [ ] 凸轮机构优化算法
 - [ ] 更多从动件类型（平底、摆动）
 
@@ -480,6 +484,10 @@ camforge/
 - [x] English mode sidebar label overflow fix
 - [x] English mode export animation info panel i18n
 - [x] GIF export flickering fix (global palette + FloydSteinberg dithering)
+- [x] Mobile sidebar opaque background
+- [x] Motion curves 3Y-axis label/tick overlap prevention
+- [x] Simulation card info panel optimization (displacement/pressure angle moved to header bar)
+- [x] Numeric display anti-jitter (fixed width + right-aligned)
 - [ ] Cam mechanism optimization algorithm
 - [ ] More follower types (flat-faced, oscillating)
 

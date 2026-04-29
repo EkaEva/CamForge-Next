@@ -1,5 +1,5 @@
-import { createSignal, Show, Switch, Match, createEffect, onCleanup, JSX } from 'solid-js';
-import { simulationData, isLoading, lastRunTime, validationErrors, params, generateDXF, generateCSV, generateSVG, generateHighResPNG, generateRealTIFF, generateGIF, generatePresetJSON, generateExcel, saveFile, getCurrentLang, getExportFilename, exportStatus, setExportStatus, paramsUpdated, setParamsUpdated, curveVisible, setCurveVisible } from '../../stores/simulation';
+import { createSignal, Show, Switch, Match, createEffect, onCleanup, JSX, createMemo } from 'solid-js';
+import { simulationData, isLoading, lastRunTime, validationErrors, params, generateDXF, generateCSV, generateSVG, generateHighResPNG, generateRealTIFF, generateGIF, generatePresetJSON, generateExcel, saveFile, getCurrentLang, getExportFilename, exportStatus, setExportStatus, paramsUpdated, setParamsUpdated, curveVisible, setCurveVisible, cursorFrame } from '../../stores/simulation';
 import { t } from '../../i18n';
 import { CamAnimation } from '../animation';
 import { MotionCurves, GeometryChart, CurvatureChart } from '../charts';
@@ -20,6 +20,12 @@ export function MainCanvas(props: MainCanvasProps) {
   const [exportProgress, setExportProgress] = createSignal(0);
   const [analysisView, setAnalysisView] = createSignal<AnalysisView>('kinematics');
   const [zoomPercent, setZoomPercent] = createSignal(100);
+  const animFrameData = createMemo(() => {
+    const data = simulationData();
+    const frameIdx = cursorFrame();
+    if (!data || frameIdx < 0 || frameIdx >= data.s.length) return { sI: 0, alphaI: 0 };
+    return { sI: data.s[frameIdx], alphaI: data.alpha_all[frameIdx] };
+  });
 
   // 自定义导出状态
   const [customExportFormat, setCustomExportFormat] = createSignal<'png' | 'tiff' | 'svg'>('tiff');
@@ -640,12 +646,16 @@ export function MainCanvas(props: MainCanvasProps) {
             <div class="w-full h-full overflow-auto bg-surface-container-low p-2 camforge-scrollbar">
               {/* 上方卡片：机构模型 */}
               <section class="flex flex-col border border-outline-variant bg-surface-container-low rounded overflow-hidden h-[320px] sm:h-[480px] relative">
-                <div class="h-10 border-b border-outline-variant flex items-center justify-between px-4 bg-surface flex-shrink-0">
-                  <span class="font-display text-xs uppercase tracking-wider text-on-surface-variant">
+                <div class="h-10 border-b border-outline-variant flex items-center justify-between px-4 bg-surface flex-shrink-0 overflow-hidden">
+                  <span class="font-display text-xs uppercase tracking-wider text-on-surface-variant shrink-0">
                     {t().tabs.mechanismModel}
                   </span>
-                  <div class="flex items-center gap-3 font-display text-xs text-on-surface-variant">
-                    <span>{t().info.zoom}: {zoomPercent()}%</span>
+                  <div class="flex items-center gap-2 font-display text-xs text-on-surface-variant shrink-0 min-w-0">
+                    <Show when={simulationData()}>
+                      <span class="whitespace-nowrap">{t().info.displacement}: <span class="tabular-nums inline-block w-[3.5rem] text-right">{animFrameData().sI.toFixed(3)}</span>mm</span>
+                      <span class="whitespace-nowrap">{t().info.pressureAngle}: <span class="tabular-nums inline-block w-[2.5rem] text-right">{animFrameData().alphaI.toFixed(2)}</span>°</span>
+                    </Show>
+                    <span class="whitespace-nowrap">{t().info.zoom}: <span class="tabular-nums inline-block w-[1.5rem] text-right">{zoomPercent()}</span>%</span>
                   </div>
                 </div>
                 <div class="flex-1 relative overflow-hidden">

@@ -117,15 +117,25 @@ export function Sidebar(props: SidebarProps) {
 
   const sidebarClass = () => {
     if (props.isMobile) {
-      return `w-72 h-full bg-surface-container border-r border-outline-variant flex flex-col shadow-xl
+      return `w-72 h-full border-r border-outline-variant flex flex-col shadow-xl
         fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out
         ${props.isOpen ? 'translate-x-0' : '-translate-x-full'}`;
     }
     return 'w-80 h-full bg-chrome-surface border-r border-chrome-border flex flex-col';
   };
 
+  const sidebarStyle = () => {
+    if (props.isMobile) {
+      return {
+        'padding-top': 'env(safe-area-inset-top)',
+        'background-color': 'var(--surface-container-lowest)',
+      };
+    }
+    return undefined;
+  };
+
   return (
-    <aside class={sidebarClass()} style={props.isMobile ? { 'padding-top': 'env(safe-area-inset-top)' } : undefined}>
+    <aside class={sidebarClass()} style={sidebarStyle()}>
       {/* Logo */}
       <div class="px-5 py-4 border-b border-chrome-border flex-shrink-0 flex items-center gap-3">
         <a

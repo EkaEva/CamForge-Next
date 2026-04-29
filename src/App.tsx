@@ -119,7 +119,7 @@ function App() {
         )}
         {isMobile() && isMobileMenuOpen() && (
           <div
-            class="fixed inset-y-0 right-0 z-40 md:hidden bg-black/30"
+            class="fixed inset-y-0 right-0 z-40"
             style={{ left: '18rem', 'padding-top': 'env(safe-area-inset-top)' }}
             onClick={() => setIsMobileMenuOpen(false)}
           />
