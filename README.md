@@ -27,9 +27,13 @@
 
 ### 结果展示
 
-#### 应用界面
+#### 桌面端界面
 
 <img src="public/showcase/ui-screenshot.png" alt="CamForge UI" width="100%">
+
+#### 移动端界面
+
+<img src="public/showcase/mobile-ui.jpg" alt="CamForge Mobile UI" width="30%">
 
 #### 凸轮动画演示
 
@@ -269,9 +273,13 @@ camforge/
 
 ### Showcase
 
-#### Application Interface
+#### Desktop Interface
 
 <img src="public/showcase-en/ui-screenshot.png" alt="CamForge UI" width="100%">
+
+#### Mobile Interface
+
+<img src="public/showcase-en/mobile-ui.jpg" alt="CamForge Mobile UI" width="30%">
 
 #### Cam Animation Demo
 
