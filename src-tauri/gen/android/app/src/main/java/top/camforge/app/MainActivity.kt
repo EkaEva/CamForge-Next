@@ -1,4 +1,4 @@
-package com.camforge.app
+package top.camforge.app
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

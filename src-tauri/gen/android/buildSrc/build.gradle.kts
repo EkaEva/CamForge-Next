@@ -6,7 +6,7 @@ gradlePlugin {
     plugins {
         create("pluginsForCoolKids") {
             id = "rust"
-            implementationClass = "com.camforge.app.kotlin.RustPlugin"
+            implementationClass = "top.camforge.app.kotlin.RustPlugin"
         }
     }
 }
