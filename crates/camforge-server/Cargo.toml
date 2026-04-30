@@ -19,7 +19,7 @@ anyhow.workspace = true
 # HTTP 服务器
 axum = "0.7"
 tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "fs"] }
+tower-http = { version = "0.6", features = ["cors", "fs", "limit"] }
 tokio = { version = "1", features = ["full"] }
 
 [features]

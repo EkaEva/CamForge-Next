@@ -44,14 +44,15 @@ export function NumberInput(props: NumberInputProps) {
       return false;
     }
 
-    props.onChange(num);
-
     if (props.onValidate) {
       const globalValid = props.onValidate(num);
-      setLocalError(!globalValid);
-      return globalValid;
+      if (!globalValid) {
+        setLocalError(true);
+        return false;
+      }
     }
 
+    props.onChange(num);
     setLocalError(false);
     return true;
   };

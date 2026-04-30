@@ -14,6 +14,8 @@ pub enum ApiError {
     BadRequest(String),
     /// 计算错误
     CalculationError(String),
+    /// 内部错误
+    Internal(String),
 }
 
 impl IntoResponse for ApiError {
@@ -21,6 +23,7 @@ impl IntoResponse for ApiError {
         let (status, message) = match self {
             ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
             ApiError::CalculationError(msg) => (StatusCode::UNPROCESSABLE_ENTITY, msg),
+            ApiError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
         };
 
         let body = Json(json!({

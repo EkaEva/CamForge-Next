@@ -81,7 +81,8 @@ pub fn compute_rise(
                 let t2 = t.powi(2);
                 let t3 = t.powi(3);
                 let t4 = t.powi(4);
-                s[i] = h * (10.0 * t3 - 15.0 * t4 + 6.0 * t.powi(5));
+                let t5 = t4 * t;
+                s[i] = h * (10.0 * t3 - 15.0 * t4 + 6.0 * t5);
                 v[i] = h * omega / delta_0 * (30.0 * t2 - 60.0 * t3 + 30.0 * t4);
                 a[i] = h * omega.powi(2) / delta_0.powi(2) * (60.0 * t - 180.0 * t2 + 120.0 * t3);
             }

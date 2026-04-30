@@ -40,8 +40,12 @@ pub fn compute_pressure_angle(
     for i in 0..n {
         let numerator = ds_ddelta[i] - pz_f * e;
         let denominator = s_0 + s[i];
-        // 使用 atan 并取绝对值，与前端保持一致
-        alpha[i] = (numerator / denominator).atan().abs() * RAD2DEG;
+        // Use atan2 for correct quadrant handling; guard against zero denominator
+        alpha[i] = if denominator.abs() < f64::EPSILON {
+            90.0 // Pressure angle approaches 90° as denominator → 0
+        } else {
+            numerator.atan2(denominator).abs() * RAD2DEG
+        };
     }
 
     Ok(alpha)
@@ -83,7 +87,8 @@ pub fn compute_curvature_radius(x: &[f64], y: &[f64]) -> Result<Vec<f64>, String
 
         // 曲率 κ = (x'y'' - y'x'') / (x'² + y'²)^(3/2)
         let cross = dx * ddy - dy * ddx;
-        let speed_cubed = (dx.powi(2) + dy.powi(2)).powf(1.5);
+        let speed_sq = dx.powi(2) + dy.powi(2);
+        let speed_cubed = speed_sq * speed_sq.sqrt(); // faster than powf(1.5)
 
         // 避免除零
         rho[i] = if speed_cubed > 1e-12 {

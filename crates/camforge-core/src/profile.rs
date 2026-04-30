@@ -95,7 +95,7 @@ pub fn compute_roller_profile(
     }
 
     // 尖底从动件，直接返回理论廓形
-    if r_r == 0.0 {
+    if r_r.abs() < f64::EPSILON {
         return Ok((x_theory.to_vec(), y_theory.to_vec()));
     }
 

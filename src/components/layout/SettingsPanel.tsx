@@ -209,40 +209,34 @@ export function SettingsPanel(props: SettingsPanelProps) {
               <h3 class="font-display text-xs uppercase tracking-wider text-on-surface-variant">
                 {t().settings.downloadDir}
               </h3>
-              <Show when={!isMobile} fallback={
-                <p class="text-xs text-on-surface-variant font-display">
-                  {t().settings.downloadDirMobileHint}
-                </p>
-              }>
-                <div class="flex gap-2">
-                  <input
-                    type="text"
-                    value={settings().downloadDir}
-                    readOnly
-                    placeholder={t().settings.downloadDirPlaceholder}
-                    class="flex-1 px-3 py-2 text-sm bg-surface-container border border-outline-variant rounded-lg text-on-surface font-display"
-                  />
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  value={settings().downloadDir}
+                  readOnly
+                  placeholder={t().settings.downloadDirPlaceholder}
+                  class="flex-1 px-3 py-2 text-sm bg-surface-container border border-outline-variant rounded-lg text-on-surface font-display"
+                />
+                <button
+                  type="button"
+                  onClick={handleSelectDownloadDir}
+                  class="px-3 py-2 text-sm bg-chrome-run-bg hover:opacity-90 active:opacity-80 active:scale-95 text-chrome-run-text rounded-lg transition-all duration-150 font-display"
+                >
+                  {t().settings.select}
+                </button>
+                <Show when={settings().downloadDir}>
                   <button
                     type="button"
-                    onClick={handleSelectDownloadDir}
-                    class="px-3 py-2 text-sm bg-chrome-run-bg hover:opacity-90 active:opacity-80 active:scale-95 text-chrome-run-text rounded-lg transition-all duration-150 font-display"
+                    onClick={handleClearDir}
+                    class="px-3 py-2 text-sm bg-chrome-surface-hover hover:opacity-90 active:opacity-80 active:scale-95 text-chrome-text rounded-lg border border-chrome-border transition-all duration-150 font-display"
                   >
-                    {t().settings.select}
+                    {t().settings.clear}
                   </button>
-                  <Show when={settings().downloadDir}>
-                    <button
-                      type="button"
-                      onClick={handleClearDir}
-                      class="px-3 py-2 text-sm bg-chrome-surface-hover hover:opacity-90 active:opacity-80 active:scale-95 text-chrome-text rounded-lg border border-chrome-border transition-all duration-150 font-display"
-                    >
-                      {t().settings.clear}
-                    </button>
-                  </Show>
-                </div>
-                <p class="text-xs text-on-surface-variant font-display">
-                  {t().settings.downloadDirHint}
-                </p>
-              </Show>
+                </Show>
+              </div>
+              <p class="text-xs text-on-surface-variant font-display">
+                {t().settings.downloadDirHint}
+              </p>
             </div>
           </Show>
         </div>

@@ -6,9 +6,9 @@
  */
 
 import { createSignal } from 'solid-js';
+import { MAX_UNDO_STEPS } from '../constants';
 
 /** 最大历史记录数 */
-const MAX_HISTORY = 50;
 
 /**
  * 历史状态内部结构
@@ -117,7 +117,7 @@ export function createHistory<T>(initialState: T): HistoryActions<T> {
     }
 
     setState({
-      past: [...s.past.slice(-MAX_HISTORY + 1), s.present],
+      past: [...s.past.slice(-MAX_UNDO_STEPS + 1), s.present],
       present: newPresent,
       future: [], // 新操作清空重做栈
     });

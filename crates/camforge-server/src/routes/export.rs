@@ -39,7 +39,7 @@ pub async fn export_dxf(
         .header(header::CONTENT_TYPE, "application/octet-stream")
         .header(header::CONTENT_DISPOSITION, "attachment; filename=\"cam_profile.dxf\"")
         .body(Body::from(dxf))
-        .unwrap())
+        .map_err(|e| ApiError::Internal(e.to_string()))?)
 }
 
 /// 导出 CSV 文件
@@ -54,7 +54,6 @@ pub async fn export_csv(
     // 计算数据
     let motion = compute_full_motion(&params)?;
     let profile = compute_cam_profile(&motion.s, params.r_0, params.e, params.sn, params.pz)?;
-    let (_x_actual, _y_actual) = compute_roller_profile(&profile.x, &profile.y, params.r_r, params.sn)?;
     let rho = compute_curvature_radius(&profile.x, &profile.y)?;
     let alpha_all = compute_pressure_angle(&motion.s, &motion.ds_ddelta, profile.s_0, params.e, params.pz)?;
 
@@ -80,7 +79,7 @@ pub async fn export_csv(
         .header(header::CONTENT_TYPE, "text/csv; charset=utf-8")
         .header(header::CONTENT_DISPOSITION, "attachment; filename=\"cam_data.csv\"")
         .body(Body::from(csv))
-        .unwrap())
+        .map_err(|e| ApiError::Internal(e.to_string()))?)
 }
 
 /// 导出 SVG 文件
@@ -97,7 +96,7 @@ pub async fn export_svg(
         .status(StatusCode::NOT_IMPLEMENTED)
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(msg))
-        .unwrap())
+        .map_err(|e| ApiError::Internal(e.to_string()))?)
 }
 
 // ===== 辅助函数 =====
@@ -242,7 +241,7 @@ fn generate_csv_content(
         }
     }
 
-    // Data rows
+    // Data rows with CSV-safe formatting
     for i in 0..delta_deg.len() {
         let r = (x[i].powi(2) + y[i].powi(2)).sqrt();
         let rho_val = if rho[i].is_finite() { format!("{:.4}", rho[i].abs()) } else { String::new() };
@@ -262,4 +261,15 @@ fn generate_csv_content(
     }
 
     lines.join("\n")
+}
+
+/// Escape a CSV cell value to prevent formula injection
+#[allow(dead_code)]
+fn csv_escape(val: &str) -> String {
+    let dangerous = ['=', '+', '-', '@', '\t', '\r'];
+    if val.starts_with(dangerous) || val.contains(',') || val.contains('"') || val.contains('\n') {
+        format!("\"{}\"", val.replace('"', "\"\""))
+    } else {
+        val.to_string()
+    }
 }

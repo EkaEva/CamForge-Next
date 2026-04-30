@@ -159,9 +159,9 @@ export function TitleBar(props: TitleBarProps) {
     );
   }
 
-  // Web: lightweight header bar with app name + action buttons
+  // Web: lightweight header bar with app name + action buttons (hidden on mobile, mobile header in App.tsx handles it)
   return (
-    <div class="h-8 flex items-center justify-between px-4 bg-chrome-bg border-b border-chrome-border select-none">
+    <div class="h-8 hidden md:flex items-center justify-between px-4 bg-chrome-bg border-b border-chrome-border select-none">
       <span class="font-display text-sm font-semibold text-chrome-text-active tracking-tight">CamForge</span>
       {actionButtons}
     </div>

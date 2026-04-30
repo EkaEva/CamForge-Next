@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeMotion, MotionLaw, isValidMotionLaw } from '../../services/motion';
+import { MotionLaw } from '../../types';
+import { computeMotion, isValidMotionLaw } from '../../services/motion';
 
 describe('computeMotion', () => {
   const h = 10;

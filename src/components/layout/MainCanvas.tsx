@@ -4,6 +4,17 @@ import { t } from '../../i18n';
 import { CamAnimation } from '../animation';
 import { MotionCurves, GeometryChart, CurvatureChart } from '../charts';
 import { showToast } from '../ui/Toast';
+import { isTauriEnv } from '../../utils/tauri';
+
+async function revealFileInManager(filePath: string) {
+  if (!isTauriEnv()) return;
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('reveal_item_in_dir', { path: filePath });
+  } catch (e) {
+    console.error('Failed to reveal file:', e);
+  }
+}
 import { isMobilePlatform, isTauriEnv as checkIsTauriEnv } from '../../utils/platform';
 import { getDownloadDir } from '../../stores/settings';
 import { Icon } from '../ui/Icon';
@@ -225,15 +236,24 @@ export function MainCanvas(props: MainCanvasProps) {
       }
 
       if (result.success) {
+        const path = result.path || filename;
+        const shortName = path.split(/[/\\]/).pop() || filename;
         const pathInfo = result.path ? ` → ${result.path}` : '';
         setExportStatus({ type: 'success', message: `${t().export.exported}: ${filename}${pathInfo}`, files: [filename] });
         if (isMobilePlatform()) {
           const currentLang = getCurrentLang();
-          const exportPath = result.path || filename;
           const toastMsg = currentLang === 'zh'
-            ? `已导出: ${exportPath}`
-            : `Exported: ${exportPath}`;
-          showToast(toastMsg, 'success', 5000);
+            ? `已导出: ${path}`
+            : `Exported: ${path}`;
+          showToast(
+            toastMsg,
+            'success',
+            6000,
+            isTauriEnv() && result.path ? {
+              label: currentLang === 'zh' ? '打开位置' : 'Open',
+              onClick: () => revealFileInManager(result.path!),
+            } : undefined,
+          );
         }
       } else if (result.error !== 'Cancelled') {
         setExportStatus({ type: 'error', message: `${t().export.exportFailed}: ${result.error}` });
@@ -387,9 +407,17 @@ export function MainCanvas(props: MainCanvasProps) {
       });
       if (isMobilePlatform()) {
         const toastMsg = currentLang === 'zh'
-          ? `已保存 ${exportedFiles.length} 个文件到下载目录`
-          : `Saved ${exportedFiles.length} files to Downloads`;
-        showToast(toastMsg, 'success', 5000);
+          ? `已保存 ${exportedFiles.length} 个文件${saveDir ? ' → ' + saveDir : ''}`
+          : `Saved ${exportedFiles.length} files${saveDir ? ' → ' + saveDir : ''}`;
+        showToast(
+          toastMsg,
+          'success',
+          6000,
+          isTauriEnv() && saveDir ? {
+            label: currentLang === 'zh' ? '打开位置' : 'Open',
+            onClick: () => revealFileInManager(saveDir),
+          } : undefined,
+        );
       }
     } catch (e) {
       console.error('Custom export error:', e);
@@ -650,10 +678,10 @@ export function MainCanvas(props: MainCanvasProps) {
                   <span class="font-display text-xs uppercase tracking-wider text-on-surface-variant truncate min-w-0">
                     {t().tabs.mechanismModel}
                   </span>
-                  <div class="flex items-center gap-2 font-display text-xs text-on-surface-variant overflow-hidden min-w-0">
+                  <div class="flex items-center gap-1 sm:gap-2 font-display text-xs text-on-surface-variant min-w-0 flex-shrink-0 pl-1 sm:pl-0">
                     <Show when={simulationData()}>
-                      <span class="whitespace-nowrap">{t().info.displacement}: <span class="tabular-nums inline-block w-[3.5rem] text-right">{animFrameData().sI.toFixed(3)}</span>mm</span>
-                      <span class="whitespace-nowrap">{t().info.pressureAngle}: <span class="tabular-nums inline-block w-[2.5rem] text-right">{animFrameData().alphaI.toFixed(2)}</span>°</span>
+                      <span class="whitespace-nowrap">{t().info.displacement}: <span class="tabular-nums inline-block w-[3rem] sm:w-[3.5rem] text-right">{animFrameData().sI.toFixed(3)}</span>mm</span>
+                      <span class="whitespace-nowrap">{t().info.pressureAngle}: <span class="tabular-nums inline-block w-[2.5rem] sm:w-[2.5rem] text-right">{animFrameData().alphaI.toFixed(2)}</span>°</span>
                     </Show>
                     <span class="whitespace-nowrap">{t().info.zoom}: <span class="tabular-nums inline-block w-[1.5rem] text-right">{zoomPercent()}</span>%</span>
                   </div>

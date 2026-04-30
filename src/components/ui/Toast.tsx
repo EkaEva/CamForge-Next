@@ -1,18 +1,27 @@
-import { createSignal, For } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 
 interface ToastMessage {
   id: number;
   message: string;
   type: 'success' | 'error' | 'info';
   duration: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 const [toasts, setToasts] = createSignal<ToastMessage[]>([]);
 let toastId = 0;
 
-export function showToast(message: string, type: 'success' | 'error' | 'info' = 'info', duration: number = 3000) {
+export function showToast(
+  message: string,
+  type: 'success' | 'error' | 'info' = 'info',
+  duration: number = 3000,
+  action?: { label: string; onClick: () => void },
+) {
   const id = ++toastId;
-  const toast: ToastMessage = { id, message, type, duration };
+  const toast: ToastMessage = { id, message, type, duration, action };
 
   setToasts(prev => [...prev, toast]);
 
@@ -27,14 +36,23 @@ export function ToastContainer() {
       <For each={toasts()}>
         {(toast) => (
           <div
-            class="px-4 py-3 rounded-lg shadow-lg text-sm font-medium max-w-md text-center animate-fade-in pointer-events-auto break-all font-display"
+            class="px-4 py-3 rounded-lg shadow-lg text-sm font-medium max-w-sm text-center animate-fade-in pointer-events-auto font-display"
             classList={{
               'bg-success text-surface-container-lowest': toast.type === 'success',
               'bg-error text-surface-container-lowest': toast.type === 'error',
               'bg-surface-container-high text-on-surface border border-outline-variant': toast.type === 'info',
             }}
           >
-            {toast.message}
+            <div class="break-all">{toast.message}</div>
+            <Show when={toast.action}>
+              <button
+                type="button"
+                onClick={toast.action!.onClick}
+                class="mt-2 px-3 py-1 text-xs font-semibold rounded border border-current opacity-90 hover:opacity-100 transition-opacity"
+              >
+                {toast.action!.label}
+              </button>
+            </Show>
           </div>
         )}
       </For>

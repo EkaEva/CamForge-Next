@@ -20,7 +20,8 @@ export async function encodeCanvasToTIFFAsync(canvas: HTMLCanvasElement, dpi: nu
 
   const width = canvas.width;
   const height = canvas.height;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Failed to get 2D context');
   const imageData = ctx.getImageData(0, 0, width, height);
 
   // 将 RGBA 数据转换为 TIFF 格式

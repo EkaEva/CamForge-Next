@@ -6,6 +6,20 @@
 
 import type { SimulationData, CamParams } from '../types';
 
+/** Escape a CSV cell value to prevent formula injection and handle special characters */
+function escapeCSVCell(value: string): string {
+  // Prevent formula injection in Excel (cells starting with =, +, -, @, tab, CR)
+  const dangerousPrefixes = ['=', '+', '-', '@', '\t', '\r'];
+  if (dangerousPrefixes.some(p => value.startsWith(p))) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  // Quote cells containing commas, quotes, or newlines
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 /**
  * 生成 CSV 格式内容
  * @param data 模拟数据
@@ -47,7 +61,7 @@ export function generateCSV(data: SimulationData, params: CamParams, lang: strin
         rho,
         rhoActual,
         data.alpha_all[i].toFixed(4)
-      ].join(','));
+      ].map(escapeCSVCell).join(','));
     } else {
       lines.push([
         data.delta_deg[i].toFixed(2),
@@ -57,7 +71,7 @@ export function generateCSV(data: SimulationData, params: CamParams, lang: strin
         data.a[i].toFixed(4),
         rho,
         data.alpha_all[i].toFixed(4)
-      ].join(','));
+      ].map(escapeCSVCell).join(','));
     }
   }
 

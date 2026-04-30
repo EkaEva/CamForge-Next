@@ -66,49 +66,62 @@ impl Default for CamParams {
 impl CamParams {
     /// 验证参数有效性
     pub fn validate(&self) -> Result<(), String> {
+        // NaN/Infinity 检查
+        let float_fields = [
+            ("delta_0", self.delta_0), ("delta_01", self.delta_01),
+            ("delta_ret", self.delta_ret), ("delta_02", self.delta_02),
+            ("h", self.h), ("r_0", self.r_0), ("e", self.e),
+            ("omega", self.omega), ("r_r", self.r_r), ("alpha_threshold", self.alpha_threshold),
+        ];
+        for (name, val) in &float_fields {
+            if !val.is_finite() {
+                return Err(format!("Parameter '{}' must be a finite number, got {}", name, val));
+            }
+        }
+
         // 四角之和必须等于 360 度
         let sum = self.delta_0 + self.delta_01 + self.delta_ret + self.delta_02;
         if (sum - 360.0).abs() > 0.01 {
-            return Err(format!("四角之和必须等于 360°（当前: {:.2}°）", sum));
+            return Err(format!("Angle sum must equal 360° (got {:.2}°)", sum));
         }
 
         // 基圆半径必须大于偏距
         if self.r_0 <= self.e.abs() {
-            return Err("基圆半径必须大于偏距的绝对值".to_string());
+            return Err("Base circle radius must exceed |e| (offset)".to_string());
         }
 
         // 行程必须为正
         if self.h <= 0.0 {
-            return Err("行程必须为正数".to_string());
+            return Err("Stroke h must be positive".to_string());
         }
 
         // 角速度必须为正
         if self.omega <= 0.0 {
-            return Err("角速度必须为正数".to_string());
+            return Err("Angular velocity ω must be positive".to_string());
         }
 
         // 离散点数范围验证
         if self.n_points < 36 {
-            return Err("离散点数不能小于 36".to_string());
+            return Err("n_points must be >= 36".to_string());
         }
         if self.n_points > 720 {
-            return Err("离散点数不能大于 720".to_string());
+            return Err("n_points must be <= 720".to_string());
         }
 
         // 运动规律验证
-        if self.tc_law < 1 || self.tc_law > 6 {
-            return Err(format!("推程运动规律必须为 1-6，当前: {}", self.tc_law));
+        if !(1..=6).contains(&self.tc_law) {
+            return Err(format!("tc_law must be 1-6, got {}", self.tc_law));
         }
-        if self.hc_law < 1 || self.hc_law > 6 {
-            return Err(format!("回程运动规律必须为 1-6，当前: {}", self.hc_law));
+        if !(1..=6).contains(&self.hc_law) {
+            return Err(format!("hc_law must be 1-6, got {}", self.hc_law));
         }
 
         // 旋向和偏距符号验证
         if self.sn != 1 && self.sn != -1 {
-            return Err(format!("旋向符号必须为 +1 或 -1，当前: {}", self.sn));
+            return Err(format!("sn must be +1 or -1, got {}", self.sn));
         }
         if self.pz != 1 && self.pz != -1 {
-            return Err(format!("偏距符号必须为 +1 或 -1，当前: {}", self.pz));
+            return Err(format!("pz must be +1 or -1, got {}", self.pz));
         }
 
         Ok(())

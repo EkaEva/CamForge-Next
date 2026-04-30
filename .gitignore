@@ -30,6 +30,7 @@ coverage/
 
 # Tauri
 src-tauri/WixTools/
+src-tauri/gen/
 
 # Claude
 .claude/

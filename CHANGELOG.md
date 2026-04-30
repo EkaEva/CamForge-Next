@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.5] - 2026-04-29
+
+### Security
+
+- **文件系统权限收窄**：FS scope 从 `$HOME/**` 缩小到 `$DOWNLOAD/$DOCUMENT/$DESKTOP`
+- **CSP 生产环境加固**：移除 `connect-src` 中的 localhost 开发地址
+- **服务器请求体限制**：Axum 添加 `RequestBodyLimitLayer` 防止 DoS
+- **参数验证加固**：Tauri 命令入口调用 `CamParams::validate()`，添加 NaN/Infinity 检查
+- **密钥文件清理**：从项目目录移除 `camforge-next.keystore`
+- **生成代码排除**：`src-tauri/gen/` 从 Git 跟踪中移除并加入 `.gitignore`
+
+### Fixed
+
+- **移动端顶部双行按钮修复**：TitleBar Web 模式在移动端隐藏，mobile header 添加语言切换按钮
+- **移动端图表英文溢出**：图例仅保留物理符号（s, v, a, α, ρ），按钮文本缩短
+- **机构模型信息栏优化**：移动端缩减数值字段宽度，隐藏缩放百分比，确保标题完整显示
+- **图表画布右侧空白缩减**：移动端 right padding 从 105→80
+- **压力角计算精度修复**：`atan()` → `atan2()`，修复退化输入下的 NaN 问题
+- **NumberInput 验证顺序修复**：`onValidate` 在 `onChange` 之前调用
+- **MotionLaw 枚举去重**：合并 `types/index.ts` 和 `services/motion.ts` 的重复定义
+- **isTauriEnv 去重**：统一到 `platform.ts`
+- **ErrorBoundary 改用 SolidJS 内置组件**
+- **i18n useI18n 返回响应式信号**
+- **debounceAsync Promise 泄漏修复**
+- **CHANGELOG 比较链接补全**：添加 v0.4.3、v0.4.4 比较链接
+
+### Changed
+
+- **版本号更新**：v0.4.4 → v0.4.5（package.json, Cargo.toml, tauri.conf.json, README.md）
+
 ## [0.4.4] - 2026-04-29
 
 ### Fixed

@@ -9,6 +9,7 @@ use axum::{
 };
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
+use tower_http::limit::RequestBodyLimitLayer;
 use std::env;
 
 mod routes;
@@ -25,6 +26,7 @@ fn build_cors_layer() -> CorsLayer {
 
     // 如果包含 "*"，则允许所有来源（开发模式）
     if origins.contains(&"*") {
+        eprintln!("[WARN] CORS_ORIGINS=* allows any origin. Do not use in production!");
         return CorsLayer::new()
             .allow_origin(Any)
             .allow_methods(Any)
@@ -58,7 +60,8 @@ async fn main() {
         .route("/health", get(health))
         // 静态文件服务（前端）
         .fallback_service(ServeDir::new("static"))
-        .layer(cors);
+        .layer(cors)
+        .layer(RequestBodyLimitLayer::new(1024 * 1024)); // 1MB limit
 
     // 启动服务器
     let port = env::var("SERVER_PORT").unwrap_or_else(|_| "3000".to_string());

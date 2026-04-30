@@ -97,7 +97,7 @@ pub fn export_dxf(
     // 验证文件路径安全性
     let safe_path = validate_export_path(&filepath)?;
 
-    let data_guard = state.data.lock().unwrap_or_else(|e| e.into_inner());
+    let data_guard = state.data.lock().map_err(|e| format!("State lock poisoned: {}", e))?;
     let data = data_guard
         .as_ref()
         .ok_or("No simulation data available")?;
@@ -210,7 +210,7 @@ pub fn export_csv(
     // 验证文件路径安全性
     let safe_path = validate_export_path(&filepath)?;
 
-    let data_guard = state.data.lock().unwrap_or_else(|e| e.into_inner());
+    let data_guard = state.data.lock().map_err(|e| format!("State lock poisoned: {}", e))?;
     let data = data_guard
         .as_ref()
         .ok_or("No simulation data available")?;

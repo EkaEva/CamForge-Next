@@ -37,6 +37,8 @@ impl Default for SimState {
 /// 计算凸轮一整圈运动的所有数据
 #[tauri::command]
 pub fn run_simulation(params: CamParams, state: State<SimState>) -> Result<SimulationData, String> {
+    // Validate all parameters upfront
+    params.validate()?;
     // 1. 计算运动规律
     let motion = compute_full_motion(&params)?;
 
@@ -114,8 +116,8 @@ pub fn run_simulation(params: CamParams, state: State<SimState>) -> Result<Simul
     };
 
     // 存储状态
-    *state.data.lock().unwrap_or_else(|e| e.into_inner()) = Some(sim_data.clone());
-    *state.params.lock().unwrap_or_else(|e| e.into_inner()) = Some(params);
+    *state.data.lock().map_err(|e| format!("State lock poisoned: {}", e))? = Some(sim_data.clone());
+    *state.params.lock().map_err(|e| format!("State lock poisoned: {}", e))? = Some(params);
 
     Ok(sim_data)
 }
@@ -125,8 +127,8 @@ pub fn run_simulation(params: CamParams, state: State<SimState>) -> Result<Simul
 /// 计算单帧动画所需的全部数据
 #[tauri::command]
 pub fn get_frame_data(frame_idx: usize, state: State<SimState>) -> Result<FrameData, String> {
-    let data_guard = state.data.lock().unwrap_or_else(|e| e.into_inner());
-    let params_guard = state.params.lock().unwrap_or_else(|e| e.into_inner());
+    let data_guard = state.data.lock().map_err(|e| format!("State lock poisoned: {}", e))?;
+    let params_guard = state.params.lock().map_err(|e| format!("State lock poisoned: {}", e))?;
 
     let data = data_guard.as_ref()
         .ok_or("No simulation data available. Run simulation first.")?;

@@ -12,7 +12,7 @@ import { createHistory, type HistoryActions } from './history';
 import { generateDXF as generateDXFCore, generateCSV as generateCSVCore, generateExcel as generateExcelCore, generateTIFFBlob } from '../exporters';
 import { getApi } from '../api';
 import { getDownloadDir, getDefaultDpi } from './settings';
-import { t } from '../i18n';
+import { t, language } from '../i18n';
 
 // 检查是否在 Tauri 环境中
 const isTauri = isTauriEnv();
@@ -456,18 +456,7 @@ export async function saveFile(
   const finalSaveDir = options?.saveDir || getDownloadDir();
 
   if (isTauri) {
-    // 移动端：使用浏览器下载方式（WebView 支持 <a download>）
-    if (isMobilePlatform()) {
-      try {
-        downloadFile(content, filename, mimeType);
-        return { success: true, path: filename };
-      } catch (e) {
-        console.error('Mobile download error:', e);
-        return { success: false, error: String(e) };
-      }
-    }
-
-    // 桌面端：使用 Tauri 文件系统
+    // Tauri 环境：使用文件系统 API（桌面端和移动端）
     try {
       const { writeFile, mkdir } = await import('@tauri-apps/plugin-fs');
       const { join, dirname, downloadDir } = await import('@tauri-apps/api/path');
@@ -476,7 +465,7 @@ export async function saveFile(
       let filePath: string;
       if (finalSaveDir) {
         filePath = await join(finalSaveDir, filename);
-      } else if (showDialog) {
+      } else if (showDialog && !isMobilePlatform()) {
         const { save } = await import('@tauri-apps/plugin-dialog');
         const ext = filename.split('.').pop() || '*';
         const filterName = ext.toUpperCase();
@@ -529,7 +518,7 @@ export async function saveFile(
 
 // 获取当前语言
 export function getCurrentLang(): string {
-  return localStorage.getItem('language') || 'zh';
+  return language();
 }
 
 // 获取导出文件名
@@ -967,7 +956,8 @@ export function generateHighResPNG(
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get 2D context');
 
     const options: ChartDrawOptions = {
       width,

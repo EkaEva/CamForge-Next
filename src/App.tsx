@@ -7,10 +7,9 @@ import { ToastContainer } from './components/ui/Toast';
 import { initTheme } from './stores/settings';
 import { undoParams, redoParams, canUndo, canRedo, runSimulation } from './stores/simulation';
 import { toggleTheme, isDark } from './stores/settings';
+import { language, setLang, t } from './i18n';
 import { Icon } from './components/ui/Icon';
 import './index.css';
-
-initTheme();
 
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = createSignal(false);
@@ -39,6 +38,7 @@ function App() {
   };
 
   onMount(() => {
+    initTheme();
     checkMobile();
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('resize', checkMobile);
@@ -66,7 +66,7 @@ function App() {
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen())}
               class="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
-              aria-label="打开菜单"
+              aria-label={t().aria.menu}
             >
               <Icon name="menu" size={24} class="text-chrome-text-active" />
             </button>
@@ -77,7 +77,7 @@ function App() {
                 onClick={undoParams}
                 disabled={!canUndo()}
                 class="w-10 h-10 flex items-center justify-center rounded-lg disabled:opacity-30 hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
-                aria-label="撤销"
+                aria-label={t().aria.undo}
               >
                 <Icon name="undo" size={20} class="text-chrome-text" />
               </button>
@@ -86,15 +86,23 @@ function App() {
                 onClick={redoParams}
                 disabled={!canRedo()}
                 class="w-10 h-10 flex items-center justify-center rounded-lg disabled:opacity-30 hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
-                aria-label="重做"
+                aria-label={t().aria.redo}
               >
                 <Icon name="redo" size={20} class="text-chrome-text" />
               </button>
               <button
                 type="button"
+                onClick={() => setLang(language() === 'en' ? 'zh' : 'en')}
+                class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
+                aria-label={t().aria.language}
+              >
+                <span class="text-xs font-display text-chrome-text">{language() === 'zh' ? '中文' : 'EN'}</span>
+              </button>
+              <button
+                type="button"
                 onClick={toggleTheme}
                 class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
-                aria-label="切换主题"
+                aria-label={t().aria.toggleTheme}
               >
                 <Icon name={isDark() ? 'light_mode' : 'dark_mode'} size={20} class="text-chrome-text" />
               </button>
@@ -102,7 +110,7 @@ function App() {
                 type="button"
                 onClick={handleOpenSettings}
                 class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
-                aria-label="设置"
+                aria-label={t().aria.settings}
               >
                 <Icon name="settings" size={20} class="text-chrome-text" />
               </button>
@@ -110,7 +118,7 @@ function App() {
                 type="button"
                 onClick={handleOpenHelp}
                 class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-chrome-surface-hover active:bg-chrome-active transition-colors"
-                aria-label="帮助"
+                aria-label={t().aria.help}
               >
                 <Icon name="help" size={20} class="text-chrome-text" />
               </button>

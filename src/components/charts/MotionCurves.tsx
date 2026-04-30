@@ -33,7 +33,7 @@ export function MotionCurves() {
     const getResponsivePadding = () => {
       const w = window.innerWidth;
       if (w < 640) {
-        return { top: 35, right: 105, bottom: 40, left: 45 };
+        return { top: 35, right: 85, bottom: 40, left: 45 };
       } else if (w < 768) {
         return { top: 40, right: 155, bottom: 45, left: 55 };
       }
@@ -345,7 +345,7 @@ export function MotionCurves() {
     const rect = canvasRef.getBoundingClientRect();
     const x = clientX - rect.left;
     const w = window.innerWidth;
-    const padding = w < 640 ? { left: 45, right: 130 } : w < 768 ? { left: 55, right: 155 } : { left: 70, right: 170 };
+    const padding = w < 640 ? { left: 45, right: 100 } : w < 768 ? { left: 55, right: 155 } : { left: 70, right: 170 };
     const chartWidth = rect.width - padding.left - padding.right;
 
     if (chartWidth <= 0) return 0;
@@ -378,7 +378,7 @@ export function MotionCurves() {
     const rect = canvasRef.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const w = window.innerWidth;
-    const padding = w < 640 ? { left: 45, right: 130 } : w < 768 ? { left: 55, right: 155 } : { left: 70, right: 170 };
+    const padding = w < 640 ? { left: 45, right: 100 } : w < 768 ? { left: 55, right: 155 } : { left: 70, right: 170 };
     const chartWidth = rect.width - padding.left - padding.right;
     if (chartWidth <= 0 || x < padding.left || x > rect.width - padding.right) {
       hoverFrame = -1;

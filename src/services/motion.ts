@@ -4,35 +4,7 @@
  * 提供凸轮运动规律的计算功能，支持 6 种标准运动规律。
  */
 
-/**
- * 运动规律类型枚举
- */
-export enum MotionLaw {
-  /** 等速运动 */
-  ConstantVelocity = 1,
-  /** 等加速等减速 */
-  ConstantAccel = 2,
-  /** 简谐运动 */
-  SimpleHarmonic = 3,
-  /** 摆线运动 */
-  Cycloidal = 4,
-  /** 3-4-5 多项式 */
-  Polynomial345 = 5,
-  /** 4-5-6-7 多项式 */
-  Polynomial4567 = 6,
-}
-
-/**
- * 运动规律名称映射
- */
-export const MotionLawNames: Record<MotionLaw, { zh: string; en: string }> = {
-  [MotionLaw.ConstantVelocity]: { zh: '等速运动', en: 'Uniform Motion' },
-  [MotionLaw.ConstantAccel]: { zh: '等加速等减速', en: 'Constant Acceleration' },
-  [MotionLaw.SimpleHarmonic]: { zh: '简谐运动', en: 'Simple Harmonic' },
-  [MotionLaw.Cycloidal]: { zh: '摆线运动', en: 'Cycloidal' },
-  [MotionLaw.Polynomial345]: { zh: '3-4-5 多项式', en: '3-4-5 Polynomial' },
-  [MotionLaw.Polynomial4567]: { zh: '4-5-6-7 多项式', en: '4-5-6-7 Polynomial' },
-};
+import { MotionLaw } from '../types';
 
 /**
  * 计算运动规律
