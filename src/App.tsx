@@ -70,7 +70,6 @@ function App() {
             >
               <Icon name="menu" size={24} class="text-chrome-text-active" />
             </button>
-            <h1 class="ml-2 text-lg font-semibold text-chrome-text-active font-display truncate min-w-0">CamForge</h1>
             <div class="ml-auto flex items-center gap-px">
               <button
                 type="button"

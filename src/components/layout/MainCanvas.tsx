@@ -4,17 +4,6 @@ import { t } from '../../i18n';
 import { CamAnimation } from '../animation';
 import { MotionCurves, GeometryChart, CurvatureChart } from '../charts';
 import { showToast } from '../ui/Toast';
-import { isTauriEnv } from '../../utils/tauri';
-
-async function revealFileInManager(filePath: string) {
-  if (!isTauriEnv()) return;
-  try {
-    const { revealItemInDir } = await import('@tauri-apps/plugin-opener');
-    await revealItemInDir(filePath);
-  } catch (e) {
-    console.error('Failed to reveal file:', e);
-  }
-}
 import { isMobilePlatform, isTauriEnv as checkIsTauriEnv } from '../../utils/platform';
 import { getDownloadDir } from '../../stores/settings';
 import { Icon } from '../ui/Icon';
@@ -244,15 +233,7 @@ export function MainCanvas(props: MainCanvasProps) {
           const toastMsg = currentLang === 'zh'
             ? `已导出: ${path}`
             : `Exported: ${path}`;
-          showToast(
-            toastMsg,
-            'success',
-            6000,
-            isTauriEnv() && result.path ? {
-              label: currentLang === 'zh' ? '打开位置' : 'Open',
-              onClick: () => revealFileInManager(result.path!),
-            } : undefined,
-          );
+          showToast(toastMsg, 'success', 6000);
         }
       } else if (result.error !== 'Cancelled') {
         setExportStatus({ type: 'error', message: `${t().export.exportFailed}: ${result.error}` });
@@ -405,17 +386,9 @@ export function MainCanvas(props: MainCanvasProps) {
       });
       if (isMobilePlatform()) {
         const toastMsg = currentLang === 'zh'
-          ? `已保存 ${exportedFiles.length} 个文件${saveDir ? ' → ' + saveDir : ''}`
-          : `Saved ${exportedFiles.length} files${saveDir ? ' → ' + saveDir : ''}`;
-        showToast(
-          toastMsg,
-          'success',
-          6000,
-          checkIsTauriEnv() && saveDir ? {
-            label: currentLang === 'zh' ? '打开位置' : 'Open',
-            onClick: () => revealFileInManager(saveDir),
-          } : undefined,
-        );
+          ? `已保存 ${exportedFiles.length} 个文件`
+          : `Saved ${exportedFiles.length} files`;
+        showToast(toastMsg, 'success', 6000);
       }
     } catch (e) {
       console.error('Custom export error:', e);

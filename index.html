@@ -47,8 +47,10 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
     <title>CamForge</title>
     <style>
       #splash{position:fixed;inset:0;z-index:9999;background:#1c1b1b;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Inter',system-ui,sans-serif;transition:opacity 0.5s ease}
@@ -81,7 +83,7 @@
       <div class="splash-text">
         <div class="splash-title">Cam<span class="splash-accent">Forge</span></div>
         <div class="splash-subtitle">凸轮机构运动学仿真</div>
-        <div class="splash-version">v0.4.6 · SolidJS + Tauri</div>
+        <div class="splash-version">v0.4.7 · SolidJS + Tauri</div>
       </div>
       <svg class="splash-cam-wrap" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
         <g id="splash-cam-group">
@@ -102,6 +104,12 @@
 
     <script>
       (function(){
+        // Wait for icon font to load before starting splash animation
+        var fontReady=false;
+        if(document.fonts&&document.fonts.load){
+          document.fonts.load('20px Material Symbols Outlined').then(function(){fontReady=true;});
+        }else{fontReady=true;}
+
         // Pre-compute cam profile points
         var cx=100,cy=100,r0=55,h=20,n=120;
         var pts=[];
@@ -191,8 +199,9 @@
             camGroup.setAttribute('transform','rotate('+(rotEase*360)+' 100 100)');
           }
 
-          // 8. Global fade out (1.4s-1.8s)
-          var fadeOut=Math.min(Math.max((elapsed-1400)/400,0),1);
+          // 8. Global fade out — wait for icon font (max 3s total)
+          var canFade=fontReady||elapsed>=3000;
+          var fadeOut=(canFade&&elapsed>=1400)?Math.min((elapsed-1400)/400,1):0;
           if(fadeOut>0){
             var op=1-fadeOut;
             splash.style.opacity=op;

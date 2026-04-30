@@ -5,15 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.7] - 2026-04-30
+
+### Fixed
+
+- **移动端"打开位置"按钮无效**：`revealItemInDir` 不支持移动端，移除移动端 Toast 中的"打开位置"按钮
+- **移动端下载目录设置**：移除移动端设置中的下载目录功能（移动端不支持目录选择器）
+- **移动端 header 标题溢出**：移除移动端 header 中的"CamForge"标题，避免挤压右侧按钮
+- **图标字体加载闪烁**：添加 `font-display: block`、`preconnect`、启动画面等待字体加载完成后再淡出
+
 ## [0.4.6] - 2026-04-30
 
 ### Fixed
 
 - **移动端状态栏导出路径冗余**：移动端状态栏不再显示导出路径，仅由 Toast 承担路径展示
 - **移动端水平滑动**：减小 header 按钮尺寸和间距，添加溢出保护，消除水平滚动
-- **Tauri 移动端"打开位置"按钮**：注册 `tauri-plugin-opener`，使用官方 JS API 替代 `invoke`
-- **Tauri 移动端下载目录选择**：移动端不支持目录选择器，改用快捷目录按钮（下载/文档/图片）
-- **Tauri 移动端自定义导出**：无保存目录时自动使用系统下载目录
+- **移动端"打开位置"按钮**：`revealItemInDir` 不支持移动端，移除移动端 Toast 中的"打开位置"按钮
+- **移动端下载目录设置**：移除移动端设置中的下载目录功能（移动端不支持目录选择器）
+- **移动端 header 标题溢出**：移除移动端 header 中的"CamForge"标题，避免挤压右侧按钮
+- **图标字体加载闪烁**：添加 `font-display: block`、`preconnect`、启动画面等待字体加载完成后再淡出
 
 ### Changed
 
@@ -785,6 +795,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.4.7]: https://github.com/EkaEva/CamForge/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/EkaEva/CamForge/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/EkaEva/CamForge/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/EkaEva/CamForge/compare/v0.4.3...v0.4.4

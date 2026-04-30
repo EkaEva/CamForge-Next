@@ -27,7 +27,7 @@ describe('debounceAsync', () => {
     const promise = debounced('test');
     vi.advanceTimersByTime(50);
     await vi.runAllTimersAsync();
-    const _result = await promise;
+    await promise;
 
     expect(fn).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
