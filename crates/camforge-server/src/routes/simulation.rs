@@ -182,6 +182,8 @@ pub async fn simulate(
         .map(|v| (v - params.flat_face_offset).abs())
         .fold(0.0_f64, f64::max);
 
+    let has_non_finite =
+        motion.s.iter().any(|v| !v.is_finite()) || x.iter().any(|v| !v.is_finite());
     let data = SimulationData {
         delta_deg: motion.delta_deg,
         s: motion.s,
@@ -206,6 +208,11 @@ pub async fn simulate(
         h: params.h,
         has_concave_region: has_concave,
         flat_face_min_half_width: flat_face_min_hw,
+        computation_error: if has_non_finite {
+            Some("Simulation produced non-finite values".to_string())
+        } else {
+            None
+        },
     };
 
     Ok(Json(SimulateResponse { data }))
