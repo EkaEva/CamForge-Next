@@ -1,61 +1,13 @@
 /* CamForge Local Fonts — replaces Google Fonts CDN for CSP compliance */
 
-/* ===== Material Symbols Outlined ===== */
+/* ===== Material Symbols Outlined (variable font) ===== */
 
 @font-face {
   font-family: 'Material Symbols Outlined';
   font-style: normal;
-  font-weight: 100;
+  font-weight: 100 700;
   font-display: block;
-  src: url('./MaterialSymbols-Outlined-100.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'Material Symbols Outlined';
-  font-style: normal;
-  font-weight: 200;
-  font-display: block;
-  src: url('./MaterialSymbols-Outlined-200.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'Material Symbols Outlined';
-  font-style: normal;
-  font-weight: 300;
-  font-display: block;
-  src: url('./MaterialSymbols-Outlined-300.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'Material Symbols Outlined';
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url('./MaterialSymbols-Outlined-400.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'Material Symbols Outlined';
-  font-style: normal;
-  font-weight: 500;
-  font-display: block;
-  src: url('./MaterialSymbols-Outlined-500.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'Material Symbols Outlined';
-  font-style: normal;
-  font-weight: 600;
-  font-display: block;
-  src: url('./MaterialSymbols-Outlined-600.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'Material Symbols Outlined';
-  font-style: normal;
-  font-weight: 700;
-  font-display: block;
-  src: url('./MaterialSymbols-Outlined-700.ttf') format('truetype');
+  src: url('./MaterialSymbolsOutlined-Variable.woff2') format('woff2');
 }
 
 /* ===== Space Grotesk ===== */
