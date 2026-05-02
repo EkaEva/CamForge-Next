@@ -1,7 +1,7 @@
 import { createSignal, createMemo, onCleanup, onMount, Show, createEffect } from 'solid-js';
 import { simulationData, params, displayOptions, cursorFrame, setCursorFrame } from '../../stores/simulation';
 import { t } from '../../i18n';
-import { TARGET_FPS, EPSILON } from '../../constants/numeric';
+import { TARGET_FPS, EPSILON, ZOOM_MIN, ZOOM_MAX } from '../../constants/numeric';
 import { FollowerType } from '../../types';
 import { Icon } from '../ui/Icon';
 import { useWindowSize } from '../../hooks/useWindowSize';
@@ -39,7 +39,7 @@ export function CamAnimation(props: CamAnimationProps) {
   const handleWheel = (e: WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom(Math.max(0.2, Math.min(3.0, zoom() + delta)));
+    setZoom(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom() + delta)));
   };
 
   let animationId: number | undefined;
@@ -302,7 +302,7 @@ export function CamAnimation(props: CamAnimationProps) {
     const max = maxFrame();
 
     // 如果组件不可用，暂停动画循环；如果不在 cam profile 标签页，跳过绘制但保持循环运行
-    if (!data) {
+    if (!data || max === 0) {
       animationId = requestAnimationFrame(animate);
       return;
     }
@@ -400,7 +400,7 @@ export function CamAnimation(props: CamAnimationProps) {
       const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
       if (touchStartDistance > 0) {
         const scale = currentDistance / touchStartDistance;
-        const newZoom = Math.max(0.2, Math.min(3.0, touchStartZoom * scale));
+        const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, touchStartZoom * scale));
         setZoom(newZoom);
       }
     } else if (e.touches.length === 1 && !playing()) {

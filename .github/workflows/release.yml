@@ -76,7 +76,7 @@ jobs:
         run: pnpm install
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -193,6 +193,7 @@ jobs:
             echo "APK_PATH=$(pwd)/CamForge_${VERSION}_android-universal.apk" >> $GITHUB_ENV
             echo "APK_STATUS=signed" >> $GITHUB_ENV
           else
+            echo "::warning title=Android APK Not Signed::ANDROID_KEYSTORE_BASE64 secret is not configured. The APK will be unsigned and cannot be installed on most Android devices."
             mv app-universal-release-unsigned.apk CamForge_${VERSION}_android-universal-unsigned.apk
             echo "APK_PATH=$(pwd)/CamForge_${VERSION}_android-universal-unsigned.apk" >> $GITHUB_ENV
             echo "APK_STATUS=unsigned" >> $GITHUB_ENV

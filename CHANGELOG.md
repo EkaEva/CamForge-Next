@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.11] - 2026-05-02
+
+### Security
+
+- **ME-21**: Docker 容器以非 root 用户运行（`camforge` 用户 + `chown`）
+- **ME-23**: 服务器添加 `Strict-Transport-Security`（HSTS）响应头
+- **ME-33**: Tauri 导出路径验证增加 Unicode path traversal 变体检测（overlong UTF-8、double URL encoding、U+2025）
+- **ME-34**: CI 工作流添加依赖安全扫描（`pnpm audit` + `cargo audit`）
+- **ME-22**: CI Android APK 签名失败时输出 GitHub Actions warning，不再静默回退
+
+### Fixed
+
+- **HI-04**: 删除未被任何源文件导入的 `io/storage.ts` 模块
+- **ME-08**: `computeMotion` 默认分支添加 `console.warn` 警告，不再静默回退
+- **ME-09**: TIFF 编码失败时抛出明确错误，不再静默回退为 PNG
+- **ME-10**: `loadPresetFromJSON` 不再暴露原始异常信息，改为通用错误提示
+- **ME-11**: `(window as any)` 类型绕过修复，为 `__TAURI_INTERNALS__` 添加类型声明
+- **ME-12**: `value as never` 类型绕过修复，重置改用 `setParams(defaultParams)`
+- **ME-13**: `compute.ts` 中 epsilon 值统一使用 `constants/numeric.ts` 中的 `EPSILON` 常量
+- **ME-19**: Dockerfile 用 `grep -v` 替换脆弱的 `sed` 原地修改
+- **ME-26**: 移除 `validate_motion_params` 包装函数，直接调用 `params.validate()`
+- **ME-35**: 合并 `generateRhoPath` 和 `generateRhoActualPath` 为参数化函数
+- **LO-01**: 删除空占位组件 `StatusBar.tsx`
+- **LO-02**: 删除未使用的 `getLanguageButtonText` 函数
+- **LO-04**: `debounceAsync` 泛型约束 `any[]` → `unknown[]`，返回类型使用 `Parameters<T>`
+- **LO-05**: 为 `utif2` 库添加本地类型声明（`src/types/utif2.d.ts`），移除 `@ts-expect-error`
+- **LO-06**: `MAX_DPI` 常量去重，统一使用 `chartDrawing` 模块导出
+- **LO-07**: SVG 导出布局尺寸提取为模块级常量
+- **LO-08**: 缩放限制值提取为 `ZOOM_MIN`/`ZOOM_MAX` 常量（`constants/numeric.ts`）
+- **LO-10**: `SettingsPanel` 事件监听器仅在面板打开时注册，关闭时自动清理
+- **LO-11**: 动画帧范围为 0 时跳过帧推进，避免无限循环
+- **LO-12**: `compute_rotated_cam` 合并两次数组遍历为单次 for 循环
+- **LO-18**: `tauri-action@v0` 锁定为具体版本 `v0.6.2`
+- **LO-22**: 移除 `simulate` API 响应中冗余的 `data` 包装键
+- **LO-23**: Tauri 入口点 `expect` 消息改为具体错误提示
+- **LO-24**: CSP `from_str` 失败时输出警告日志，不再静默跳过
+- **LO-28**: 摆动从动件 `initial_angle=0` 时添加验证错误（压力角奇点）
+- **LO-29**: `serde_json` 从 camforge-core 依赖移至 dev-dependencies
+- **LO-31**: 修复 CHANGELOG 底部 [0.3.6] 比较链接位置错误
+- **HI-07**: `GeometryChart` 组件重命名为 `PressureAngleChart`，准确反映其渲染压力角图表的功能
+- **LO-25**: 服务器 `0.0.0.0` 绑定地址添加文档注释，说明 Docker 部署必要性
+- **ME-29**: `CamParams::validate()` 角度容差 `0.01°` 添加文档注释，说明工程精度与 UI 舍入权衡
+- **NumberInput 死锁修复**: `validateAndNotify` 先提交值再校验，修复角度修正后 Enter 仍报错的 bug
+- **启动动画**: 动画总时长压缩至 2.0s，字体加载兜底从 3.0s 降至 2.0s
+
+### Changed
+
+- **版本号更新**：v0.4.10 → v0.4.11（package.json, Cargo.toml, tauri.conf.json, README.md, index.html, CamForgeSplash.tsx）
+- **ME-20**: 添加 `.dockerignore` 文件（排除 node_modules/target/docs/IDE 等）
+- **LO-15**: `.editorconfig` 已存在，确认缩进/字符集配置正确
+
+---
+
 ## [0.4.10] - 2026-05-02
 
 ### Fixed
@@ -404,8 +457,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Twitter Card（summary_large_image）
   - SEO 增强（robots, canonical）
   - JSON-LD 结构化数据（WebApplication）
-
-[0.3.6]: https://github.com/EkaEva/CamForge/compare/v0.3.5...v0.3.6
 
 ## [0.3.5] - 2026-04-25
 
@@ -860,6 +911,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.4.11]: https://github.com/EkaEva/CamForge/compare/v0.4.10...v0.4.11
 [0.4.10]: https://github.com/EkaEva/CamForge/compare/v0.4.9...v0.4.10
 [0.4.9]: https://github.com/EkaEva/CamForge/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/EkaEva/CamForge/compare/v0.4.7...v0.4.8
@@ -872,6 +924,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.4.1]: https://github.com/EkaEva/CamForge/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/EkaEva/CamForge/compare/v0.3.7...v0.4.0
 [0.3.7]: https://github.com/EkaEva/CamForge/compare/v0.3.6...v0.3.7
+[0.3.6]: https://github.com/EkaEva/CamForge/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/EkaEva/CamForge/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/EkaEva/CamForge/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/EkaEva/CamForge/compare/v0.3.2...v0.3.3

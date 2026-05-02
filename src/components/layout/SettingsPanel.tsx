@@ -53,14 +53,16 @@ export function SettingsPanel(props: SettingsPanelProps) {
     setDragging(false);
   };
 
-  onMount(() => {
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-  });
-
-  onCleanup(() => {
-    window.removeEventListener('mousemove', handleMouseMove);
-    window.removeEventListener('mouseup', handleMouseUp);
+  createEffect(() => {
+    if (props.isOpen) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      onCleanup(() => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+        setDragging(false);
+      });
+    }
   });
 
   createEffect(() => {

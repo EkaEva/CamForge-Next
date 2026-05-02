@@ -11,13 +11,14 @@ WORKDIR /app
 # 安装构建依赖
 RUN apk add --no-cache musl-dev
 
-# 复制 Cargo 文件并缓存依赖
+# Copy Cargo files and cache dependencies
 COPY Cargo.toml Cargo.lock ./
 COPY crates/camforge-core/Cargo.toml ./crates/camforge-core/
 COPY crates/camforge-server/Cargo.toml ./crates/camforge-server/
 
-# 创建 Docker 专用的 Cargo.toml（排除 src-tauri）
-RUN sed '/src-tauri/d' Cargo.toml > Cargo.toml.tmp && mv Cargo.toml.tmp Cargo.toml
+# Remove src-tauri from workspace members (Docker only needs camforge-core + camforge-server)
+# Uses grep -v for robustness: removes any line containing 'src-tauri'
+RUN grep -v 'src-tauri' Cargo.toml > Cargo.toml.tmp && mv Cargo.toml.tmp Cargo.toml
 
 # 创建空的 src 目录以缓存依赖
 RUN mkdir -p crates/camforge-core/src crates/camforge-server/src && \
@@ -74,11 +75,17 @@ WORKDIR /app
 # 安装运行时依赖
 RUN apk add --no-cache ca-certificates
 
+# Create non-root user for security
+RUN addgroup -S camforge && adduser -S -G camforge camforge
+
 # 从后端构建阶段复制可执行文件
 COPY --from=backend-builder /app/target/release/camforge-server ./server
 
 # 从前端构建阶段复制静态文件
 COPY --from=frontend-builder /app/dist ./static
+
+# Set ownership to non-root user
+RUN chown -R camforge:camforge /app
 
 # 暴露端口
 EXPOSE 3000
@@ -86,6 +93,9 @@ EXPOSE 3000
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+
+# Run as non-root user
+USER camforge
 
 # 启动服务器
 CMD ["./server"]

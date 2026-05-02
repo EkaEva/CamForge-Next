@@ -34,7 +34,7 @@ pub struct FullMotionResult {
 /// * `FullMotionResult` - 包含所有运动数据
 pub fn compute_full_motion(params: &CamParams) -> Result<FullMotionResult, String> {
     // 参数验证
-    validate_motion_params(params)?;
+    params.validate()?;
 
     let n = params.n_points;
     let delta_0 = params.delta_0 * DEG2RAD;
@@ -108,11 +108,6 @@ pub fn compute_full_motion(params: &CamParams) -> Result<FullMotionResult, Strin
         ds_ddelta,
         phase_bounds,
     })
-}
-
-/// 验证运动参数（委托至 CamParams::validate）
-fn validate_motion_params(params: &CamParams) -> Result<(), String> {
-    params.validate()
 }
 
 #[cfg(test)]

@@ -17,16 +17,10 @@ pub struct SimulateRequest {
     params: CamParams,
 }
 
-/// 运行模拟响应
-#[derive(serde::Serialize)]
-pub struct SimulateResponse {
-    data: SimulationData,
-}
-
 /// 运行凸轮模拟
 pub async fn simulate(
     Json(req): Json<SimulateRequest>,
-) -> Result<Json<SimulateResponse>, ApiError> {
+) -> Result<Json<SimulationData>, ApiError> {
     let params = req.params;
 
     // 验证参数
@@ -217,5 +211,5 @@ pub async fn simulate(
         },
     };
 
-    Ok(Json(SimulateResponse { data }))
+    Ok(Json(data))
 }

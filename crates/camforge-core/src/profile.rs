@@ -419,17 +419,14 @@ pub fn compute_rotated_cam(
     let cos_a = angle_rad.cos();
     let sin_a = angle_rad.sin();
 
-    let x_rot: Vec<f64> = x_static
-        .iter()
-        .zip(y_static.iter())
-        .map(|(&x, &y)| x * cos_a - y * sin_a)
-        .collect();
+    let n = x_static.len();
+    let mut x_rot = Vec::with_capacity(n);
+    let mut y_rot = Vec::with_capacity(n);
 
-    let y_rot: Vec<f64> = x_static
-        .iter()
-        .zip(y_static.iter())
-        .map(|(&x, &y)| x * sin_a + y * cos_a)
-        .collect();
+    for (&x, &y) in x_static.iter().zip(y_static.iter()) {
+        x_rot.push(x * cos_a - y * sin_a);
+        y_rot.push(x * sin_a + y * cos_a);
+    }
 
     (x_rot, y_rot)
 }

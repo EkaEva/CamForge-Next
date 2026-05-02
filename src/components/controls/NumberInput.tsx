@@ -44,6 +44,9 @@ export function NumberInput(props: NumberInputProps) {
       return false;
     }
 
+    // 先提交本地值，确保参数状态与输入同步
+    props.onChange(num);
+
     if (props.onValidate) {
       const globalValid = props.onValidate(num);
       if (!globalValid) {
@@ -52,7 +55,6 @@ export function NumberInput(props: NumberInputProps) {
       }
     }
 
-    props.onChange(num);
     setLocalError(false);
     return true;
   };

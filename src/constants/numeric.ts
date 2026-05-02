@@ -6,3 +6,5 @@ export const PERCENTILE_CLIP_MID_HIGH = 0.9;
 export const EPSILON = 1e-10;
 export const TARGET_FPS = 60;
 export const MAX_UNDO_STEPS = 50;
+export const ZOOM_MIN = 0.2;
+export const ZOOM_MAX = 3.0;

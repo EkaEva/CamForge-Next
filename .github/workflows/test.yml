@@ -33,6 +33,9 @@ jobs:
       - name: ESLint check
         run: pnpm lint
 
+      - name: pnpm audit
+        run: pnpm audit --audit-level=moderate || true
+
   test-backend:
     runs-on: ubuntu-latest
     steps:
@@ -45,6 +48,9 @@ jobs:
 
       - name: Rust clippy check
         run: cargo clippy -p camforge-core -p camforge-server -- -D warnings
+
+      - name: cargo audit
+        run: cargo install cargo-audit --locked && cargo audit
 
   build-check:
     runs-on: ubuntu-latest

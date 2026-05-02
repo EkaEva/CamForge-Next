@@ -3,6 +3,7 @@ import type { CamParams, SimulationData } from '../../types';
 import { FollowerType } from '../../types';
 import { computeMotion } from '../../services/motion';
 import { arrayMax, arrayMaxBy, arrayMinBy, filterFinite, findIndex } from '../../utils/array';
+import { EPSILON } from '../../constants/numeric';
 
 export function computeSimulationLocally(p: CamParams): SimulationData {
   const n = p.n_points;
@@ -132,7 +133,7 @@ export function computeSimulationLocally(p: CamParams): SimulationData {
       const dy = y[iNext] - y[iPrev];
       const lenT = Math.hypot(dx, dy);
 
-      if (lenT < 1e-12) {
+      if (lenT < EPSILON) {
         x_actual.push(x[i]);
         y_actual.push(y[i]);
         continue;
@@ -177,7 +178,7 @@ export function computeSimulationLocally(p: CamParams): SimulationData {
       const dpsiDd = ds_ddelta[i] / p.arm_length;
       const denom = p.pivot_distance * Math.sin(delta0Rad + psi);
       const numer = p.arm_length * dpsiDd;
-      alpha_all.push(Math.abs(denom) < 1e-10 ? 90 : Math.abs(Math.atan(numer / denom)) * 180 / Math.PI);
+      alpha_all.push(Math.abs(denom) < EPSILON ? 90 : Math.abs(Math.atan(numer / denom)) * 180 / Math.PI);
     }
   } else if (isOscillatingFlatFaced || p.follower_type === FollowerType.TranslatingFlatFaced) {
     // 平底从动件压力角为 0
@@ -199,7 +200,7 @@ export function computeSimulationLocally(p: CamParams): SimulationData {
 
   // 摆动从动件：应用安装偏角 gamma 旋转轮廓
   // gamma 不改变轮廓形状，只改变朝向；压力角是旋转不变量
-  if (isOscillating && Math.abs(p.gamma) > 1e-10) {
+  if (isOscillating && Math.abs(p.gamma) > EPSILON) {
     const gammaRad = p.gamma * Math.PI / 180;
     const cosG = Math.cos(gammaRad);
     const sinG = Math.sin(gammaRad);
@@ -233,7 +234,7 @@ export function computeSimulationLocally(p: CamParams): SimulationData {
     const speedCubed = Math.pow(dx * dx + dy * dy, 1.5);
 
     // 避免除零
-    if (speedCubed > 1e-12 && Math.abs(cross) > 1e-12) {
+    if (speedCubed > EPSILON && Math.abs(cross) > EPSILON) {
       rho.push(speedCubed / cross);
     } else {
       rho.push(Infinity);

@@ -136,6 +136,9 @@ export function loadPresetFromJSON(jsonString: string): { success: boolean; erro
       if (Math.abs(p.e) > Number.EPSILON) {
         return { success: false, error: `摆动从动件偏距必须为 0` };
       }
+      if (Math.abs(p.initial_angle) < Number.EPSILON) {
+        return { success: false, error: `摆动从动件初始角必须为非零值（0 会导致压力角计算奇点）` };
+      }
     }
 
     // 应用参数
@@ -150,7 +153,7 @@ export function loadPresetFromJSON(jsonString: string): { success: boolean; erro
     setParamsUpdated(true);
     runSimulation();
     return { success: true };
-  } catch (e) {
-    return { success: false, error: `JSON 解析失败: ${e}` };
+  } catch {
+    return { success: false, error: 'JSON 解析失败: 文件格式不正确，请检查是否为有效的 CamForge 预设文件' };
   }
 }

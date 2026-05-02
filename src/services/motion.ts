@@ -95,7 +95,8 @@ export function computeMotion(
     }
 
     default:
-      // 默认使用简谐运动
+      // Invalid motion type — fall back to simple harmonic with warning
+      console.warn(`Invalid motion law type: ${law}, falling back to simple harmonic`);
       s = (h * (1 - Math.cos(Math.PI * t))) / 2;
       v = (h * omega * Math.PI * Math.sin(Math.PI * t)) / (2 * deltaRad);
       a =

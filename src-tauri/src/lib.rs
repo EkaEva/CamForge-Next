@@ -20,5 +20,5 @@ pub fn run() {
             commands::export_csv,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("Failed to start Tauri application — check that system dependencies (WebView2 on Windows, libwebkit2gtk/libgtk-3 on Linux) are installed");
 }

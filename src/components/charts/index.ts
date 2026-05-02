@@ -1,3 +1,3 @@
 export { MotionCurves } from './MotionCurves';
-export { GeometryChart } from './GeometryChart';
+export { PressureAngleChart } from './PressureAngleChart';
 export { CurvatureChart } from './CurvatureChart';

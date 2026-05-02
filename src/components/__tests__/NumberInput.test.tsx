@@ -70,15 +70,16 @@ describe('NumberInput', () => {
     expect(onChange).toHaveBeenCalledWith(100);
   });
 
-  it('calls custom onValidate', () => {
+  it('commits value via onChange before calling onValidate', () => {
     const onChange = vi.fn();
     const onValidate = vi.fn(() => false);
     const { container } = render(() => <NumberInput label="Stroke" value={10} onChange={onChange} onValidate={onValidate} />);
     const input = container.querySelector('input') as HTMLInputElement;
     input.value = '15';
     fireEvent.blur(input);
+    expect(onChange).toHaveBeenCalledWith(15);
     expect(onValidate).toHaveBeenCalledWith(15);
-    expect(onChange).not.toHaveBeenCalled();
+    expect(input.getAttribute('aria-invalid')).toBe('true');
   });
 
   it('displays external error state', () => {

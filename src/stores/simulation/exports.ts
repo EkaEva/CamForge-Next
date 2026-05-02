@@ -1,4 +1,4 @@
-import { drawMotionCurves, drawPressureAngleChart, drawCurvatureChart, drawCamProfileChart } from '../../utils/chartDrawing';
+import { drawMotionCurves, drawPressureAngleChart, drawCurvatureChart, drawCamProfileChart, MAX_DPI } from '../../utils/chartDrawing';
 import type { ChartDrawOptions } from '../../utils/chartDrawing';
 import { isTauriEnv } from '../../utils/tauri';
 import { isMobilePlatform } from '../../utils/platform';
@@ -146,6 +146,14 @@ function xmlEscape(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
+// SVG 导出布局常量
+const SVG_CHART_WIDTH = 500;
+const SVG_CHART_HEIGHT = 350;
+const SVG_GAP = 20;
+const SVG_PADDING = { top: 50, right: 70, bottom: 50, left: 60 };
+const SVG_TOTAL_WIDTH = SVG_CHART_WIDTH * 2 + SVG_GAP * 3;
+const SVG_TOTAL_HEIGHT = SVG_CHART_HEIGHT * 2 + SVG_GAP * 3;
+
 // 生成 SVG 内容（运动曲线 + 压力角 + 曲率半径 + 凸轮轮廓）
 export function generateSVG(): string {
   const data = simulationData();
@@ -154,14 +162,12 @@ export function generateSVG(): string {
 
   const lang = getCurrentLang();
 
-  // 布局：2x2 网格，每个图表大小
-  const chartWidth = 500;
-  const chartHeight = 350;
-  const gap = 20;
-  const totalWidth = chartWidth * 2 + gap * 3;
-  const totalHeight = chartHeight * 2 + gap * 3;
-
-  const padding = { top: 50, right: 70, bottom: 50, left: 60 };
+  const chartWidth = SVG_CHART_WIDTH;
+  const chartHeight = SVG_CHART_HEIGHT;
+  const gap = SVG_GAP;
+  const totalWidth = SVG_TOTAL_WIDTH;
+  const totalHeight = SVG_TOTAL_HEIGHT;
+  const padding = SVG_PADDING;
 
   // 标签（XML 安全）
   const labels = {
@@ -237,18 +243,21 @@ export function generateSVG(): string {
     return `M ${points.join(' L ')}`;
   };
 
-  // 生成曲线路径（处理无穷值）- 理论轮廓
-  const generateRhoPath = (
+  // 生成曲线路径（处理无穷值）
+  const generateRhoPathFromData = (
+    rhoData: number[],
     offsetX: number,
     offsetY: number,
     plotWidth: number,
     plotHeight: number
   ): string => {
+    if (!rhoData || rhoData.length === 0) return '';
+
     const parts: string[] = [];
     let currentPath: string[] = [];
 
-    for (let i = 0; i < data.rho.length; i++) {
-      if (!isFinite(data.rho[i])) {
+    for (let i = 0; i < rhoData.length; i++) {
+      if (!isFinite(rhoData[i])) {
         if (currentPath.length > 0) {
           parts.push(`M ${currentPath.join(' L ')}`);
           currentPath = [];
@@ -256,39 +265,7 @@ export function generateSVG(): string {
         continue;
       }
       const x = offsetX + padding.left + (data.delta_deg[i] / 360) * plotWidth;
-      const y = offsetY + padding.top + (1 - (data.rho[i] - rhoMin) / (rhoMax - rhoMin)) * plotHeight;
-      currentPath.push(`${x.toFixed(2)},${y.toFixed(2)}`);
-    }
-
-    if (currentPath.length > 0) {
-      parts.push(`M ${currentPath.join(' L ')}`);
-    }
-
-    return parts.join(' ');
-  };
-
-  // 生成曲线路径（处理无穷值）- 实际轮廓
-  const generateRhoActualPath = (
-    offsetX: number,
-    offsetY: number,
-    plotWidth: number,
-    plotHeight: number
-  ): string => {
-    if (!data.rho_actual || data.rho_actual.length === 0) return '';
-
-    const parts: string[] = [];
-    let currentPath: string[] = [];
-
-    for (let i = 0; i < data.rho_actual.length; i++) {
-      if (!isFinite(data.rho_actual[i])) {
-        if (currentPath.length > 0) {
-          parts.push(`M ${currentPath.join(' L ')}`);
-          currentPath = [];
-        }
-        continue;
-      }
-      const x = offsetX + padding.left + (data.delta_deg[i] / 360) * plotWidth;
-      const y = offsetY + padding.top + (1 - (data.rho_actual[i] - rhoMin) / (rhoMax - rhoMin)) * plotHeight;
+      const y = offsetY + padding.top + (1 - (rhoData[i] - rhoMin) / (rhoMax - rhoMin)) * plotHeight;
       currentPath.push(`${x.toFixed(2)},${y.toFixed(2)}`);
     }
 
@@ -476,8 +453,8 @@ export function generateSVG(): string {
     }).join('\n    ')}
 
     <!-- 曲线 -->
-    <path d="${generateRhoPath(positions[2].x, positions[2].y, plotWidth, plotHeight)}" class="curve-rho"/>
-    ${p.r_r > 0 ? `<path d="${generateRhoActualPath(positions[2].x, positions[2].y, plotWidth, plotHeight)}" stroke="#3B82F6" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>` : ''}
+    <path d="${generateRhoPathFromData(data.rho, positions[2].x, positions[2].y, plotWidth, plotHeight)}" class="curve-rho"/>
+    ${p.r_r > 0 ? `<path d="${generateRhoPathFromData(data.rho_actual, positions[2].x, positions[2].y, plotWidth, plotHeight)}" stroke="#3B82F6" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>` : ''}
 
     <!-- 滚子半径阈值线 -->
     ${p.r_r > 0 ? (() => {
@@ -556,7 +533,6 @@ export function generateHighResPNG(
     }
 
     // DPI 上限保护，防止内存溢出
-    const MAX_DPI = 600;
     const dpi = Math.min(customDpi || getDefaultDpi(), MAX_DPI);
     const width = type === 'profile' ? 6 * dpi : 8 * dpi;
     const height = type === 'profile' ? 6 * dpi : 5 * dpi;
@@ -613,7 +589,6 @@ export async function generateRealTIFF(
   }
 
   // DPI 上限保护
-  const MAX_DPI = 600;
   const dpi = Math.min(customDpi || getDefaultDpi(), MAX_DPI);
   const width = type === 'profile' ? 6 * dpi : 8 * dpi;
   const height = type === 'profile' ? 6 * dpi : 5 * dpi;

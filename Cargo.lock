@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "camforge"
-version = "0.4.9"
+version = "0.4.11"
 dependencies = [
  "camforge-core",
  "dirs",
@@ -441,7 +441,7 @@ dependencies = [
 
 [[package]]
 name = "camforge-core"
-version = "0.4.9"
+version = "0.4.11"
 dependencies = [
  "approx",
  "serde",
@@ -450,7 +450,7 @@ dependencies = [
 
 [[package]]
 name = "camforge-server"
-version = "0.4.9"
+version = "0.4.11"
 dependencies = [
  "axum",
  "base64 0.22.1",

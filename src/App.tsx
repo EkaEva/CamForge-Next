@@ -38,8 +38,11 @@ function App() {
   };
 
   onMount(() => {
-    const splash = document.getElementById('splash');
-    if (splash) splash.remove();
+    // Fallback: remove splash after 3s if splash.js failed (e.g. CSP blocked)
+    setTimeout(() => {
+      const splash = document.getElementById('splash');
+      if (splash) splash.remove();
+    }, 3000);
     initTheme();
     checkMobile();
     window.addEventListener('keydown', handleKeyDown);

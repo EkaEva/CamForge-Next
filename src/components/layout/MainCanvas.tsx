@@ -3,7 +3,7 @@ import { simulationData, isLoading, lastRunTime, validationErrors, params, gener
 import { FollowerType } from '../../types';
 import { t } from '../../i18n';
 import { CamAnimation } from '../animation';
-import { MotionCurves, GeometryChart, CurvatureChart } from '../charts';
+import { MotionCurves, PressureAngleChart, CurvatureChart } from '../charts';
 import { showToast } from '../ui/Toast';
 import { isMobilePlatform, isTauriEnv as checkIsTauriEnv } from '../../utils/platform';
 import { getDownloadDir } from '../../stores/settings';
@@ -733,7 +733,7 @@ export function MainCanvas(props: MainCanvasProps) {
                       <div role="tabpanel" class="w-full h-full"><CurvatureChart /></div>
                     </Match>
                     <Match when={analysisView() === 'pressure'}>
-                      <div role="tabpanel" class="w-full h-full"><GeometryChart /></div>
+                      <div role="tabpanel" class="w-full h-full"><PressureAngleChart /></div>
                     </Match>
                   </Switch>
                 </div>

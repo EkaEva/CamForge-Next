@@ -2,6 +2,18 @@
  * 平台检测工具函数
  */
 
+interface TauriInternals {
+  metadata?: {
+    platform?: string;
+  };
+}
+
+declare global {
+  interface Window {
+    __TAURI_INTERNALS__?: TauriInternals;
+  }
+}
+
 export function isTauriEnv(): boolean {
   try {
     return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -14,8 +26,7 @@ export function isMobilePlatform(): boolean {
   if (typeof window === 'undefined') return false;
 
   if (isTauriEnv()) {
-    // 优先检查 Tauri metadata
-    const internals = (window as any).__TAURI_INTERNALS__;
+    const internals = window.__TAURI_INTERNALS__;
     const platform = internals?.metadata?.platform;
     if (platform === 'android' || platform === 'ios') return true;
 

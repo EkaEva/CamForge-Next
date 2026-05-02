@@ -1,6 +1,6 @@
 import { Show, createSignal, onMount, createMemo } from 'solid-js';
 import { NumberInput, Select, Toggle } from '../controls';
-import { params, displayOptions, updateParam, updateDisplayOption, savePreset, loadPreset, getSavedPresets, deletePreset, validateParams, setParamsChanged, randomizeParams, loadPresetFromJSON, setDisplayOptions, setParamsUpdated, invalidParams, runSimulation, simulationData } from '../../stores/simulation';
+import { params, displayOptions, updateParam, updateDisplayOption, savePreset, loadPreset, getSavedPresets, deletePreset, validateParams, setParams, setParamsChanged, randomizeParams, loadPresetFromJSON, setDisplayOptions, setParamsUpdated, invalidParams, runSimulation, simulationData } from '../../stores/simulation';
 import { t } from '../../i18n';
 import { motionLawOptions, defaultParams, defaultDisplayOptions } from '../../constants';
 import { FollowerType } from '../../types';
@@ -70,9 +70,7 @@ export function Sidebar(props: SidebarProps) {
   };
 
   const handleReset = () => {
-    Object.entries(defaultParams).forEach(([key, value]) => {
-      updateParam(key as keyof typeof defaultParams, value as never);
-    });
+    setParams(defaultParams);
     setDisplayOptions(defaultDisplayOptions);
     setParamsChanged(false);
     runSimulation();

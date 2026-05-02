@@ -18,15 +18,21 @@ fn validate_export_path(filepath: &str) -> Result<PathBuf, String> {
     let path = Path::new(filepath);
     let filepath_lower = filepath.to_lowercase();
 
-    // 1. 检查路径遍历攻击（包括 URL 编码形式）
+    // 1. 检查路径遍历攻击（包括 URL 编码形式和 Unicode 变体）
     if filepath.contains("..") {
         return Err("Path traversal not allowed: path cannot contain '..'".to_string());
     }
     if filepath_lower.contains("%2e%2e")
         || filepath_lower.contains("%2e.")
         || filepath_lower.contains(".%2e")
+        || filepath_lower.contains("%c0%ae%c0%ae")  // Overlong UTF-8 encoding of '..'
+        || filepath_lower.contains("%252e%252e")     // Double URL encoding of '..'
     {
         return Err("Path traversal not allowed: encoded path traversal detected".to_string());
+    }
+    // Unicode two-dot character ‥ (U+2025) — rarely exploitable but flagged by scanners
+    if filepath.contains('\u{2025}') {
+        return Err("Path traversal not allowed: Unicode path traversal variant detected".to_string());
     }
 
     // 2. 验证文件扩展名（大小写不敏感）
@@ -392,6 +398,12 @@ mod tests {
         assert!(validate_export_path("%2e%2e/etc/passwd").is_err());
         assert!(validate_export_path("%2e./etc/passwd").is_err());
         assert!(validate_export_path(".%2e/etc/passwd").is_err());
+        // Overlong UTF-8 encoding
+        assert!(validate_export_path("%c0%ae%c0%ae/etc/passwd").is_err());
+        // Double URL encoding
+        assert!(validate_export_path("%252e%252e/etc/passwd").is_err());
+        // Unicode two-dot character ‥ (U+2025)
+        assert!(validate_export_path("\u{2025}/etc/passwd").is_err());
     }
 
     #[test]

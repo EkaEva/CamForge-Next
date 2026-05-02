@@ -273,6 +273,8 @@ impl CamParams {
         }
 
         // 四角之和必须等于 360 度
+        // 容差 0.01° 兼顾工程精度与 UI 滑块舍入误差：四角度均为整数输入时总和精确，
+        // 但自定义预设文件中可能包含浮点角度值（如 89.995°），0.01° 容差在工程上等价于精确匹配
         let sum = self.delta_0 + self.delta_01 + self.delta_ret + self.delta_02;
         if (sum - 360.0).abs() > 0.01 {
             return Err(format!("Angle sum must equal 360° (got {:.2}°)", sum));
@@ -344,6 +346,13 @@ impl CamParams {
                     "e must be 0 for oscillating followers, got {}",
                     self.e
                 ));
+            }
+            // initial_angle 为 0 时，sin(initial_angle) = 0 会导致压力角计算分母为零，
+            // 压力角被强制为 90°（参见 compute_oscillating_pressure_angle）
+            if self.initial_angle.abs() < f64::EPSILON {
+                return Err(
+                    "initial_angle must be non-zero for oscillating followers (0 causes pressure angle singularity)".to_string()
+                );
             }
         }
 

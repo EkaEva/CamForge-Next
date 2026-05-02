@@ -3,7 +3,7 @@ import { simulationData, params, cursorFrame, setCursorFrame } from '../../store
 import { isDark as isDarkSignal } from '../../stores/settings';
 import { t } from '../../i18n';
 
-export function GeometryChart() {
+export function PressureAngleChart() {
   // eslint-disable-next-line no-unassigned-vars
   let canvasRef: HTMLCanvasElement | undefined;
   let isDragging = false;

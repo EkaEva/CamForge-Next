@@ -48,7 +48,6 @@ export async function encodeCanvasToTIFFAsync(canvas: HTMLCanvasElement, dpi: nu
   }
 
   // 创建 TIFF 文件
-  // @ts-expect-error utif2 encode types are incorrect
   const tiffArray = UTIF.encode([width, height, rgbData, {
     dpi: [dpi, dpi],
     compression: 5,   // LZW 无损压缩
@@ -72,12 +71,7 @@ export async function generateTIFFBlob(canvas: HTMLCanvasElement, dpi: number = 
     return await encodeCanvasToTIFFAsync(canvas, dpi);
   } catch (e) {
     console.error('TIFF encoding error:', e);
-    // 失败时返回 PNG 作为 fallback
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        resolve(blob || new Blob());
-      }, 'image/png');
-    });
+    throw new Error('TIFF encoding failed — please try PNG or SVG export instead');
   }
 }
 
@@ -103,7 +97,6 @@ export function encodeCanvasToTIFF(canvas: HTMLCanvasElement, dpi: number = 600)
     rgbData[rgbIdx + 2] = rgba[rgbaIdx + 2];
   }
 
-  // @ts-expect-error utif2 encode types are incorrect
   const tiffArray = UTIF.encode([width, height, rgbData, {
     dpi: [dpi, dpi],
     compression: 5,

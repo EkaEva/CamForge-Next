@@ -136,6 +136,8 @@ async fn security_headers(request: Request, next: middleware::Next) -> Response<
     // Content-Security-Policy（使用 nonce 替代 'unsafe-inline'）
     if let Ok(csp_value) = HeaderValue::from_str(&csp) {
         headers.insert("content-security-policy", csp_value);
+    } else {
+        eprintln!("[WARN] CSP header value contains invalid bytes, CSP header dropped");
     }
 
     // X-Content-Type-Options: 防止 MIME 嗅探
@@ -157,6 +159,12 @@ async fn security_headers(request: Request, next: middleware::Next) -> Response<
     headers.insert(
         "permissions-policy",
         HeaderValue::from_static("camera=(), microphone=(), geolocation=()"),
+    );
+
+    // Strict-Transport-Security: 强制 HTTPS（1年，含子域名）
+    headers.insert(
+        "strict-transport-security",
+        HeaderValue::from_static("max-age=31536000; includeSubDomains"),
     );
 
     // 将 nonce 注入到 HTML 响应中（替换占位符 __CSP_NONCE__）
@@ -207,6 +215,8 @@ async fn main() {
 
     // 启动服务器
     let port = env::var("SERVER_PORT").unwrap_or_else(|_| "3000".to_string());
+    // 绑定 0.0.0.0 是 Docker 容器部署的必要条件——容器外部流量通过 CNI 桥接转发，若绑定
+    // 127.0.0.1 则只能接受容器内回环连接，外部请求无法到达服务。生产部署应配合防火墙限制。
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr)
         .await

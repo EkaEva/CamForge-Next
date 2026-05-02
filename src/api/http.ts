@@ -40,7 +40,7 @@ export class HttpApi implements CamApi {
     }
 
     const data = await response.json();
-    return data.data as SimulationData;
+    return data as SimulationData;
   }
 
   /**
