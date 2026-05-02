@@ -425,13 +425,11 @@ dependencies = [
 
 [[package]]
 name = "camforge"
-version = "0.4.7"
+version = "0.4.8"
 dependencies = [
- "anyhow",
  "camforge-core",
  "dirs",
  "dunce",
- "num-traits",
  "serde",
  "serde_json",
  "tauri",
@@ -439,32 +437,27 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-fs",
  "tauri-plugin-opener",
- "thiserror 1.0.69",
 ]
 
 [[package]]
 name = "camforge-core"
-version = "0.4.7"
+version = "0.4.8"
 dependencies = [
  "approx",
- "num-traits",
  "serde",
  "serde_json",
- "thiserror 1.0.69",
 ]
 
 [[package]]
 name = "camforge-server"
-version = "0.4.7"
+version = "0.4.8"
 dependencies = [
- "anyhow",
  "axum",
  "base64 0.22.1",
  "camforge-core",
  "rand 0.9.4",
  "serde",
  "serde_json",
- "thiserror 1.0.69",
  "tokio",
  "tower",
  "tower-http",

@@ -48,11 +48,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
+    <!-- Fonts (local for CSP compliance — no external CDN) -->
+    <link rel="stylesheet" href="/fonts/fonts.css" />
     <title>CamForge</title>
     <!-- Splash screen styles (external file for CSP compliance) -->
     <link rel="stylesheet" href="/splash.css" />
@@ -74,7 +71,7 @@
       <div class="splash-text">
         <div class="splash-title">Cam<span class="splash-accent">Forge</span></div>
         <div class="splash-subtitle">凸轮机构运动学仿真</div>
-        <div class="splash-version">v0.4.8 · SolidJS + Tauri</div>
+        <div class="splash-version">v0.4.9 · SolidJS + Tauri</div>
       </div>
       <svg class="splash-cam-wrap" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
         <g id="splash-cam-group">

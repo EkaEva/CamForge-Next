@@ -64,13 +64,11 @@ fn build_csp(nonce: &str) -> String {
     let script_src = format!("script-src 'self' 'nonce-{}' 'wasm-unsafe-eval'", nonce);
     // style-src 使用 nonce 替代 'unsafe-inline'：SolidJS 仅使用内联 style 属性（不受 style-src 限制），
     // Vite 开发模式通过 <meta property="csp-nonce"> 自动读取 nonce
-    let style_src = format!(
-        "style-src 'self' 'nonce-{}' https://fonts.googleapis.com",
-        nonce
-    );
+    // 字体已本地化，无需外部 CDN
+    let style_src = format!("style-src 'self' 'nonce-{}'", nonce);
     let img_src = "img-src 'self' data: blob:";
-    let font_src = "font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com";
-    let connect_src = "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com";
+    let font_src = "font-src 'self' data:";
+    let connect_src = "connect-src 'self'";
     let worker_src = "worker-src 'self' blob:";
     // object-src 'none' blocks Flash, Java applets, etc.
     let object_src = "object-src 'none'";
@@ -95,6 +93,31 @@ fn build_csp(nonce: &str) -> String {
         frame_ancestors,
     ]
     .join("; ")
+}
+
+/// 缓存控制中间件
+///
+/// - `index.html`: `no-cache` — 每次验证，确保用户拿到最新版本
+/// - `assets/*` (Vite 带 hash 的 JS/CSS): `max-age=31536000, immutable` — 1 年强缓存
+/// - 其他静态资源 (字体、splash 等): `max-age=86400` — 1 天缓存
+async fn cache_control(request: Request, next: middleware::Next) -> Response<Body> {
+    let path = request.uri().path().to_owned();
+    let mut response = next.run(request).await;
+    let headers = response.headers_mut();
+
+    let cache_value = if path == "/" || path == "/index.html" {
+        "no-cache"
+    } else if path.starts_with("/assets/") {
+        "public, max-age=31536000, immutable"
+    } else {
+        "public, max-age=86400"
+    };
+
+    if let Ok(val) = HeaderValue::from_str(cache_value) {
+        headers.insert("cache-control", val);
+    }
+
+    response
 }
 
 /// 安全响应头中间件
@@ -168,6 +191,7 @@ async fn main() {
         // 静态文件服务（前端）
         .fallback_service(ServeDir::new("static"))
         .layer(middleware::from_fn(security_headers))
+        .layer(middleware::from_fn(cache_control))
         .layer(cors)
         .layer(RequestBodyLimitLayer::new(1024 * 1024)); // 1MB limit
 

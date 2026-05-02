@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.9] - 2026-05-02
+
+### Security
+
+- **CSP `unsafe-inline` 移除**：script-src 和 style-src 不再包含 `'unsafe-inline'`，改用 per-request nonce 策略，CSP 安全评分提升至 A+
+- **代码外置化**：所有内联 `<script>` 块已外置为独立 JS 文件（`splash.js`），splash 样式外置为 `splash.css`
+
+### Fixed
+
+- **浏览器缓存导致旧版本残留**：添加 `cache_control` 中间件，`index.html` 设置 `no-cache`（每次验证），`/assets/*` 设置 `immutable` 长缓存，其他静态资源缓存 1 天
+- **Docker CI action 版本错误**：`docker.yml` 中 `setup-buildx-action@v7` → `@v3`，`build-push-action@v7` → `@v6`，`login-action@v4` → `@v3`，`metadata-action@v6` → `@v5`，`checkout@v5` → `@v4`
+
+### Changed
+
+- **版本号更新**：v0.4.8 → v0.4.9（package.json, Cargo.toml, tauri.conf.json, README.md, index.html）
+
+---
+
 ## [0.4.8] - 2026-05-01
 
 ### Fixed
@@ -820,6 +838,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.4.9]: https://github.com/EkaEva/CamForge/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/EkaEva/CamForge/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/EkaEva/CamForge/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/EkaEva/CamForge/compare/v0.4.5...v0.4.6

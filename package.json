@@ -1,6 +1,6 @@
 {
   "name": "camforge",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "description": "Cam mechanism kinematics simulator - Tauri v2 + SolidJS desktop application with mobile support",
   "type": "module",
   "scripts": {
