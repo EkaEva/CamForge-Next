@@ -9,6 +9,8 @@ use camforge_core::{
     compute_roller_profile, compute_rotated_cam, CamParams, FollowerType, SimulationData,
 };
 
+pub type ProfileCoords = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>);
+
 /// 运行模拟请求
 #[derive(serde::Deserialize)]
 pub struct SimulateRequest {

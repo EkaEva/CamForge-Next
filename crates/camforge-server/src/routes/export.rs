@@ -1,6 +1,7 @@
 //! 导出 API 路由
 
 use crate::error::ApiError;
+use crate::routes::simulation::{compute_profile_for_type, ProfileCoords};
 use axum::{
     body::Body,
     http::{header, Response, StatusCode},
