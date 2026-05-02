@@ -27,7 +27,7 @@ pub struct ExportRequest {
 fn compute_profile_for_type(
     params: &CamParams,
     motion: &FullMotionResult,
-) -> Result<(Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>), String> {
+) -> Result<ProfileCoords, String> {
     let (x, y, x_actual, y_actual) = match params.follower_type {
         FollowerType::TranslatingKnifeEdge | FollowerType::TranslatingRoller => {
             let profile =
@@ -85,18 +85,18 @@ fn compute_profile_for_type(
 /// 导出 DXF 文件
 pub async fn export_dxf(Json(req): Json<ExportRequest>) -> Result<Response<Body>, ApiError> {
     let params = req.params;
-    params.validate().map_err(|e| ApiError::BadRequest(e))?;
+    params.validate().map_err(ApiError::BadRequest)?;
 
     // 计算数据
     let motion = compute_full_motion(&params)?;
     let (x, y, x_actual, y_actual) =
-        compute_profile_for_type(&params, &motion).map_err(|e| ApiError::CalculationError(e))?;
+        compute_profile_for_type(&params, &motion).map_err(ApiError::CalculationError)?;
 
     // 生成 DXF
     let include_actual = req.include_actual.unwrap_or(true) && params.r_r > 0.0;
     let dxf = generate_dxf_content(&x, &y, &x_actual, &y_actual, include_actual);
 
-    Ok(Response::builder()
+    Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "application/octet-stream")
         .header(
@@ -104,20 +104,20 @@ pub async fn export_dxf(Json(req): Json<ExportRequest>) -> Result<Response<Body>
             "attachment; filename=\"cam_profile.dxf\"",
         )
         .body(Body::from(dxf))
-        .map_err(|e| ApiError::Internal(e.to_string()))?)
+        .map_err(|e| ApiError::Internal(e.to_string()))
 }
 
 /// 导出 CSV 文件
 pub async fn export_csv(Json(req): Json<ExportRequest>) -> Result<Response<Body>, ApiError> {
     let params = req.params;
-    params.validate().map_err(|e| ApiError::BadRequest(e))?;
+    params.validate().map_err(ApiError::BadRequest)?;
 
     let lang = req.lang.unwrap_or_else(|| "zh".to_string());
 
     // 计算数据
     let motion = compute_full_motion(&params)?;
     let (x, y, _, _) =
-        compute_profile_for_type(&params, &motion).map_err(|e| ApiError::CalculationError(e))?;
+        compute_profile_for_type(&params, &motion).map_err(ApiError::CalculationError)?;
     let rho = compute_curvature_radius(&x, &y)?;
 
     // 根据从动件类型计算压力角
@@ -169,7 +169,7 @@ pub async fn export_csv(Json(req): Json<ExportRequest>) -> Result<Response<Body>
         &lang,
     );
 
-    Ok(Response::builder()
+    Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "text/csv; charset=utf-8")
         .header(
@@ -177,7 +177,7 @@ pub async fn export_csv(Json(req): Json<ExportRequest>) -> Result<Response<Body>
             "attachment; filename=\"cam_data.csv\"",
         )
         .body(Body::from(csv))
-        .map_err(|e| ApiError::Internal(e.to_string()))?)
+        .map_err(|e| ApiError::Internal(e.to_string()))
 }
 
 /// 生成 SVG 内容（凸轮廓形）
@@ -231,17 +231,17 @@ fn generate_svg_content(x: &[f64], y: &[f64], r_0: f64) -> String {
 /// 导出 SVG 文件
 pub async fn export_svg(Json(req): Json<ExportRequest>) -> Result<Response<Body>, ApiError> {
     let params = req.params;
-    params.validate().map_err(|e| ApiError::BadRequest(e))?;
+    params.validate().map_err(ApiError::BadRequest)?;
 
     // 计算数据
     let motion = compute_full_motion(&params)?;
     let (x, y, _, _) =
-        compute_profile_for_type(&params, &motion).map_err(|e| ApiError::CalculationError(e))?;
+        compute_profile_for_type(&params, &motion).map_err(ApiError::CalculationError)?;
 
     // 生成 SVG
     let svg = generate_svg_content(&x, &y, params.r_0);
 
-    Ok(Response::builder()
+    Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "image/svg+xml")
         .header(
@@ -249,7 +249,7 @@ pub async fn export_svg(Json(req): Json<ExportRequest>) -> Result<Response<Body>
             "attachment; filename=\"cam_profile.svg\"",
         )
         .body(Body::from(svg))
-        .map_err(|e| ApiError::Internal(e.to_string()))?)
+        .map_err(|e| ApiError::Internal(e.to_string()))
 }
 
 // ===== 辅助函数 =====
@@ -338,7 +338,7 @@ fn generate_dxf_content(
     }
 
     // Actual profile polyline
-    if include_actual && x_actual.len() > 0 {
+    if include_actual && !x_actual.is_empty() {
         lines.push("0".to_string());
         lines.push("LWPOLYLINE".to_string());
         lines.push("8".to_string());
@@ -364,6 +364,7 @@ fn generate_dxf_content(
     lines.join("\n")
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generate_csv_content(
     delta_deg: &[f64],
     x: &[f64],

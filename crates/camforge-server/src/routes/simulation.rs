@@ -28,7 +28,7 @@ pub async fn simulate(
     let params = req.params;
 
     // 验证参数
-    params.validate().map_err(|e| ApiError::BadRequest(e))?;
+    params.validate().map_err(ApiError::BadRequest)?;
 
     // 1. 计算运动规律
     let motion = compute_full_motion(&params)?;
