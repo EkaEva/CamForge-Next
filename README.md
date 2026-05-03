@@ -4,7 +4,7 @@
 
 **凸轮机构运动学模拟器 | Cam Mechanism Kinematics Simulator**
 
-[![Version](https://img.shields.io/badge/version-0.4.11-blue.svg)](https://github.com/EkaEva/CamForge/releases/tag/v0.4.11)
+[![Version](https://img.shields.io/badge/version-0.4.12-blue.svg)](https://github.com/EkaEva/CamForge/releases/tag/v0.4.12)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24c8db.svg)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-1.9-4f88c6.svg)](https://solidjs.com)
@@ -95,6 +95,7 @@
 | **Excel** | 包含完整数据的电子表格 |
 | **SVG** | 矢量图形格式，可无损缩放 |
 | **PNG** | 高分辨率图片（支持 600 DPI） |
+| **TIFF** | 无损图像格式，支持 LZW 压缩与 DPI 元数据 |
 | **GIF** | 动画格式，展示凸轮运动过程 |
 | **JSON** | 预设配置文件，方便参数保存与分享 |
 
@@ -104,12 +105,10 @@
 |:---|:---:|:---|
 | [Tauri](https://tauri.app) | v2 | 跨平台桌面应用框架 |
 | [SolidJS](https://solidjs.com) | 1.9 | 响应式前端框架 |
-| [TypeScript](https://www.typescriptlang.org) | 5.6 | 类型安全的 JavaScript |
+| [TypeScript](https://www.typescriptlang.org) | 5.8 | 类型安全的 JavaScript |
 | [Tailwind CSS](https://tailwindcss.com) | 4.2 | 原子化 CSS 框架 |
 | [Rust](https://www.rust-lang.org) | 1.70+ | 高性能后端计算 |
 | [Axum](https://docs.rs/axum) | 0.7 | HTTP API 服务器 |
-| [ndarray](https://docs.rs/ndarray) | 0.15 | Rust 数值计算库 |
-| [rayon](https://docs.rs/rayon) | 1.8 | Rust 并行计算库 |
 
 ### 快速开始
 
@@ -190,6 +189,7 @@ camforge/
 │   ├── camforge-core/         # 共享核心库
 │   │   └── src/
 │   │       ├── motion.rs      # 运动规律计算
+│   │       ├── full_motion.rs # 全运动周期计算
 │   │       ├── profile.rs     # 轮廓计算
 │   │       ├── geometry.rs    # 几何分析
 │   │       └── types.rs       # 类型定义
@@ -199,8 +199,11 @@ camforge/
 │           └── routes/        # API 路由
 ├── src/                       # 前端源码
 │   ├── components/            # UI 组件
-│   ├── services/              # 业务服务层
+│   ├── exporters/             # 导出模块（DXF/CSV/Excel/TIFF）
+│   ├── hooks/                 # 自定义 Hooks
 │   ├── stores/                # 状态管理
+│   ├── constants/             # 常量定义
+│   ├── types/                 # 类型声明
 │   ├── api/                   # API 适配层
 │   ├── i18n/                  # 国际化
 │   └── utils/                 # 工具函数
@@ -216,46 +219,19 @@ camforge/
 
 ### 开发路线
 
-- [x] 基本运动规律计算
-- [x] 凸轮轮廓绘制
-- [x] 压力角与曲率半径分析
-- [x] 动画演示
-- [x] 多格式导出
+- [x] 6 种运动规律（等速、等加速、简谐、摆线、3-4-5、4-5-6-7 多项式）
+- [x] 凸轮轮廓绘制与动画演示
+- [x] 压力角 / 曲率半径实时分析
+- [x] 多格式导出（DXF、CSV、Excel、SVG、PNG、TIFF、GIF、JSON）
 - [x] 中英文国际化
-- [x] 错误边界与输入校验
-- [x] CI 自动化测试
-- [x] GIF 异步导出（Web Worker）
-- [x] 撤销/重做功能
-- [x] 无障碍性改进
-- [x] 前后端分离架构
-- [x] Web 服务器部署支持
-- [x] Docker 部署支持
-- [x] macOS 支持
-- [x] Linux 支持
-- [x] 移动端响应式布局
-- [x] 触摸手势支持
-- [x] iOS/Android 应用配置
-- [x] iOS/Android 应用构建（APK 已签名发布）
-- [x] Material Design 3 设计系统重构
-- [x] 专业色板与图例交互
-- [x] 启动动画（Remotion 设计 + JS 驱动）
-- [x] 移动端侧边栏间隙关闭机制
-- [x] 移动端图表卡片响应式高度
-- [x] 图表图例去重（Canvas 图例移除，仅保留 HTML 图例）
-- [x] 启动动画加速（2.93s → 1.8s）
-- [x] 移动端侧边栏背景修复与间隙遮罩
-- [x] 移动端状态栏导出路径换行显示
-- [x] 移动端运动曲线图3Y轴适配
-- [x] 移动端设置面板下载目录提示
-- [x] 英文模式侧边栏标签溢出修复
-- [x] 英文模式导出动画信息面板国际化
-- [x] GIF导出闪烁修复（全局调色板+FloydSteinberg抖动）
-- [x] 移动端侧边栏不透明背景
-- [x] 运动线图三轴标签与刻度防重叠
-- [x] 仿真卡片信息面板优化（位移/压力角移至标题栏）
-- [x] 数值显示防抖动（固定宽度+右对齐）
+- [x] 撤销 / 重做
+- [x] 桌面端 + Web 服务器双模式部署（Tauri / Axum / Docker）
+- [x] 跨平台支持（Windows / macOS / Linux / iOS / Android）
+- [x] 移动端响应式布局与触摸手势
+- [x] Material Design 3 设计系统
+- [x] 安全加固（CSP nonce、速率限制、HSTS、Docker 非 root）
+- [x] 5 种从动件类型（直动尖底、直动滚子、直动平底、摆动滚子、摆动平底）
 - [ ] 凸轮机构优化算法
-- [ ] 更多从动件类型（平底、摆动）
 
 ### 许可证
 
@@ -341,6 +317,7 @@ camforge/
 | **Excel** | Spreadsheet with complete data |
 | **SVG** | Vector graphics format, scalable without quality loss |
 | **PNG** | High-resolution image (supports 600 DPI) |
+| **TIFF** | Lossless image format with LZW compression and DPI metadata |
 | **GIF** | Animation format showing cam motion |
 | **JSON** | Preset configuration file for parameter saving and sharing |
 
@@ -350,12 +327,10 @@ camforge/
 |:---|:---:|:---|
 | [Tauri](https://tauri.app) | v2 | Cross-platform desktop framework |
 | [SolidJS](https://solidjs.com) | 1.9 | Reactive frontend framework |
-| [TypeScript](https://www.typescriptlang.org) | 5.6 | Type-safe JavaScript |
+| [TypeScript](https://www.typescriptlang.org) | 5.8 | Type-safe JavaScript |
 | [Tailwind CSS](https://tailwindcss.com) | 4.2 | Utility-first CSS framework |
 | [Rust](https://www.rust-lang.org) | 1.70+ | High-performance backend computation |
 | [Axum](https://docs.rs/axum) | 0.7 | HTTP API server |
-| [ndarray](https://docs.rs/ndarray) | 0.15 | Rust numerical computing library |
-| [rayon](https://docs.rs/rayon) | 1.8 | Rust parallel computing library |
 
 ### Quick Start
 
@@ -436,6 +411,7 @@ camforge/
 │   ├── camforge-core/         # Shared core library
 │   │   └── src/
 │   │       ├── motion.rs      # Motion law calculation
+│   │       ├── full_motion.rs # Full motion cycle calculation
 │   │       ├── profile.rs     # Profile calculation
 │   │       ├── geometry.rs    # Geometry analysis
 │   │       └── types.rs       # Type definitions
@@ -445,8 +421,11 @@ camforge/
 │           └── routes/        # API routes
 ├── src/                       # Frontend source code
 │   ├── components/            # UI components
-│   ├── services/              # Business services
+│   ├── exporters/             # Export modules (DXF/CSV/Excel/TIFF)
+│   ├── hooks/                 # Custom hooks
 │   ├── stores/                # State management
+│   ├── constants/             # Constants
+│   ├── types/                 # Type declarations
 │   ├── api/                   # API adapter layer
 │   ├── i18n/                  # Internationalization
 │   └── utils/                 # Utility functions
@@ -462,42 +441,19 @@ camforge/
 
 ### Roadmap
 
-- [x] Basic motion law calculation
-- [x] Cam profile drawing
-- [x] Pressure angle and curvature radius analysis
-- [x] Animation demonstration
-- [x] Multi-format export
+- [x] 6 motion laws (Uniform, Constant Acceleration, Simple Harmonic, Cycloidal, 3-4-5 Polynomial, 4-5-6-7 Polynomial)
+- [x] Cam profile drawing & animation
+- [x] Pressure angle / curvature radius real-time analysis
+- [x] Multi-format export (DXF, CSV, Excel, SVG, PNG, TIFF, GIF, JSON)
 - [x] Chinese/English internationalization
-- [x] Error boundary and input validation
-- [x] CI automated testing
-- [x] GIF async export (Web Worker)
-- [x] Undo/Redo functionality
-- [x] Accessibility improvements
-- [x] Frontend-backend separation architecture
-- [x] Web server deployment support
-- [x] Docker deployment support
-- [x] macOS support
-- [x] Linux support
-- [x] Mobile responsive layout
-- [x] Touch gesture support
-- [x] iOS/Android app configuration
-- [x] iOS/Android app build (Signed APK released)
-- [x] Material Design 3 design system overhaul
-- [x] Professional color palette & interactive chart legends
-- [x] Startup splash animation (Remotion design + JS-driven)
-- [x] Mobile sidebar background fix & gap overlay
-- [x] Mobile status bar export path line-wrap display
-- [x] Mobile motion curves 3Y-axis adaptation
-- [x] Mobile settings download directory hint
-- [x] English mode sidebar label overflow fix
-- [x] English mode export animation info panel i18n
-- [x] GIF export flickering fix (global palette + FloydSteinberg dithering)
-- [x] Mobile sidebar opaque background
-- [x] Motion curves 3Y-axis label/tick overlap prevention
-- [x] Simulation card info panel optimization (displacement/pressure angle moved to header bar)
-- [x] Numeric display anti-jitter (fixed width + right-aligned)
+- [x] Undo / Redo
+- [x] Desktop + Web server dual-mode deployment (Tauri / Axum / Docker)
+- [x] Cross-platform support (Windows / macOS / Linux / iOS / Android)
+- [x] Mobile responsive layout & touch gestures
+- [x] Material Design 3 design system
+- [x] Security hardening (CSP nonce, rate limiting, HSTS, Docker non-root)
+- [x] 5 follower types (translating knife-edge, translating roller, translating flat-faced, oscillating roller, oscillating flat-faced)
 - [ ] Cam mechanism optimization algorithm
-- [ ] More follower types (flat-faced, oscillating)
 
 ### License
 

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.12] - 2026-05-03
+
+### Security
+
+- **HI-10**: 服务器速率限制从占位实现改为可配置的 per-IP 固定窗口算法（默认 60 请求/分钟），通过 `RATE_LIMIT` 环境变量配置
+- **HI-14**: SECURITY.md 更新，反映速率限制和 Tauri CSV 导出的实际实现状态
+
+### Fixed
+
+- **ME-28**: Tauri `get_frame_data` 命令锁竞争优化 — 在 Mutex 作用域内克隆数据后立即释放锁，再进行计算，避免阻塞其他 IPC 命令
+- **ME-18**: 移除未使用的 `@types/react` 和 `@types/react-dom` 依赖
+- **LO-09**: 动画循环在组件不活跃或数据缺失时停止 `requestAnimationFrame`，通过 `createEffect` 自动重启
+
+### Changed
+
+- **版本号更新**：v0.4.11 → v0.4.12（package.json, Cargo.toml, tauri.conf.json, README.md, index.html, CamForgeSplash.tsx）
+- **README 准确性修正**：移除已删除的 ndarray/rayon 依赖，TypeScript 版本 5.6→5.8，从动件类型标记为已完成，添加 TIFF 导出格式，更新项目结构
+- **Review.md 统计更新**：58/88 (66%)，Critical 100%，High 61%，Medium 63%，Low 69%
+
+---
+
 ## [0.4.11] - 2026-05-02
 
 ### Security
@@ -911,6 +932,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.4.12]: https://github.com/EkaEva/CamForge/compare/v0.4.11...v0.4.12
 [0.4.11]: https://github.com/EkaEva/CamForge/compare/v0.4.10...v0.4.11
 [0.4.10]: https://github.com/EkaEva/CamForge/compare/v0.4.9...v0.4.10
 [0.4.9]: https://github.com/EkaEva/CamForge/compare/v0.4.8...v0.4.9

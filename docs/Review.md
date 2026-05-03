@@ -12,7 +12,7 @@
 
 ### 项目技术栈
 
-- **前端框架**: SolidJS 1.9 + TypeScript 5.6 + Tailwind CSS 4.2
+- **前端框架**: SolidJS 1.9 + TypeScript 5.8 + Tailwind CSS 4.2
 - **桌面壳**: Tauri v2 (Rust)，支持 Windows/macOS/Linux/Android/iOS
 - **Web 后端**: Axum 0.7 (Rust) + Tokio，RESTful API
 - **核心计算库**: Rust workspace（camforge-core / camforge-server / src-tauri）
@@ -860,4 +860,4 @@
 
 ---
 
-*审查完成时间: 2026-05-01 | 审查工具版本: Claude Code (deepseek-v4-pro) | 当前修复版本: v0.4.11*
+*审查完成时间: 2026-05-01 | 审查工具版本: Claude Code (deepseek-v4-pro) | 当前修复版本: v0.4.12*
