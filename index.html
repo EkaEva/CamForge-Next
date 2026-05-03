@@ -76,7 +76,8 @@
       <svg class="splash-cam-wrap" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
         <g id="splash-cam-group">
           <circle cx="100" cy="100" r="55" fill="none" stroke="#444748" stroke-width="0.8" stroke-dasharray="4,4"/>
-          <path id="splash-cam-path" fill="none" stroke="#E07A5F" stroke-width="2"/>
+          <path id="splash-cam-path" d="M 100.00 45.00 L 102.88 45.06 L 105.75 45.25 L 108.62 45.56 L 111.48 45.99 L 114.32 46.54 L 117.15 47.23 L 119.95 48.03 L 122.72 48.97 L 125.46 50.02 L 128.17 51.21 L 130.83 52.52 L 133.45 53.96 L 136.02 55.53 L 138.52 57.22 L 140.96 59.04 L 143.33 60.98 L 145.62 63.05 L 147.83 65.25 L 149.95 67.56 L 151.96 70.00 L 153.87 72.55 L 155.66 75.22 L 157.34 77.99 L 158.88 80.87 L 160.29 83.85 L 161.55 86.92 L 162.65 90.08 L 163.60 93.31 L 164.39 96.63 L 165.00 100.00 L 165.43 103.43 L 165.68 106.90 L 165.74 110.41 L 165.61 113.95 L 165.29 117.49 L 164.76 121.04 L 164.03 124.58 L 163.10 128.09 L 161.96 131.57 L 160.62 135.00 L 159.08 138.37 L 157.34 141.66 L 155.41 144.87 L 153.28 147.97 L 150.96 150.96 L 148.47 153.83 L 145.80 156.55 L 142.96 159.13 L 139.97 161.55 L 136.83 163.79 L 133.55 165.85 L 130.15 167.73 L 126.64 169.40 L 123.03 170.86 L 119.32 172.12 L 115.55 173.15 L 111.71 173.96 L 107.83 174.53 L 103.92 174.88 L 100.00 175.00 L 96.08 174.88 L 92.17 174.53 L 88.29 173.96 L 84.45 173.15 L 80.68 172.12 L 76.97 170.86 L 73.36 169.40 L 69.85 167.73 L 66.45 165.85 L 63.17 163.79 L 60.03 161.55 L 57.04 159.13 L 54.20 156.55 L 51.53 153.83 L 49.04 150.96 L 46.72 147.97 L 44.59 144.87 L 42.66 141.66 L 40.92 138.37 L 39.38 135.00 L 38.04 131.57 L 36.90 128.09 L 35.97 124.58 L 35.24 121.04 L 34.71 117.49 L 34.39 113.95 L 34.26 110.41 L 34.32 106.90 L 34.57 103.43 L 35.00 100.00 L 35.61 96.63 L 36.40 93.31 L 37.35 90.08 L 38.45 86.92 L 39.71 83.85 L 41.12 80.87 L 42.66 77.99 L 44.34 75.22 L 46.13 72.55 L 48.04 70.00 L 50.05 67.56 L 52.17 65.25 L 54.38 63.05 L 56.67 60.98 L 59.04 59.04 L 61.48 57.22 L 63.98 55.53 L 66.55 53.96 L 69.17 52.52 L 71.83 51.21 L 74.54 50.02 L 77.28 48.97 L 80.05 48.03 L 82.85 47.23 L 85.68 46.54 L 88.52 45.99 L 91.38 45.56 L 94.25 45.25 L 97.12 45.06 L 100.00 45.00 Z" fill="none" stroke="#E07A5F" stroke-width="2" stroke-dasharray="411" stroke-dashoffset="411"/>
+          <animateTransform id="splash-cam-rotate" attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="0.5s" begin="0.8s" fill="freeze" calcMode="spline" keySplines="0.5 0 0.5 1"/>
         </g>
         <circle cx="100" cy="100" r="3" fill="none" stroke="#c4c7c7" stroke-width="1.5"/>
         <polygon id="splash-cam-base" points="100,106 90,120 110,120" fill="#c4c7c7" class="splash-cam-base"/>
@@ -90,8 +91,16 @@
 
     <div id="root"></div>
 
-    <!-- Splash animation (external file for CSP compliance) -->
-    <script src="/splash.js"></script>
+    <!-- Splash animation (inline for CSP compliance) -->
+    <script>
+(function(){
+  var splash=document.getElementById('splash');
+  if(!splash)return;
+  function rm(){var el=document.getElementById('splash');if(el)el.remove();}
+  splash.addEventListener('animationend',function(e){if(e.animationName==='splash-fade-out')rm();});
+  setTimeout(rm,3000);
+})();
+    </script>
     <script src="/src/index.tsx" type="module"></script>
   </body>
 </html>

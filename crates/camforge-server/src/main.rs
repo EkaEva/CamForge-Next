@@ -61,7 +61,7 @@ fn build_cors_layer() -> CorsLayer {
 fn build_csp(nonce: &str) -> String {
     let default_src = "default-src 'self'";
     // script-src 使用 nonce：内联脚本（splash 动画）通过 Vite 插件注入 nonce 属性
-    let script_src = format!("script-src 'self' 'nonce-{}' 'wasm-unsafe-eval'", nonce);
+    let script_src = format!("script-src 'self' 'nonce-{}' 'wasm-unsafe-eval' 'unsafe-eval'", nonce);
     // style-src: 'unsafe-inline' is required by SolidJS — its production build
     // sets styles via element.style.cssText and setAttribute("style",...),
     // which CSP treats as inline styles and blocks without 'unsafe-inline'.
@@ -107,7 +107,7 @@ async fn cache_control(request: Request, next: middleware::Next) -> Response<Bod
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
 
-    let cache_value = if path == "/" || path == "/index.html" {
+    let cache_value = if path == "/" || path == "/index.html" || path == "/splash.css" || path == "/splash.js" {
         "no-cache"
     } else if path.starts_with("/assets/") {
         "public, max-age=31536000, immutable"

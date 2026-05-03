@@ -9,8 +9,12 @@ import type { CamApi } from './index';
 
 /**
  * HTTP API 配置
+ *
+ * 生产环境使用空字符串（相对路径），浏览器自动解析为页面同源 URL，
+ * 从而满足 CSP `connect-src 'self'` 限制。
+ * 本地开发通过 .env 设置 VITE_API_URL=http://localhost:3000。
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 /**
  * HTTP API 实现

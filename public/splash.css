@@ -1,47 +1,44 @@
-/* Splash screen styles — CSS animations replace JS rAF for compositor-thread execution */
+/* Splash screen styles — CSS animations run on compositor thread,
+   unaffected by main-thread blocking during JS module parsing.
+   JS only computes the cam path and removes the element after animation. */
 #splash{
   position:fixed;inset:0;z-index:9999;background:#1c1b1b;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   font-family:'Inter',system-ui,sans-serif;
-  animation:splash-fade-out 0.5s ease 1.5s both;
+  animation:splash-fade-out 0.5s ease 1.8s both;
 }
 .splash-grid{position:absolute;inset:0;opacity:0.15}
 .splash-text{position:relative;text-align:center;margin-bottom:40px}
 .splash-title{
   font-size:48px;font-weight:700;color:#e5e2e1;letter-spacing:-0.02em;
-  animation:text-spring 0.4s ease-out 0.35s both;
+  opacity:0;animation:text-spring 0.5s ease-out 0.35s both;
 }
 .splash-accent{color:#E07A5F}
 .splash-subtitle{
   font-size:14px;font-weight:400;color:#c4c7c7;letter-spacing:0.08em;
   text-transform:uppercase;margin-top:8px;
-  animation:text-spring 0.4s ease-out 0.5s both;
+  opacity:0;animation:text-spring 0.5s ease-out 0.5s both;
 }
 .splash-version{
   font-size:12px;font-weight:500;color:#8e9192;margin-top:20px;
-  animation:text-spring 0.4s ease-out 0.65s both;
+  opacity:0;animation:text-spring 0.5s ease-out 0.65s both;
 }
 .splash-cam-wrap{position:relative;width:160px;height:160px}
 .splash-cam-base{
-  animation:cam-base-appear 0.3s ease 0.25s both;
+  opacity:0;animation:cam-base-appear 0.3s ease 0.25s both;
 }
 .splash-curves{
   position:absolute;bottom:60px;width:min(880px,70vw);height:60px;
-  animation:curves-fade-in 0.25s ease 0.55s both;
+  opacity:0;animation:curves-fade-in 0.25s ease 0.55s both;
 }
 
 /* Cam profile progressive draw via stroke-dashoffset */
 #splash-cam-path{
-  stroke-dasharray:400;
-  stroke-dashoffset:400;
   animation:cam-draw 0.7s ease-out 0.1s forwards;
 }
 
-/* Cam rotation after draw completes */
-#splash-cam-group{
-  animation:cam-rotate 0.5s ease-in-out 0.8s both;
-  transform-origin:100px 100px;
-}
+/* Cam rotation uses SVG <animateTransform> instead of CSS —
+   CSS transform-origin on SVG <g> is unreliable across browsers. */
 
 @keyframes text-spring{
   from{opacity:0;transform:translateY(30px)}
@@ -57,10 +54,6 @@
 @keyframes curves-fade-in{
   from{opacity:0}
   to{opacity:0.4}
-}
-@keyframes cam-rotate{
-  from{transform:rotate(0deg)}
-  to{transform:rotate(360deg)}
 }
 @keyframes splash-fade-out{
   from{opacity:1}
