@@ -320,8 +320,8 @@ pub fn compute_oscillating_profile(
     }
 
     Ok(OscillatingProfileResult {
-        x_theory: x_theory,
-        y_theory: y_theory,
+        x_theory,
+        y_theory,
     })
 }
 
