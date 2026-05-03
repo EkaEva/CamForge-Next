@@ -2,12 +2,39 @@
 //!
 //! 提供 DXF、CSV 等格式导出功能
 
-use std::fs::File;
-use std::io::Write;
+use std::fs::{self, File};
+use std::io::{BufWriter, Write};
 use std::path::{Component, Path, PathBuf};
 use tauri::State;
 
 use crate::commands::simulation::SimState;
+
+/// Write data to a file atomically: write to a temp file first, then rename on success.
+fn atomic_write(path: &Path, data: &[u8]) -> Result<(), String> {
+    let parent = path
+        .parent()
+        .ok_or_else(|| format!("Invalid path: {}", path.display()))?;
+    let stem = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .ok_or_else(|| format!("Invalid filename: {}", path.display()))?;
+    let tmp_path = parent.join(format!("{}.tmp", stem));
+
+    let mut file =
+        File::create(&tmp_path).map_err(|e| format!("Failed to create temp file: {}", e))?;
+    file.write_all(data)
+        .map_err(|e| format!("Failed to write temp file: {}", e))?;
+    file.sync_all()
+        .map_err(|e| format!("Failed to sync temp file: {}", e))?;
+    drop(file);
+
+    fs::rename(&tmp_path, path).map_err(|e| {
+        let _ = fs::remove_file(&tmp_path);
+        format!("Failed to rename temp file: {}", e)
+    })?;
+
+    Ok(())
+}
 
 /// 允许的导出文件扩展名
 const ALLOWED_EXTENSIONS: &[&str] = &["dxf", "csv"];
@@ -177,99 +204,99 @@ pub fn export_dxf(
         return Err("No profile data available to export".to_string());
     }
 
-    let mut file = File::create(&safe_path).map_err(|e| e.to_string())?;
+    let mut buf: Vec<u8> = Vec::new();
+    {
+        let mut w = BufWriter::new(&mut buf);
 
-    // DXF Header
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "SECTION").map_err(|e| e.to_string())?;
-    writeln!(file, "2").map_err(|e| e.to_string())?;
-    writeln!(file, "HEADER").map_err(|e| e.to_string())?;
-    writeln!(file, "9").map_err(|e| e.to_string())?;
-    writeln!(file, "$INSUNITS").map_err(|e| e.to_string())?;
-    writeln!(file, "70").map_err(|e| e.to_string())?;
-    writeln!(file, "4").map_err(|e| e.to_string())?; // Millimeters
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "ENDSEC").map_err(|e| e.to_string())?;
+        // DXF Header
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "SECTION").map_err(|e| e.to_string())?;
+        writeln!(w, "2").map_err(|e| e.to_string())?;
+        writeln!(w, "HEADER").map_err(|e| e.to_string())?;
+        writeln!(w, "9").map_err(|e| e.to_string())?;
+        writeln!(w, "$INSUNITS").map_err(|e| e.to_string())?;
+        writeln!(w, "70").map_err(|e| e.to_string())?;
+        writeln!(w, "4").map_err(|e| e.to_string())?;
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "ENDSEC").map_err(|e| e.to_string())?;
 
-    // Tables Section
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "SECTION").map_err(|e| e.to_string())?;
-    writeln!(file, "2").map_err(|e| e.to_string())?;
-    writeln!(file, "TABLES").map_err(|e| e.to_string())?;
+        // Tables Section
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "SECTION").map_err(|e| e.to_string())?;
+        writeln!(w, "2").map_err(|e| e.to_string())?;
+        writeln!(w, "TABLES").map_err(|e| e.to_string())?;
 
-    // Layer table
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "TABLE").map_err(|e| e.to_string())?;
-    writeln!(file, "2").map_err(|e| e.to_string())?;
-    writeln!(file, "LAYER").map_err(|e| e.to_string())?;
-    writeln!(file, "70").map_err(|e| e.to_string())?;
-    writeln!(file, "2").map_err(|e| e.to_string())?;
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "TABLE").map_err(|e| e.to_string())?;
+        writeln!(w, "2").map_err(|e| e.to_string())?;
+        writeln!(w, "LAYER").map_err(|e| e.to_string())?;
+        writeln!(w, "70").map_err(|e| e.to_string())?;
+        writeln!(w, "2").map_err(|e| e.to_string())?;
 
-    // Theory layer
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "LAYER").map_err(|e| e.to_string())?;
-    writeln!(file, "2").map_err(|e| e.to_string())?;
-    writeln!(file, "CAM_THEORY").map_err(|e| e.to_string())?;
-    writeln!(file, "70").map_err(|e| e.to_string())?;
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "62").map_err(|e| e.to_string())?;
-    writeln!(file, "1").map_err(|e| e.to_string())?; // Red
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "LAYER").map_err(|e| e.to_string())?;
+        writeln!(w, "2").map_err(|e| e.to_string())?;
+        writeln!(w, "CAM_THEORY").map_err(|e| e.to_string())?;
+        writeln!(w, "70").map_err(|e| e.to_string())?;
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "62").map_err(|e| e.to_string())?;
+        writeln!(w, "1").map_err(|e| e.to_string())?;
 
-    // Actual layer
-    if include_actual {
-        writeln!(file, "0").map_err(|e| e.to_string())?;
-        writeln!(file, "LAYER").map_err(|e| e.to_string())?;
-        writeln!(file, "2").map_err(|e| e.to_string())?;
-        writeln!(file, "CAM_ACTUAL").map_err(|e| e.to_string())?;
-        writeln!(file, "70").map_err(|e| e.to_string())?;
-        writeln!(file, "0").map_err(|e| e.to_string())?;
-        writeln!(file, "62").map_err(|e| e.to_string())?;
-        writeln!(file, "5").map_err(|e| e.to_string())?; // Blue
+        if include_actual {
+            writeln!(w, "0").map_err(|e| e.to_string())?;
+            writeln!(w, "LAYER").map_err(|e| e.to_string())?;
+            writeln!(w, "2").map_err(|e| e.to_string())?;
+            writeln!(w, "CAM_ACTUAL").map_err(|e| e.to_string())?;
+            writeln!(w, "70").map_err(|e| e.to_string())?;
+            writeln!(w, "0").map_err(|e| e.to_string())?;
+            writeln!(w, "62").map_err(|e| e.to_string())?;
+            writeln!(w, "5").map_err(|e| e.to_string())?;
+        }
+
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "ENDTAB").map_err(|e| e.to_string())?;
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "ENDSEC").map_err(|e| e.to_string())?;
+
+        // Entities Section
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "SECTION").map_err(|e| e.to_string())?;
+        writeln!(w, "2").map_err(|e| e.to_string())?;
+        writeln!(w, "ENTITIES").map_err(|e| e.to_string())?;
+
+        write_polyline_to(&mut w, &data.x, &data.y, "CAM_THEORY")?;
+
+        if include_actual && !data.x_actual.is_empty() {
+            write_polyline_to(&mut w, &data.x_actual, &data.y_actual, "CAM_ACTUAL")?;
+        }
+
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "ENDSEC").map_err(|e| e.to_string())?;
+        writeln!(w, "0").map_err(|e| e.to_string())?;
+        writeln!(w, "EOF").map_err(|e| e.to_string())?;
     }
 
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "ENDTAB").map_err(|e| e.to_string())?;
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "ENDSEC").map_err(|e| e.to_string())?;
-
-    // Entities Section
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "SECTION").map_err(|e| e.to_string())?;
-    writeln!(file, "2").map_err(|e| e.to_string())?;
-    writeln!(file, "ENTITIES").map_err(|e| e.to_string())?;
-
-    // Theory profile polyline
-    write_polyline(&mut file, &data.x, &data.y, "CAM_THEORY")?;
-
-    // Actual profile polyline (if roller follower)
-    if include_actual && !data.x_actual.is_empty() {
-        write_polyline(&mut file, &data.x_actual, &data.y_actual, "CAM_ACTUAL")?;
-    }
-
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "ENDSEC").map_err(|e| e.to_string())?;
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "EOF").map_err(|e| e.to_string())?;
+    atomic_write(&safe_path, &buf)?;
 
     Ok(())
 }
 
-/// Write a polyline entity to DXF file
-fn write_polyline(file: &mut File, x: &[f64], y: &[f64], layer: &str) -> Result<(), String> {
-    writeln!(file, "0").map_err(|e| e.to_string())?;
-    writeln!(file, "LWPOLYLINE").map_err(|e| e.to_string())?;
-    writeln!(file, "8").map_err(|e| e.to_string())?;
-    writeln!(file, "{}", layer).map_err(|e| e.to_string())?;
-    writeln!(file, "90").map_err(|e| e.to_string())?;
-    writeln!(file, "{}", x.len()).map_err(|e| e.to_string())?;
-    writeln!(file, "70").map_err(|e| e.to_string())?;
-    writeln!(file, "1").map_err(|e| e.to_string())?; // Closed
+/// Write a polyline entity to DXF writer
+fn write_polyline_to<W: Write>(w: &mut W, x: &[f64], y: &[f64], layer: &str) -> Result<(), String> {
+    writeln!(w, "0").map_err(|e| e.to_string())?;
+    writeln!(w, "LWPOLYLINE").map_err(|e| e.to_string())?;
+    writeln!(w, "8").map_err(|e| e.to_string())?;
+    writeln!(w, "{}", layer).map_err(|e| e.to_string())?;
+    writeln!(w, "90").map_err(|e| e.to_string())?;
+    writeln!(w, "{}", x.len()).map_err(|e| e.to_string())?;
+    writeln!(w, "70").map_err(|e| e.to_string())?;
+    writeln!(w, "1").map_err(|e| e.to_string())?;
 
     for i in 0..x.len() {
-        writeln!(file, "10").map_err(|e| e.to_string())?;
-        writeln!(file, "{:.6}", x[i]).map_err(|e| e.to_string())?;
-        writeln!(file, "20").map_err(|e| e.to_string())?;
-        writeln!(file, "{:.6}", y[i]).map_err(|e| e.to_string())?;
+        writeln!(w, "10").map_err(|e| e.to_string())?;
+        writeln!(w, "{:.6}", x[i]).map_err(|e| e.to_string())?;
+        writeln!(w, "20").map_err(|e| e.to_string())?;
+        writeln!(w, "{:.6}", y[i]).map_err(|e| e.to_string())?;
     }
 
     Ok(())
@@ -301,74 +328,79 @@ pub fn export_csv(filepath: String, lang: String, state: State<SimState>) -> Res
         return Err("No simulation data available to export".to_string());
     }
 
-    let mut file = File::create(&safe_path).map_err(|e| e.to_string())?;
+    let mut buf: Vec<u8> = Vec::new();
+    {
+        let mut w = BufWriter::new(&mut buf);
 
-    // Write BOM for Excel UTF-8 compatibility
-    file.write_all(&[0xEF, 0xBB, 0xBF])
-        .map_err(|e| e.to_string())?;
-
-    // Compute actual curvature radius if roller follower
-    let has_actual = params.r_r > 0.0;
-
-    // Header row (i18n)
-    let headers = if lang == "zh" {
-        if has_actual {
-            "转角 δ (°),向径 R (mm),推杆位移 s (mm),推杆速度 v (mm/s),推杆加速度 a (mm/s²),理论曲率半径 ρ (mm),实际曲率半径 ρₐ (mm),压力角 α (°)"
-        } else {
-            "转角 δ (°),向径 R (mm),推杆位移 s (mm),推杆速度 v (mm/s),推杆加速度 a (mm/s²),曲率半径 ρ (mm),压力角 α (°)"
-        }
-    } else {
-        if has_actual {
-            "Angle δ (°),Radius R (mm),Displacement s (mm),Velocity v (mm/s),Acceleration a (mm/s²),Theory ρ (mm),Actual ρₐ (mm),Pressure Angle α (°)"
-        } else {
-            "Angle δ (°),Radius R (mm),Displacement s (mm),Velocity v (mm/s),Acceleration a (mm/s²),Curvature ρ (mm),Pressure Angle α (°)"
-        }
-    };
-    writeln!(file, "{}", headers).map_err(|e| e.to_string())?;
-
-    // Data rows
-    for i in 0..data.delta_deg.len() {
-        let r = (data.x[i].powi(2) + data.y[i].powi(2)).sqrt();
-        let rho_val = if data.rho[i].is_finite() {
-            format!("{:.4}", data.rho[i].abs())
-        } else {
-            String::new()
-        };
-        let rho_actual_val = if has_actual && i < data.rho_actual.len() && data.rho_actual[i].is_finite() {
-            format!("{:.4}", data.rho_actual[i].abs())
-        } else {
-            String::new()
-        };
-
-        if has_actual {
-            writeln!(
-                file,
-                "{},{},{},{},{},{},{},{}",
-                csv_escape(&format!("{:.2}", data.delta_deg[i])),
-                csv_escape(&format!("{:.4}", r)),
-                csv_escape(&format!("{:.4}", data.s[i])),
-                csv_escape(&format!("{:.4}", data.v[i])),
-                csv_escape(&format!("{:.4}", data.a[i])),
-                csv_escape(&rho_val),
-                csv_escape(&rho_actual_val),
-                csv_escape(&format!("{:.4}", data.alpha_all[i]))
-            )
+        // Write BOM for Excel UTF-8 compatibility
+        w.write_all(&[0xEF, 0xBB, 0xBF])
             .map_err(|e| e.to_string())?;
+
+        // Compute actual curvature radius if roller follower
+        let has_actual = params.r_r > 0.0;
+
+        // Header row (i18n)
+        let headers = if lang == "zh" {
+            if has_actual {
+                "转角 δ (°),向径 R (mm),推杆位移 s (mm),推杆速度 v (mm/s),推杆加速度 a (mm/s²),理论曲率半径 ρ (mm),实际曲率半径 ρₐ (mm),压力角 α (°)"
+            } else {
+                "转角 δ (°),向径 R (mm),推杆位移 s (mm),推杆速度 v (mm/s),推杆加速度 a (mm/s²),曲率半径 ρ (mm),压力角 α (°)"
+            }
         } else {
-            writeln!(
-                file,
-                "{},{},{},{},{},{},{}",
-                csv_escape(&format!("{:.2}", data.delta_deg[i])),
-                csv_escape(&format!("{:.4}", r)),
-                csv_escape(&format!("{:.4}", data.s[i])),
-                csv_escape(&format!("{:.4}", data.v[i])),
-                csv_escape(&format!("{:.4}", data.a[i])),
-                csv_escape(&rho_val),
-                csv_escape(&format!("{:.4}", data.alpha_all[i]))
-            )
-            .map_err(|e| e.to_string())?;
+            if has_actual {
+                "Angle δ (°),Radius R (mm),Displacement s (mm),Velocity v (mm/s),Acceleration a (mm/s²),Theory ρ (mm),Actual ρₐ (mm),Pressure Angle α (°)"
+            } else {
+                "Angle δ (°),Radius R (mm),Displacement s (mm),Velocity v (mm/s),Acceleration a (mm/s²),Curvature ρ (mm),Pressure Angle α (°)"
+            }
+        };
+        writeln!(w, "{}", headers).map_err(|e| e.to_string())?;
+
+        // Data rows
+        for i in 0..data.delta_deg.len() {
+            let r = (data.x[i].powi(2) + data.y[i].powi(2)).sqrt();
+            let rho_val = if data.rho[i].is_finite() {
+                format!("{:.4}", data.rho[i].abs())
+            } else {
+                String::new()
+            };
+            let rho_actual_val = if has_actual && i < data.rho_actual.len() && data.rho_actual[i].is_finite() {
+                format!("{:.4}", data.rho_actual[i].abs())
+            } else {
+                String::new()
+            };
+
+            if has_actual {
+                writeln!(
+                    w,
+                    "{},{},{},{},{},{},{},{}",
+                    csv_escape(&format!("{:.2}", data.delta_deg[i])),
+                    csv_escape(&format!("{:.4}", r)),
+                    csv_escape(&format!("{:.4}", data.s[i])),
+                    csv_escape(&format!("{:.4}", data.v[i])),
+                    csv_escape(&format!("{:.4}", data.a[i])),
+                    csv_escape(&rho_val),
+                    csv_escape(&rho_actual_val),
+                    csv_escape(&format!("{:.4}", data.alpha_all[i]))
+                )
+                .map_err(|e| e.to_string())?;
+            } else {
+                writeln!(
+                    w,
+                    "{},{},{},{},{},{},{}",
+                    csv_escape(&format!("{:.2}", data.delta_deg[i])),
+                    csv_escape(&format!("{:.4}", r)),
+                    csv_escape(&format!("{:.4}", data.s[i])),
+                    csv_escape(&format!("{:.4}", data.v[i])),
+                    csv_escape(&format!("{:.4}", data.a[i])),
+                    csv_escape(&rho_val),
+                    csv_escape(&format!("{:.4}", data.alpha_all[i]))
+                )
+                .map_err(|e| e.to_string())?;
+            }
         }
     }
+
+    atomic_write(&safe_path, &buf)?;
 
     Ok(())
 }

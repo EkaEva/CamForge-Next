@@ -4,7 +4,8 @@
 
 **凸轮机构运动学模拟器 | Cam Mechanism Kinematics Simulator**
 
-[![Version](https://img.shields.io/badge/version-0.4.13-blue.svg)](https://github.com/EkaEva/CamForge/releases/tag/v0.4.13)
+[![Version](https://img.shields.io/badge/version-0.4.14-blue.svg)](https://github.com/EkaEva/CamForge/releases/tag/v0.4.14)
+[![CI](https://github.com/EkaEva/CamForge/actions/workflows/test.yml/badge.svg)](https://github.com/EkaEva/CamForge/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24c8db.svg)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-1.9-4f88c6.svg)](https://solidjs.com)

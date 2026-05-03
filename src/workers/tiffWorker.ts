@@ -34,24 +34,13 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
 
   if (type === 'encode') {
     try {
-      // 将 RGBA 数据转换为 RGB
-      const rgbData = new Uint8Array(width * height * 3);
-      for (let i = 0; i < width * height; i++) {
-        const rgbaIdx = i * 4;
-        const rgbIdx = i * 3;
-        rgbData[rgbIdx] = rgbaData[rgbaIdx];         // R
-        rgbData[rgbIdx + 1] = rgbaData[rgbaIdx + 1]; // G
-        rgbData[rgbIdx + 2] = rgbaData[rgbaIdx + 2]; // B
-      }
-
-      // 编码为 TIFF
-      const tiffArray = UTIF.encode([width, height, rgbData, {
-        dpi: [dpi, dpi],
-        compression: 5,   // LZW 无损压缩
-        photometric: 2,   // RGB
-        bitsPerSample: 8,
-        samplesPerPixel: 3,
-      }]);
+      // encodeImage 接受 RGBA 数据、宽、高和可选元数据
+      const metadata = {
+        t282: [[dpi, 1]],   // XResolution
+        t283: [[dpi, 1]],   // YResolution
+        t296: [2],           // ResolutionUnit = inch
+      };
+      const tiffArray = new Uint8Array(UTIF.encodeImage(rgbaData, width, height, metadata));
 
       // 返回结果
       const response: TiffResultMessage = {

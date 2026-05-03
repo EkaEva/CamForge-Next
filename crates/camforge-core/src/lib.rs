@@ -22,6 +22,7 @@ pub use motion::{compute_return, compute_rise, compute_rise_point, linspace};
 pub use profile::{
     compute_cam_profile, compute_flat_faced_profile, compute_oscillating_flat_faced_profile,
     compute_oscillating_pressure_angle, compute_oscillating_profile, compute_roller_profile,
-    compute_rotated_cam, ProfileResult,
+    compute_rotated_cam, FlatFacedProfileResult, OscFlatProfileResult, OscillatingProfileResult,
+    ProfileResult,
 };
 pub use types::{CamParams, FollowerType, FrameData, MotionLaw, SimulationData};

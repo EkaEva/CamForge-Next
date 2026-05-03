@@ -2,9 +2,6 @@
 //!
 //! 计算理论廓形和滚子从动件实际廓形
 
-type RollerProfile = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, f64);
-type OscFlatProfile = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>);
-
 /// 凸轮轮廓计算结果
 pub struct ProfileResult {
     /// 理论廓形 X 坐标
@@ -13,6 +10,40 @@ pub struct ProfileResult {
     pub y: Vec<f64>,
     /// 初始位移 sqrt(r_0² - e²)
     pub s_0: f64,
+}
+
+/// 平底从动件轮廓计算结果
+pub struct FlatFacedProfileResult {
+    /// 理论廓形 X 坐标
+    pub x_theory: Vec<f64>,
+    /// 理论廓形 Y 坐标
+    pub y_theory: Vec<f64>,
+    /// 实际廓形 X 坐标
+    pub x_actual: Vec<f64>,
+    /// 实际廓形 Y 坐标
+    pub y_actual: Vec<f64>,
+    /// 初始位移 sqrt(r_0² - e²)
+    pub s_0: f64,
+}
+
+/// 摆动从动件轮廓计算结果
+pub struct OscillatingProfileResult {
+    /// 理论廓形 X 坐标
+    pub x_theory: Vec<f64>,
+    /// 理论廓形 Y 坐标
+    pub y_theory: Vec<f64>,
+}
+
+/// 摆动平底从动件轮廓计算结果
+pub struct OscFlatProfileResult {
+    /// 理论廓形 X 坐标
+    pub x_theory: Vec<f64>,
+    /// 理论廓形 Y 坐标
+    pub y_theory: Vec<f64>,
+    /// 实际廓形 X 坐标
+    pub x_actual: Vec<f64>,
+    /// 实际廓形 Y 坐标
+    pub y_actual: Vec<f64>,
 }
 
 /// 计算凸轮理论廓形坐标
@@ -162,7 +193,7 @@ pub fn compute_roller_profile(
 /// * `flat_face_offset` - 平底中心线偏置量 (mm)
 ///
 /// # Returns
-/// * `(x_theory, y_theory, x_actual, y_actual, s_0)` - 理论廓形、实际廓形坐标和初始位移
+/// * `FlatFacedProfileResult` - 理论廓形、实际廓形坐标和初始位移
 pub fn compute_flat_faced_profile(
     s: &[f64],
     ds_ddelta: &[f64],
@@ -171,7 +202,7 @@ pub fn compute_flat_faced_profile(
     sn: i32,
     pz: i32,
     flat_face_offset: f64,
-) -> Result<RollerProfile, String> {
+) -> Result<FlatFacedProfileResult, String> {
     if r_0 <= 0.0 {
         return Err(format!("r_0 must be > 0, got {}", r_0));
     }
@@ -218,7 +249,13 @@ pub fn compute_flat_faced_profile(
         y_actual[i] = ya;
     }
 
-    Ok((x_theory, y_theory, x_actual, y_actual, s_0))
+    Ok(FlatFacedProfileResult {
+        x_theory,
+        y_theory,
+        x_actual,
+        y_actual,
+        s_0,
+    })
 }
 
 /// 计算摆动从动件凸轮理论廓形
@@ -236,14 +273,14 @@ pub fn compute_flat_faced_profile(
 /// * `sn` - 旋向符号 (+1 顺时针, -1 逆时针)
 ///
 /// # Returns
-/// * `(x_theory, y_theory)` - 理论廓形坐标
+/// * `OscillatingProfileResult` - 理论廓形坐标
 pub fn compute_oscillating_profile(
     s: &[f64],
     arm_length: f64,
     pivot_distance: f64,
     initial_angle: f64,
     sn: i32,
-) -> Result<(Vec<f64>, Vec<f64>), String> {
+) -> Result<OscillatingProfileResult, String> {
     if arm_length <= 0.0 {
         return Err(format!("arm_length must be > 0, got {}", arm_length));
     }
@@ -282,7 +319,10 @@ pub fn compute_oscillating_profile(
         y_theory[i] = -pivot_distance * sin_d + arm_length * sin_a;
     }
 
-    Ok((x_theory, y_theory))
+    Ok(OscillatingProfileResult {
+        x_theory: x_theory,
+        y_theory: y_theory,
+    })
 }
 
 /// 计算摆动平底从动件实际廓形
@@ -300,7 +340,7 @@ pub fn compute_oscillating_profile(
 /// * `flat_face_offset` - 平底中心线偏置量 (mm)
 ///
 /// # Returns
-/// * `(x_theory, y_theory, x_actual, y_actual)` - 理论和实际廓形坐标
+/// * `OscFlatProfileResult` - 理论和实际廓形坐标
 pub fn compute_oscillating_flat_faced_profile(
     s: &[f64],
     ds_ddelta: &[f64],
@@ -309,7 +349,7 @@ pub fn compute_oscillating_flat_faced_profile(
     initial_angle: f64,
     sn: i32,
     flat_face_offset: f64,
-) -> Result<OscFlatProfile, String> {
+) -> Result<OscFlatProfileResult, String> {
     if s.len() != ds_ddelta.len() {
         return Err(format!(
             "s and ds_ddelta must have same length, got {} and {}",
@@ -319,8 +359,9 @@ pub fn compute_oscillating_flat_faced_profile(
     }
 
     // 先计算理论廓形
-    let (x_theory, y_theory) =
-        compute_oscillating_profile(s, arm_length, pivot_distance, initial_angle, sn)?;
+    let theory = compute_oscillating_profile(s, arm_length, pivot_distance, initial_angle, sn)?;
+    let x_theory = theory.x_theory;
+    let y_theory = theory.y_theory;
 
     let n = s.len();
     let sn_f = sn as f64;
@@ -345,7 +386,12 @@ pub fn compute_oscillating_flat_faced_profile(
         y_actual[i] = y_theory[i] + offset_y;
     }
 
-    Ok((x_theory, y_theory, x_actual, y_actual))
+    Ok(OscFlatProfileResult {
+        x_theory,
+        y_theory,
+        x_actual,
+        y_actual,
+    })
 }
 
 /// 计算摆动从动件压力角
@@ -486,21 +532,20 @@ mod tests {
         let n = 360;
         let s = vec![0.0; n];
         let ds_ddelta = vec![0.0; n];
-        let (x_t, y_t, x_a, y_a, s_0) =
-            compute_flat_faced_profile(&s, &ds_ddelta, 40.0, 0.0, 1, 1, 0.0).unwrap();
+        let result = compute_flat_faced_profile(&s, &ds_ddelta, 40.0, 0.0, 1, 1, 0.0).unwrap();
 
         // s_0 = sqrt(40² - 0²) = 40
-        assert!((s_0 - 40.0).abs() < 1e-10);
+        assert!((result.s_0 - 40.0).abs() < 1e-10);
 
         // 零位移时理论和实际轮廓应相同
         for i in 0..n {
-            assert!((x_t[i] - x_a[i]).abs() < 1e-10);
-            assert!((y_t[i] - y_a[i]).abs() < 1e-10);
+            assert!((result.x_theory[i] - result.x_actual[i]).abs() < 1e-10);
+            assert!((result.y_theory[i] - result.y_actual[i]).abs() < 1e-10);
         }
 
         // 检查轮廓闭合
-        let dx = x_a[0] - x_a[n - 1];
-        let dy = y_a[0] - y_a[n - 1];
+        let dx = result.x_actual[0] - result.x_actual[n - 1];
+        let dy = result.y_actual[0] - result.y_actual[n - 1];
         let dist = (dx.powi(2) + dy.powi(2)).sqrt();
         assert!(
             dist < 1.0,
@@ -526,13 +571,13 @@ mod tests {
             })
             .collect();
 
-        let (x_t, y_t, x_a, y_a, _) =
+        let result =
             compute_flat_faced_profile(&s, &ds_ddelta, 40.0, 0.0, 1, 1, 0.0).unwrap();
 
         // 理论和实际轮廓应不同
         let mut has_diff = false;
         for i in 0..n {
-            if (x_t[i] - x_a[i]).abs() > 0.01 || (y_t[i] - y_a[i]).abs() > 0.01 {
+            if (result.x_theory[i] - result.x_actual[i]).abs() > 0.01 || (result.y_theory[i] - result.y_actual[i]).abs() > 0.01 {
                 has_diff = true;
                 break;
             }
@@ -567,13 +612,13 @@ mod tests {
         let s = vec![0.0; n];
         let a = 120.0;
         let l = 80.0;
-        let (x, y) = compute_oscillating_profile(&s, l, a, 0.0, 1).unwrap();
+        let result = compute_oscillating_profile(&s, l, a, 0.0, 1).unwrap();
 
         // 检查轮廓闭合（允许离散化误差，约 2π·r_eff/n）
         let r_eff = a + l; // 有效半径
         let tolerance = 2.0 * std::f64::consts::PI * r_eff / n as f64 + 0.1;
-        let dx = x[0] - x[n - 1];
-        let dy = y[0] - y[n - 1];
+        let dx = result.x_theory[0] - result.x_theory[n - 1];
+        let dy = result.y_theory[0] - result.y_theory[n - 1];
         let dist = (dx.powi(2) + dy.powi(2)).sqrt();
         assert!(
             dist < tolerance,
@@ -593,13 +638,13 @@ mod tests {
                 10.0 * (2.0 * std::f64::consts::PI * t).sin()
             })
             .collect();
-        let (x, y) = compute_oscillating_profile(&s, 80.0, 120.0, 30.0, -1).unwrap();
+        let result = compute_oscillating_profile(&s, 80.0, 120.0, 30.0, -1).unwrap();
 
         // 轮廓应闭合（s(0)=s(2π)=0）
         let r_eff = 120.0 + 80.0;
         let tolerance = 2.0 * std::f64::consts::PI * r_eff / n as f64 + 0.1;
-        let dx = x[0] - x[n - 1];
-        let dy = y[0] - y[n - 1];
+        let dx = result.x_theory[0] - result.x_theory[n - 1];
+        let dy = result.y_theory[0] - result.y_theory[n - 1];
         let dist = (dx.powi(2) + dy.powi(2)).sqrt();
         assert!(
             dist < tolerance,
@@ -609,8 +654,8 @@ mod tests {
 
         // 所有坐标应为有限值
         for i in 0..n {
-            assert!(x[i].is_finite(), "x[{}] should be finite, got {}", i, x[i]);
-            assert!(y[i].is_finite(), "y[{}] should be finite, got {}", i, y[i]);
+            assert!(result.x_theory[i].is_finite(), "x[{}] should be finite, got {}", i, result.x_theory[i]);
+            assert!(result.y_theory[i].is_finite(), "y[{}] should be finite, got {}", i, result.y_theory[i]);
         }
     }
 
@@ -652,13 +697,13 @@ mod tests {
         let n = 360;
         let s = vec![0.0; n];
         let ds_ddelta = vec![0.0; n];
-        let (xt, yt, xa, ya) =
+        let result =
             compute_oscillating_flat_faced_profile(&s, &ds_ddelta, 80.0, 120.0, 30.0, 1, 0.0)
                 .unwrap();
 
         for i in 0..n {
-            assert!((xt[i] - xa[i]).abs() < 1e-10, "x should match at {}", i);
-            assert!((yt[i] - ya[i]).abs() < 1e-10, "y should match at {}", i);
+            assert!((result.x_theory[i] - result.x_actual[i]).abs() < 1e-10, "x should match at {}", i);
+            assert!((result.y_theory[i] - result.y_actual[i]).abs() < 1e-10, "y should match at {}", i);
         }
     }
 
@@ -679,13 +724,13 @@ mod tests {
             })
             .collect();
 
-        let (xt, yt, xa, ya) =
+        let result =
             compute_oscillating_flat_faced_profile(&s, &ds_ddelta, 80.0, 120.0, 30.0, -1, 0.0)
                 .unwrap();
 
         let mut has_diff = false;
         for i in 0..n {
-            if (xt[i] - xa[i]).abs() > 0.01 || (yt[i] - ya[i]).abs() > 0.01 {
+            if (result.x_theory[i] - result.x_actual[i]).abs() > 0.01 || (result.y_theory[i] - result.y_actual[i]).abs() > 0.01 {
                 has_diff = true;
                 break;
             }
@@ -697,8 +742,8 @@ mod tests {
 
         // 所有坐标应为有限值
         for i in 0..n {
-            assert!(xa[i].is_finite(), "x_actual[{}] should be finite", i);
-            assert!(ya[i].is_finite(), "y_actual[{}] should be finite", i);
+            assert!(result.x_actual[i].is_finite(), "x_actual[{}] should be finite", i);
+            assert!(result.y_actual[i].is_finite(), "y_actual[{}] should be finite", i);
         }
     }
 
@@ -717,18 +762,18 @@ mod tests {
         let s = vec![0.0; n];
         let ds_ddelta = vec![0.0; n];
 
-        let (_, _, xa0, ya0, _) =
+        let r0 =
             compute_flat_faced_profile(&s, &ds_ddelta, 40.0, 0.0, 1, 1, 0.0).unwrap();
-        let (_, _, xa1, ya1, _) =
+        let r1 =
             compute_flat_faced_profile(&s, &ds_ddelta, 40.0, 0.0, 1, 1, 5.0).unwrap();
 
-        assert!(xa0
+        assert!(r0.x_actual
             .iter()
-            .zip(xa1.iter())
+            .zip(r1.x_actual.iter())
             .any(|(a, b)| (a - b).abs() > 1e-9));
-        assert!(ya0
+        assert!(r0.y_actual
             .iter()
-            .zip(ya1.iter())
+            .zip(r1.y_actual.iter())
             .any(|(a, b)| (a - b).abs() > 1e-9));
     }
 
@@ -738,20 +783,20 @@ mod tests {
         let s = vec![0.0; n];
         let ds_ddelta = vec![0.0; n];
 
-        let (_, _, xa0, ya0) =
+        let r0 =
             compute_oscillating_flat_faced_profile(&s, &ds_ddelta, 80.0, 120.0, 30.0, 1, 0.0)
                 .unwrap();
-        let (_, _, xa1, ya1) =
+        let r1 =
             compute_oscillating_flat_faced_profile(&s, &ds_ddelta, 80.0, 120.0, 30.0, 1, 5.0)
                 .unwrap();
 
-        assert!(xa0
+        assert!(r0.x_actual
             .iter()
-            .zip(xa1.iter())
+            .zip(r1.x_actual.iter())
             .any(|(a, b)| (a - b).abs() > 1e-9));
-        assert!(ya0
+        assert!(r0.y_actual
             .iter()
-            .zip(ya1.iter())
+            .zip(r1.y_actual.iter())
             .any(|(a, b)| (a - b).abs() > 1e-9));
     }
 
@@ -762,7 +807,9 @@ mod tests {
             .map(|i| 10.0 * (2.0 * std::f64::consts::PI * i as f64 / n as f64).sin())
             .collect();
 
-        let (x0, y0) = compute_oscillating_profile(&s, 80.0, 120.0, 30.0, 1).unwrap();
+        let osc = compute_oscillating_profile(&s, 80.0, 120.0, 30.0, 1).unwrap();
+        let x0 = &osc.x_theory;
+        let y0 = &osc.y_theory;
 
         // Rotate by gamma=45 degrees
         let gamma = 45.0 * std::f64::consts::PI / 180.0;
@@ -787,12 +834,12 @@ mod tests {
             .map(|i| 10.0 * (2.0 * std::f64::consts::PI * i as f64 / n as f64).sin())
             .collect();
 
-        let (x, y) = compute_oscillating_profile(&s, 80.0, 120.0, 30.0, 1).unwrap();
-        let (x_rot, y_rot) = compute_rotated_cam(&x, &y, 0.0);
+        let osc = compute_oscillating_profile(&s, 80.0, 120.0, 30.0, 1).unwrap();
+        let (x_rot, y_rot) = compute_rotated_cam(&osc.x_theory, &osc.y_theory, 0.0);
 
         for i in 0..n {
-            assert!((x[i] - x_rot[i]).abs() < 1e-10, "x mismatch at {}", i);
-            assert!((y[i] - y_rot[i]).abs() < 1e-10, "y mismatch at {}", i);
+            assert!((osc.x_theory[i] - x_rot[i]).abs() < 1e-10, "x mismatch at {}", i);
+            assert!((osc.y_theory[i] - y_rot[i]).abs() < 1e-10, "y mismatch at {}", i);
         }
     }
 }

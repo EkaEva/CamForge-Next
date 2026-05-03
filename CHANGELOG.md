@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.13] - 2026-05-03
+## [0.4.14] - 2026-05-03
+
+### Changed
+
+- **ME-25**: Refactored `compute_oscillating_profile`, `compute_flat_faced_profile`, and `compute_oscillating_flat_faced_profile` in `camforge-core/src/profile.rs` to return named structs (`OscillatingProfileResult`, `FlatFacedProfileResult`, `OscFlatProfileResult`) instead of anonymous tuples, improving readability and reducing positional-destructuring errors
+- **ME-14**: Replaced single-line comment in `src/stores/simulation/compute.ts` with a prominent multi-line JSDoc cross-language sync warning referencing specific Rust source files
+
+### Fixed
+
+- **LO-27**: Implemented atomic file writes for Tauri export commands (`export_dxf`, `export_csv`) — data is first written to a `.tmp` file, then `fs::rename`d on success, preventing partial-file corruption on crash
+- **TIFF export failure**: Fixed `UTIF.encode()` incorrect API usage in `src/exporters/tiff.ts` and `src/workers/tiffWorker.ts` — replaced non-existent simplified array format with `UTIF.encodeImage(rgba, w, h, metadata)`, passing RGBA pixel data directly with proper DPI metadata (`t282`/`t283`/`t296` TIFF tags). Updated `src/types/utif2.d.ts` type declarations accordingly
+
+### Added
+
+- **ME-05**: Added 16 unit tests for API adapter layer (`src/api/__tests__/api.test.ts`) covering `HttpApi` and `TauriApi` request serialization, error handling, and unsupported method guards
+- **ME-01**: Added 16 validation tests for `CamParams::validate()` in `camforge-core/src/types.rs` covering negative values, NaN, Infinity, angle sum tolerance, follower type constraints, and parameter range checks (total: 64 tests passing)
+- **LO-19**: Added GitHub Actions CI status badge and updated version badge to README.md
+
+## [0.4.13] - 2026-05-02
 
 ### Security
 
@@ -955,6 +973,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.4.14]: https://github.com/EkaEva/CamForge/compare/v0.4.13...v0.4.14
 [0.4.13]: https://github.com/EkaEva/CamForge/compare/v0.4.12...v0.4.13
 [0.4.12]: https://github.com/EkaEva/CamForge/compare/v0.4.11...v0.4.12
 [0.4.11]: https://github.com/EkaEva/CamForge/compare/v0.4.10...v0.4.11

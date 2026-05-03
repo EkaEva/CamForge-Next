@@ -1,4 +1,4 @@
-# CamForge v0.4.13 系统性审查报告
+# CamForge v0.4.14 系统性审查报告
 
 ## 1. 审查概述
 
@@ -8,7 +8,7 @@
 | **审查方法** | 静态代码分析 + 架构审查 + 安全扫描 + 配置审计 + 测试覆盖率评估，采用多代理并行分治策略，分别对前端代码质量、Rust 后端代码质量、测试与文档完整性、依赖管理与安全性 4 个维度进行深度审查后合并去重 |
 | **审查时间** | 2026-05-01 |
 | **审查环境** | Windows 11 Home China 10.0.26200, Node.js 20, Rust 2021 edition, Tauri v2 + SolidJS 1.9 + Tailwind CSS 4.2 + Axum 0.7 |
-| **项目版本** | v0.4.13（package.json / Cargo.toml 当前版本），审查目标为 v0.4.13 优化方向 |
+| **项目版本** | v0.4.14（package.json / Cargo.toml 当前版本），审查目标为 v0.4.14 优化方向 |
 
 ### 项目技术栈
 
@@ -23,15 +23,15 @@
 
 ## 修复进度跟踪
 
-> 最后更新: 2026-05-03 | 修复目标版本: v0.4.13
+> 最后更新: 2026-05-03 | 修复目标版本: v0.4.14
 
 | 严重程度 | 总数 | 已修复 | 未修复 | 完成率 |
 |:--------:|:----:|:------:|:------:|:------:|
 | 严重 | 3 | 3 | 0 | 100% |
 | 高 | 18 | 12 | 6 | 67% |
-| 中 | 35 | 25 | 10 | 71% |
-| 低 | 32 | 23 | 9 | 72% |
-| **合计** | **88** | **63** | **25** | **72%** |
+| 中 | 35 | 28 | 7 | 80% |
+| 低 | 32 | 25 | 7 | 78% |
+| **合计** | **88** | **68** | **20** | **77%** |
 
 状态标记: ✅ 已修复 | ⬜ 未修复 | ⚠️ 已验证无需修复
 
@@ -299,12 +299,13 @@
 - **严重程度**: 中
 - **问题类别**: 测试
 
-#### ⬜ ME-05: API 适配器层无测试
+#### ✅ ME-05: API 适配器层无测试
 
 - **问题描述**: [src/api/tauri.ts](src/api/tauri.ts) 和 [src/api/http.ts](src/api/http.ts) 是前端自适应切换 Tauri IPC / HTTP REST 两种模式的关键适配层，但均无测试。自动检测逻辑、请求参数序列化、错误处理路径均未被验证。
 - **问题位置**: [src/api/tauri.ts](src/api/tauri.ts)、[src/api/http.ts](src/api/http.ts)、[src/api/index.ts](src/api/index.ts)
 - **严重程度**: 中
 - **问题类别**: 测试
+- **v0.4.14 修复**: 添加 `src/api/__tests__/api.test.ts`，覆盖 HttpApi 和 TauriApi 的 16 个测试用例（请求序列化、错误处理、不支持方法抛异常等）
 
 #### ⬜ ME-06: `Sidebar.tsx` 单文件过长（630 行），含 5 个可折叠面板
 
@@ -366,12 +367,13 @@
 - **严重程度**: 中
 - **问题类别**: 代码质量
 
-#### ⬜ ME-14: 前端与 Rust 后端运动规律实现存在版本同步风险
+#### ✅ ME-14: 前端与 Rust 后端运动规律实现存在版本同步风险
 
 - **问题描述**: [compute.ts:1](src/stores/simulation/compute.ts#L1) 注释说明该文件为 `camforge-core::compute_full_motion` 的前端镜像实现，但注释仅使用 `//` 行注释而未使用更显眼的 `TODO` 或引用具体 Rust 文件路径。如果 Rust 后端公式更新而前端不同步，两套计算将产生分歧，而当前无自动化的跨语言测试来检测这种不一致。
 - **问题位置**: [src/stores/simulation/compute.ts:1](src/stores/simulation/compute.ts#L1)
 - **严重程度**: 中
 - **问题类别**: 代码质量、架构设计
+- **v0.4.14 修复**: 替换为多行 JSDoc 警告注释，引用具体 Rust 文件路径（full_motion.rs、profile.rs、geometry.rs），标注 Rust 为 source of truth
 
 #### ✅ ME-15: 声明但未使用的 Rust 依赖 `anyhow`
 
@@ -448,7 +450,7 @@
 - **严重程度**: 中
 - **问题类别**: 代码质量
 
-#### ⬜ ME-25: `compute_oscillating_profile` 返回元组而非结构体
+#### ✅ ME-25: `compute_oscillating_profile` 返回元组而非结构体
 
 - **问题描述**: [profile.rs:237](crates/camforge-core/src/profile.rs#L237) `compute_oscillating_profile` 返回 `Result<(Vec<f64>, Vec<f64>), String>`，而类似函数 `compute_cam_profile` 返回 `Result<ProfileResult, String>` 结构体。`compute_flat_faced_profile`（[profile.rs:163-171](crates/camforge-core/src/profile.rs#L163-L171)）更返回 5 元组（`Result<(Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, f64), String>`），调用方必须按位置解构，易出错。
 - **问题位置**:
@@ -456,6 +458,7 @@
   - [crates/camforge-core/src/profile.rs:163-171](crates/camforge-core/src/profile.rs#L163-L171)
 - **严重程度**: 中
 - **问题类别**: 架构设计
+- **v0.4.14 修复**: 拆分为 `FlatFacedProfileResult`、`OscillatingProfileResult`、`OscFlatProfileResult` 命名结构体，所有调用方已更新为使用字段名而非位置解构
 
 #### ✅ ME-26: `full_motion.rs` 中的 `validate_motion_params` 包装函数是多余的间接层
 
@@ -668,12 +671,13 @@
 - **严重程度**: 低
 - **问题类别**: 依赖管理、兼容性
 
-#### ⬜ LO-19: 项目无 GitHub README 徽章
+#### ✅ LO-19: 项目无 GitHub README 徽章
 
 - **问题描述**: 根目录 `README.md` 缺乏 CI 状态、测试覆盖率、最新版本等常见项目徽章，这些徽章能帮助用户快速评估项目健康度和活跃度。
 - **问题位置**: [README.md](README.md)
 - **严重程度**: 低
 - **问题类别**: 文档
+- **v0.4.14 修复**: 添加 GitHub Actions CI 状态徽章，更新版本徽章至 v0.4.14
 
 #### ⬜ LO-20: 架构文档中无 SVG/PNG 架构图
 
@@ -725,12 +729,13 @@
 - **问题类别**: 安全
 - **v0.4.10 修复**: 字体已本地化，`connect-src` 中 Google Fonts 域名已移除，仅保留 `'self'`
 
-#### ⬜ LO-27: 导出路径部分文件写入无清理机制
+#### ✅ LO-27: 导出路径部分文件写入无清理机制
 
 - **问题描述**: [commands/export.rs:170](src-tauri/src/commands/export.rs#L170) 如果 `writeln!` 调用在 DXF/CSV 文件写入中途失败，会留下损坏的部分文件在用户文件系统中，无重试或清理回滚机制。
 - **问题位置**: [src-tauri/src/commands/export.rs:170](src-tauri/src/commands/export.rs#L170)
 - **严重程度**: 低
 - **问题类别**: 代码质量
+- **v0.4.14 修复**: 实现 `atomic_write` 函数（写入 `.tmp` 临时文件 → `sync_all` → `fs::rename`），`export_dxf` 和 `export_csv` 均改为先写入内存缓冲区再原子写入目标文件
 
 #### ✅ LO-28: `CamParams::initial_angle` 默认值 0 导致摆动从动件压力角奇点
 
@@ -860,7 +865,7 @@
 
 ---
 
-*审查完成时间: 2026-05-01 | 审查工具版本: Claude Code (deepseek-v4-pro) | 当前修复版本: v0.4.13*
+*审查完成时间: 2026-05-01 | 审查工具版本: Claude Code (deepseek-v4-pro) | 当前修复版本: v0.4.14*
 
 ### v0.4.13 新增修复
 

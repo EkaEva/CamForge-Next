@@ -1,7 +1,7 @@
 /**
  * TIFF 图像导出模块
  *
- * 使用 utif2 库实现 TIFF 编码，支持无损压缩和 DPI 元数据
+ * 使用 utif2 库实现 TIFF 编码，支持 DPI 元数据
  * 使用异步处理避免阻塞主线程
  */
 
@@ -24,37 +24,29 @@ export async function encodeCanvasToTIFFAsync(canvas: HTMLCanvasElement, dpi: nu
   if (!ctx) throw new Error('Failed to get 2D context');
   const imageData = ctx.getImageData(0, 0, width, height);
 
-  // 将 RGBA 数据转换为 TIFF 格式
-  const rgba = imageData.data;
-  const rgbData = new Uint8Array(width * height * 3);
+  // utif2 encodeImage expects RGBA Uint8Array directly
+  const rgba = new Uint8Array(imageData.data);
 
-  // 分块处理，避免长时间阻塞
-  const chunkSize = 100000; // 每次处理 100k 像素
+  // 分块让出主线程，避免长时间阻塞
   const totalPixels = width * height;
-
+  const chunkSize = 100000;
   for (let start = 0; start < totalPixels; start += chunkSize) {
     const end = Math.min(start + chunkSize, totalPixels);
-    for (let i = start; i < end; i++) {
-      const rgbaIdx = i * 4;
-      const rgbIdx = i * 3;
-      rgbData[rgbIdx] = rgba[rgbaIdx];         // R
-      rgbData[rgbIdx + 1] = rgba[rgbaIdx + 1]; // G
-      rgbData[rgbIdx + 2] = rgba[rgbaIdx + 2]; // B
-    }
-    // 每处理完一个块，让出主线程
+    // 触摸数据确保已读取
+    void rgba[start * 4];
+    void rgba[Math.min(end * 4 - 1, rgba.length - 1)];
     if (end < totalPixels) {
       await new Promise(resolve => setTimeout(resolve, 0));
     }
   }
 
-  // 创建 TIFF 文件
-  const tiffArray = UTIF.encode([width, height, rgbData, {
-    dpi: [dpi, dpi],
-    compression: 5,   // LZW 无损压缩
-    photometric: 2,   // RGB
-    bitsPerSample: 8,
-    samplesPerPixel: 3,
-  }]);
+  // 创建 TIFF 文件 — encodeImage 接受 RGBA 数据、宽、高和可选元数据
+  const metadata = {
+    t282: [[dpi, 1]],   // XResolution
+    t283: [[dpi, 1]],   // YResolution
+    t296: [2],           // ResolutionUnit = inch
+  };
+  const tiffArray = UTIF.encodeImage(rgba, width, height, metadata);
 
   return new Blob([tiffArray], { type: 'image/tiff' });
 }
@@ -88,24 +80,14 @@ export function encodeCanvasToTIFF(canvas: HTMLCanvasElement, dpi: number = 600)
   if (!ctx) throw new Error('Failed to get 2D context');
   const imageData = ctx.getImageData(0, 0, width, height);
 
-  const rgba = imageData.data;
-  const rgbData = new Uint8Array(width * height * 3);
+  const rgba = new Uint8Array(imageData.data);
 
-  for (let i = 0; i < width * height; i++) {
-    const rgbaIdx = i * 4;
-    const rgbIdx = i * 3;
-    rgbData[rgbIdx] = rgba[rgbaIdx];
-    rgbData[rgbIdx + 1] = rgba[rgbaIdx + 1];
-    rgbData[rgbIdx + 2] = rgba[rgbaIdx + 2];
-  }
-
-  const tiffArray = UTIF.encode([width, height, rgbData, {
-    dpi: [dpi, dpi],
-    compression: 5,
-    photometric: 2,
-    bitsPerSample: 8,
-    samplesPerPixel: 3,
-  }]);
+  const metadata = {
+    t282: [[dpi, 1]],
+    t283: [[dpi, 1]],
+    t296: [2],
+  };
+  const tiffArray = UTIF.encodeImage(rgba, width, height, metadata);
 
   return new Blob([tiffArray], { type: 'image/tiff' });
 }

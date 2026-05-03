@@ -38,7 +38,7 @@ fn compute_profile_for_type(
             (profile.x, profile.y, xa, ya)
         }
         FollowerType::TranslatingFlatFaced => {
-            let (xt, yt, xa, ya, _) = compute_flat_faced_profile(
+            let result = compute_flat_faced_profile(
                 &motion.s,
                 &motion.ds_ddelta,
                 params.r_0,
@@ -47,21 +47,21 @@ fn compute_profile_for_type(
                 params.pz,
                 params.flat_face_offset,
             )?;
-            (xt, yt, xa, ya)
+            (result.x_theory, result.y_theory, result.x_actual, result.y_actual)
         }
         FollowerType::OscillatingRoller => {
-            let (xt, yt) = compute_oscillating_profile(
+            let osc = compute_oscillating_profile(
                 &motion.s,
                 params.arm_length,
                 params.pivot_distance,
                 params.initial_angle,
                 params.sn,
             )?;
-            let (xa, ya) = compute_roller_profile(&xt, &yt, params.r_r, params.sn)?;
-            (xt, yt, xa, ya)
+            let (xa, ya) = compute_roller_profile(&osc.x_theory, &osc.y_theory, params.r_r, params.sn)?;
+            (osc.x_theory, osc.y_theory, xa, ya)
         }
         FollowerType::OscillatingFlatFaced => {
-            let (xt, yt, xa, ya) = compute_oscillating_flat_faced_profile(
+            let osc = compute_oscillating_flat_faced_profile(
                 &motion.s,
                 &motion.ds_ddelta,
                 params.arm_length,
@@ -70,7 +70,7 @@ fn compute_profile_for_type(
                 params.sn,
                 params.flat_face_offset,
             )?;
-            (xt, yt, xa, ya)
+            (osc.x_theory, osc.y_theory, osc.x_actual, osc.y_actual)
         }
     };
 

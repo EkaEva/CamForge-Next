@@ -596,4 +596,169 @@ mod tests {
         );
         assert!(MotionLaw::try_from(7).is_err());
     }
+
+    #[test]
+    fn test_negative_delta_0_rejected() {
+        let params = CamParams { delta_0: -10.0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("delta_0 must be > 0"));
+    }
+
+    #[test]
+    fn test_negative_delta_ret_rejected() {
+        let params = CamParams { delta_ret: -5.0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("delta_ret must be > 0"));
+    }
+
+    #[test]
+    fn test_negative_dwell_rejected() {
+        let params = CamParams { delta_01: -5.0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("delta_01 must be >= 0"));
+    }
+
+    #[test]
+    fn test_r0_less_than_e_rejected() {
+        let params = CamParams { r_0: 3.0, e: 5.0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("Base circle radius must exceed |e|"));
+    }
+
+    #[test]
+    fn test_non_positive_h_rejected() {
+        let params = CamParams { h: 0.0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("Stroke h must be positive"));
+    }
+
+    #[test]
+    fn test_non_positive_omega_rejected() {
+        let params = CamParams { omega: 0.0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("Angular velocity ω must be positive"));
+    }
+
+    #[test]
+    fn test_n_points_out_of_range_rejected() {
+        let params = CamParams { n_points: 10, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("n_points must be >= 36"));
+
+        let params = CamParams { n_points: 1000, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("n_points must be <= 720"));
+    }
+
+    #[test]
+    fn test_invalid_motion_law_rejected() {
+        let params = CamParams { tc_law: 0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("tc_law must be 1-6"));
+
+        let params = CamParams { hc_law: 8, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("hc_law must be 1-6"));
+    }
+
+    #[test]
+    fn test_invalid_sn_pz_rejected() {
+        let params = CamParams { sn: 0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("sn must be +1 or -1"));
+
+        let params = CamParams { pz: 2, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("pz must be +1 or -1"));
+    }
+
+    #[test]
+    fn test_nan_rejected() {
+        let params = CamParams { r_0: f64::NAN, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("must be a finite number"));
+    }
+
+    #[test]
+    fn test_infinity_rejected() {
+        let params = CamParams { h: f64::INFINITY, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("must be a finite number"));
+    }
+
+    #[test]
+    fn test_oscillating_e_must_be_zero() {
+        let params = CamParams {
+            follower_type: FollowerType::OscillatingRoller,
+            e: 5.0,
+            initial_angle: 30.0,
+            ..CamParams::default()
+        };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("e must be 0 for oscillating"));
+    }
+
+    #[test]
+    fn test_oscillating_initial_angle_zero_rejected() {
+        let params = CamParams {
+            follower_type: FollowerType::OscillatingRoller,
+            e: 0.0,
+            initial_angle: 0.0,
+            ..CamParams::default()
+        };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("initial_angle must be non-zero"));
+    }
+
+    #[test]
+    fn test_roller_negative_r_r_rejected() {
+        let params = CamParams { r_r: -5.0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("r_r must be >= 0 for roller"));
+    }
+
+    #[test]
+    fn test_knife_edge_positive_r_r_rejected() {
+        let params = CamParams {
+            follower_type: FollowerType::TranslatingKnifeEdge,
+            r_r: 5.0,
+            ..CamParams::default()
+        };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("r_r must be 0 for"));
+    }
+
+    #[test]
+    fn test_alpha_threshold_zero_rejected() {
+        let params = CamParams { alpha_threshold: 0.0, ..CamParams::default() };
+        let err = params.validate().unwrap_err();
+        assert!(err.contains("alpha_threshold must be > 0"));
+    }
+
+    #[test]
+    fn test_angle_sum_tolerance() {
+        // 0.01° tolerance: 359.98° should be rejected (diff = 0.02)
+        let params = CamParams { delta_0: 89.98, delta_01: 60.0, delta_ret: 120.0, delta_02: 90.0, ..CamParams::default() };
+        assert!(params.validate().is_err());
+        // Exact 360° should pass
+        let params = CamParams { delta_0: 90.0, delta_01: 60.0, delta_ret: 120.0, delta_02: 90.0, ..CamParams::default() };
+        assert!(params.validate().is_ok());
+    }
+
+    #[test]
+    fn test_follower_type_str() {
+        assert_eq!(FollowerType::TranslatingRoller.as_str(), "Translating Roller");
+        assert_eq!(FollowerType::OscillatingFlatFaced.as_str(), "Oscillating Flat-Faced");
+        assert_eq!(FollowerType::TranslatingRoller.as_str_zh(), "直动滚子");
+    }
+
+    #[test]
+    fn test_follower_type_traits() {
+        assert!(FollowerType::OscillatingRoller.is_oscillating());
+        assert!(!FollowerType::TranslatingRoller.is_oscillating());
+        assert!(FollowerType::TranslatingFlatFaced.is_flat_faced());
+        assert!(!FollowerType::TranslatingRoller.is_flat_faced());
+        assert!(FollowerType::TranslatingRoller.needs_roller());
+        assert!(!FollowerType::TranslatingKnifeEdge.needs_roller());
+    }
 }

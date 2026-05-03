@@ -63,7 +63,7 @@ pub fn run_simulation(params: CamParams, state: State<SimState>) -> Result<Simul
             (profile.x, profile.y, xa, ya, profile.s_0, alpha)
         }
         FollowerType::TranslatingFlatFaced => {
-            let (xt, yt, xa, ya, s0) = compute_flat_faced_profile(
+            let result = compute_flat_faced_profile(
                 &motion.s,
                 &motion.ds_ddelta,
                 params.r_0,
@@ -73,17 +73,17 @@ pub fn run_simulation(params: CamParams, state: State<SimState>) -> Result<Simul
                 params.flat_face_offset,
             )?;
             let alpha = compute_flat_faced_pressure_angle(motion.s.len());
-            (xt, yt, xa, ya, s0, alpha)
+            (result.x_theory, result.y_theory, result.x_actual, result.y_actual, result.s_0, alpha)
         }
         FollowerType::OscillatingRoller => {
-            let (xt, yt) = compute_oscillating_profile(
+            let osc = compute_oscillating_profile(
                 &motion.s,
                 params.arm_length,
                 params.pivot_distance,
                 params.initial_angle,
                 params.sn,
             )?;
-            let (xa, ya) = compute_roller_profile(&xt, &yt, params.r_r, params.sn)?;
+            let (xa, ya) = compute_roller_profile(&osc.x_theory, &osc.y_theory, params.r_r, params.sn)?;
             let alpha = compute_oscillating_pressure_angle(
                 &motion.s,
                 &motion.ds_ddelta,
@@ -98,10 +98,10 @@ pub fn run_simulation(params: CamParams, state: State<SimState>) -> Result<Simul
                     * params.arm_length
                     * (params.initial_angle * DEG2RAD).cos())
             .sqrt();
-            (xt, yt, xa, ya, s0, alpha)
+            (osc.x_theory, osc.y_theory, xa, ya, s0, alpha)
         }
         FollowerType::OscillatingFlatFaced => {
-            let (xt, yt, xa, ya) = compute_oscillating_flat_faced_profile(
+            let osc = compute_oscillating_flat_faced_profile(
                 &motion.s,
                 &motion.ds_ddelta,
                 params.arm_length,
@@ -117,7 +117,7 @@ pub fn run_simulation(params: CamParams, state: State<SimState>) -> Result<Simul
                     * params.arm_length
                     * (params.initial_angle * DEG2RAD).cos())
             .sqrt();
-            (xt, yt, xa, ya, s0, alpha)
+            (osc.x_theory, osc.y_theory, osc.x_actual, osc.y_actual, s0, alpha)
         }
     };
 
