@@ -21,9 +21,10 @@ COPY crates/camforge-server/Cargo.toml ./crates/camforge-server/
 RUN grep -v 'src-tauri' Cargo.toml > Cargo.toml.tmp && mv Cargo.toml.tmp Cargo.toml
 
 # 创建空的 src 目录以缓存依赖
-RUN mkdir -p crates/camforge-core/src crates/camforge-server/src && \
+RUN mkdir -p crates/camforge-core/src crates/camforge-core/benches crates/camforge-server/src && \
     echo "fn main() {}" > crates/camforge-server/src/main.rs && \
-    echo "" > crates/camforge-core/src/lib.rs
+    echo "" > crates/camforge-core/src/lib.rs && \
+    echo "" > crates/camforge-core/benches/simulation_bench.rs
 
 # 构建依赖（缓存层）
 RUN cargo build --release -p camforge-server
