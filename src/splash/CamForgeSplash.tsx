@@ -183,7 +183,7 @@ export const CamForgeSplash: React.FC = () => {
             opacity: taglineSpring,
           }}
         >
-          v0.4.17 · SolidJS + Tauri
+          v0.4.18 · SolidJS + Tauri
         </div>
       </div>
 

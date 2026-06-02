@@ -17,7 +17,7 @@ Download the latest release from [GitHub Releases](https://github.com/EkaEva/Cam
 
 ### Web Mode | Web 模式
 
-Access the deployed instance at `https://camforge.top` or run locally:
+Access the deployed instance at `https://camforge.yneko.com` or run locally:
 
 ```bash
 git clone https://github.com/EkaEva/CamForge.git

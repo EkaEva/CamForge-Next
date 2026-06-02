@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://camforge.top/sitemap.xml
+Sitemap: https://camforge.yneko.com/sitemap.xml
